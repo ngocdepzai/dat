@@ -1,0 +1,105 @@
+ext {
+    // Application
+    applicationId = "com.hc.dat"
+    appVersionName = "0.0.9-1"
+    appVersionCode = 20
+
+    // Modules
+    commonVersionName = "0.0.1"
+    commonVersionCode = 1
+    serviceVersionName = "0.0.1"
+    serviceVersionCode = 1
+    deviceVersionName = "0.0.1"
+    deviceVersionCode = 1
+    typeVersionName = "0.0.1"
+    typeVersionCode = 1
+
+    // Android
+    androidBuildToolVersion = "29.0.3"
+    androidMinSdkVersion = 21
+    androidTargetSdkVersion = 27
+    androidCompileSdkVersion = 28
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // Libraries version
+    kotlin_version = '1.3.72'
+    core_ktx_version = '1.1.0'
+    appcompat_version = '1.1.0'
+    constraint_layout_version = '1.1.3'
+    lifecycle_version = '1.1.1'
+    navigation_version = '2.2.2'
+    databinding_version = '4.0.1'
+    coroutines_version = '1.7.3'
+    material_version = '1.9.0'
+    room_version = '2.3.0'
+    dagger2_version = '2.35.1'
+    retrofit2_version = '2.9.0'
+    gson_version = '2.8.6'
+    okehttp3_version = '4.9.1'
+    activity_ktx_version = '1.2.3'
+    picasso_version = '2.8'
+    coil_version = '2.4.0'
+
+    // 3rd version
+    database_debug_version = '1.0.6'
+
+    // Testing
+    junit_version = '4.12'
+    junit_ext_version = '1.1.1'
+    espresso_core_version = '3.2.0'
+    //Expandable Recyclerview
+    expandable_version= '1.4'
+
+    libraries = [
+            service: project(':service'),
+            device: project(':device'),
+            type: project(':type'),
+            face: project(':face'),
+
+            kotlinStdLib: "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version",
+            coreKtx: "androidx.core:core-ktx:$core_ktx_version",
+            appCompat: "androidx.appcompat:appcompat:$appcompat_version",
+            constraintLayout: "androidx.constraintlayout:constraintlayout:$constraint_layout_version",
+            material:"com.google.android.material:material:$material_version",
+            activityKtx: "androidx.activity:activity-ktx:$activity_ktx_version",
+
+            lifeCycle: "android.arch.lifecycle:extensions:$lifecycle_version",
+
+            navigationFragment: "androidx.navigation:navigation-fragment-ktx:$navigation_version",
+            navigationUI: "androidx.navigation:navigation-ui-ktx:$navigation_version",
+            navigationRuntime: "androidx.navigation:navigation-runtime-ktx:$navigation_version",
+
+            databinding: "com.android.databinding:compiler:$databinding_version",
+
+            coroutinesCore: "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version",
+            coroutinesAndroid: "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version",
+
+            roomRuntime: "androidx.room:room-runtime:$room_version",
+            roomKtx: "androidx.room:room-ktx:$room_version",
+            roomCompiler: "androidx.room:room-compiler:$room_version",
+            roomCommon: "androidx.room:room-common:$room_version",
+
+            dagger: "com.google.dagger:dagger-android:$dagger2_version",
+            daggerSupport: "com.google.dagger:dagger-android-support:$dagger2_version",
+            daggerCompiler: "com.google.dagger:dagger-compiler:$dagger2_version",
+            daggerProcessor: "com.google.dagger:dagger-android-processor:$dagger2_version",
+
+            retrofit: "com.squareup.retrofit2:retrofit:$retrofit2_version",
+            gson: "com.google.code.gson:gson:$gson_version",
+            converterGson: "com.squareup.retrofit2:converter-gson:$retrofit2_version",
+            okhttp3: "com.squareup.okhttp3:logging-interceptor:$okehttp3_version",
+
+            picasso: "com.squareup.picasso:picasso:$picasso_version",
+            coil: "io.coil-kt:coil:$coil_version",
+
+            //expandablerecyclerview
+            expandableRecyclerview: "com.thoughtbot:expandablerecyclerview:$expandable_version",
+
+            dataDebug: "com.amitshekhar.android:debug-db:$database_debug_version",
+
+            jUnit: "junit:junit:$junit_version",
+            jUnitExt: "androidx.test.ext:junit:$junit_ext_version",
+            espressoCore: "androidx.test.espresso:espresso-core:$espresso_core_version"
+    ]
+
+}

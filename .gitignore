@@ -1,0 +1,20 @@
+**/build/*
+**/.gradle/*
+**/.idea/*
+.gradle/*
+.idea/*
+# Generated files
+**/bin/
+**/gen/
+**/out/
+**/release/
+# IntelliJ
+*.iml
+app/app.iml
+local.properties
+
+**/*.dex
+**/*.apk
+**/.DS_Store
+.rar
+.DS_Store

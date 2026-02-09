@@ -1,0 +1,369 @@
+package com.hc.dat.utils
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.location.Location
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
+import android.os.Environment
+import android.renderscript.*
+import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
+import androidx.annotation.RequiresApi
+import com.hc.dat.service.model.UploadDeviceInfoRequest
+import com.lws.type.Logger
+import hc.manager.datapp.BuildConfig
+import hc.manager.datapp.utils.MathUtil
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileWriter
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.math.BigDecimal
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.*
+
+object Utils {
+
+    const val JAPAN_TIME_VIEW_FORMAT = "HH:mm"
+    const val RIDER_SESSION_DATE_FORMAT = "dd-MM-yyyy\nHH:mm:ss"
+    const val DATE_RECEIPT_NUMBER_FORMAT = "yyyyMMdd"
+    const val LOCAL_DATE_FORMAT = "dd-MM-yyyy"
+    const val LOCAL_TIME_FORMAT = "dd-MM-yyyy HH:mm"
+    const val LOCAL_DATE_LIST = "yyyy/MM/dd"
+    const val YEAR = "yyyy"
+    const val MONTH = "MM"
+    const val DAY = "dd"
+    const val IMAGE_CACHE_PATH = "/cache/"
+    const val DROP_HEIGHT_DEFAULT = 250
+
+    /**
+     * For cargo trucks of kilograms counter type = 1 and for trucks of liters counter type = 0
+     */
+    const val COUNTER_TYPE_KG = 1
+    const val COUNTER_TYPE_L = 0
+    var hcConfigFolder = File(Environment.getExternalStorageDirectory().toString() + "/HC_DAT_CONFIG")
+
+    /*
+    Calculates the estimated brightness of an Android Bitmap.
+    pixelSpacing tells how many pixels to skip each pixel. Higher values result in better performance, but a more rough estimate.
+    When pixelSpacing = 1, the method actually calculates the real average brightness, not an estimate.
+    This is what the calculateBrightness() shorthand is for.
+    Do not use values for pixelSpacing that are smaller than 1.
+    */
+    fun getBrightnessFromBitmap(input: Bitmap, pixelSpacing: Int = 1): Int {
+        var R = 0
+        var G = 0
+        var B = 0
+        val height = input.height
+        val width = input.width
+        var n = 0
+        val pixels = IntArray(width * height)
+        input.getPixels(pixels, 0, width, 0, 0, width, height)
+        var i = 0
+        while (i < pixels.size) {
+            val color = pixels[i]
+            R += Color.red(color)
+            G += Color.green(color)
+            B += Color.blue(color)
+            n++
+            i += pixelSpacing
+        }
+        return (R + B + G) / (n * 3)
+    }
+
+    fun nv21ToBitmap(context: Context, nv21: ByteArray, width: Int, height: Int): Bitmap? {
+        val rs = RenderScript.create(context)
+        val yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
+        val yuvType = Type.Builder(rs, Element.U8(rs)).setX(nv21.size)
+        val `in` = Allocation.createTyped(rs, yuvType.create(), Allocation.USAGE_SCRIPT)
+        val rgbaType = Type.Builder(rs, Element.RGBA_8888(rs)).setX(width).setY(height)
+        val out = Allocation.createTyped(rs, rgbaType.create(), Allocation.USAGE_SCRIPT)
+        `in`.copyFrom(nv21)
+        yuvToRgbIntrinsic.setInput(`in`)
+        yuvToRgbIntrinsic.forEach(out)
+        val bmpout = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        out.copyTo(bmpout)
+        return bmpout
+    }
+//    fun getBrightnessFromBitmap(input: Bitmap, pixelSpacing: Int = 1): Int {
+//        var R = 0
+//        var G = 0
+//        var B = 0
+//        val height = input.height
+//        val width = input.width
+//        var n = 0
+//        val pixels = IntArray(width * height)
+//        input.getPixels(pixels, 0, width, 0, 0, width, height)
+//        var i = 0
+//        while (i < pixels.size) {
+//            val color = pixels[i]
+//            R += Color.red(color)
+//            G += Color.green(color)
+//            B += Color.blue(color)
+//            n++
+//            i += pixelSpacing
+//        }
+//        return (R + B + G) / (n * 3)
+//    }
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
+@SuppressLint("MissingPermission")
+fun getDeviceInfo(context: Context): UploadDeviceInfoRequest {
+    var seri = ""
+    var imei1 = ""
+    var imei2 = ""
+    var simSerialNumber = ""
+    var versionAppDat = ""
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+        val dataConfig = readDataConfig()
+        if(dataConfig.size >= 3){
+            dataConfig[0].let {
+                seri = it
+            }
+            dataConfig[1].let {
+                imei1 = it
+            }
+            dataConfig[2].let {
+                imei2 = it
+            }
+        }
+        versionAppDat = BuildConfig.VERSION_NAME
+
+        return UploadDeviceInfoRequest(
+            seri = seri,
+            imei1 = imei1,
+            imei2 = imei2,
+            simReal = simSerialNumber,
+            versionAppDat = versionAppDat
+        )
+
+    }
+    else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Logger.i("getImeiDevice: ${Build.MODEL} | Build.getSerial(): ${Build.getSerial()}")
+        val telephonyManager =
+            context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork = connectivityManager.activeNetwork
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+        val isCellular =
+            networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true
+
+        if (isCellular) {
+            val subscriptionManager =
+                context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
+            val activeSubscriptionInfoList = subscriptionManager.activeSubscriptionInfoList
+
+            val defaultDataSubscriptionId = SubscriptionManager.getDefaultDataSubscriptionId()
+
+            for (subscriptionInfo in activeSubscriptionInfoList) {
+                val subscriptionId = subscriptionInfo.subscriptionId
+                val simSlotIndex = subscriptionInfo.simSlotIndex
+
+                if (subscriptionId == defaultDataSubscriptionId) {
+                    Logger.d("SIM in slot $simSlotIndex is using mobile data")
+                } else {
+                    Logger.d("SIM in slot1 ")
+                }
+            }
+        } else {
+            Logger.d(" No active cellular data connection")
+        }
+
+        seri = Build.getSerial()
+        try {
+            imei1 = telephonyManager.getImei(0)
+            imei2 = telephonyManager.getImei(1)
+        } catch (e: Exception) {
+            Logger.e("error: version android not supported!")
+        }
+        simSerialNumber = telephonyManager.simSerialNumber ?: "Không lắp SIM"
+        versionAppDat = BuildConfig.VERSION_NAME
+        return UploadDeviceInfoRequest(
+            seri = seri,
+            imei1 = imei1,
+            imei2 = imei2,
+            simReal = simSerialNumber,
+            versionAppDat = versionAppDat
+        )
+    } else throw RuntimeException("Version Android not supported!")
+}
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
+    @SuppressLint("MissingPermission")
+    fun getImeiDevice(context: Context): String {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Logger.i("getImeiDevice: ${Build.MODEL} | Build.getSerial(): ${Build.getSerial()}")
+            val telephonyManager =
+                context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            telephonyManager.deviceId
+            Logger.i("telephonyManager.deviceId: ${telephonyManager.deviceId}")
+            return if (Build.MODEL.contains("FP") && !"0123456789ABCDEF".equals(
+                    Build.getSerial(),
+                    ignoreCase = true
+                ) || telephonyManager.deviceId == null
+            ) {
+                Build.getSerial()
+            } else {
+                val telephonyManager =
+                    context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+                telephonyManager.deviceId
+            }
+        } else throw RuntimeException("Version Android not supported!")
+    }
+     fun saveDataConfigToExternalStorage(serialNumber: String, imei1: String, imei2: String) {
+         val textData = "$serialNumber\n$imei1\n$imei2"
+
+         if (!hcConfigFolder.exists()) {
+             hcConfigFolder.mkdirs()
+         }
+         val configFile = File(hcConfigFolder, "config.txt")
+         try {
+             val writer = FileWriter(configFile, false)
+             writer.write(textData)
+             writer.flush()
+             writer.close()
+         } catch (e: IOException) {
+             e.printStackTrace()
+         }
+    }
+    fun readDataConfig(): List<String> {
+        if (isExternalStorageReadable()) {
+
+            val file = File(hcConfigFolder, "config.txt")
+            try {
+                FileInputStream(file).use { input ->
+                    return input.bufferedReader().readLines()
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+        return emptyList()
+    }
+
+    private fun isExternalStorageWritable(): Boolean {
+        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
+    }
+    private fun isExternalStorageReadable(): Boolean {
+        val state = Environment.getExternalStorageState()
+        return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
+    }
+    fun getTextContentFromRes(file: File): String {
+        var string: String? = ""
+        val stringBuilder = StringBuilder()
+        val inputStream: InputStream = FileInputStream(file)
+        val reader = BufferedReader(InputStreamReader(inputStream))
+        while (true) {
+            try {
+                if (reader.readLine().also { string = it } == null) break
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+            stringBuilder.append(string).append("\n")
+        }
+        inputStream.close()
+        return stringBuilder.toString()
+    }
+
+    fun getDeliveryDate(type: String = JAPAN_TIME_VIEW_FORMAT): String {
+        val sdf = SimpleDateFormat(type, Locale.JAPANESE)
+        return sdf.format(Date())
+    }
+
+    fun getCurrentDateTime(): String {
+        val convertSdfNew = SimpleDateFormat(RIDER_SESSION_DATE_FORMAT, Locale.getDefault())
+        return convertSdfNew.format(Date())
+    }
+
+    fun convertDateToString(date: Date): String {
+        val convertSdfNew = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        return convertSdfNew.format(date)
+    }
+
+    fun convertTimeStampToDateTime(time: Long): String {
+        val convertSdfNew = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())
+        return convertSdfNew.format(Date(time * 1000))
+    }
+    fun convertTimeStampToTime(time: Long): String {
+        val convertSdfNew = SimpleDateFormat("HH.mm", Locale.getDefault())
+        return convertSdfNew.format(Date(time))
+    }
+    fun convertServerTimeToMilliSecond(time: String?): Long? {
+        return time?.let {
+            val convertSdfNew =
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSZ", Locale.getDefault())
+            convertSdfNew.parse(time)?.time
+        } ?: let { null }
+    }
+
+    fun convertServerTimeToDate(time: String?): Date? {
+        return time?.let {
+//            val convertSdfNew = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSZ", Locale.getDefault())
+            val convertSdfNew = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            convertSdfNew.parse(time)
+        } ?: let { null }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getNextDate(currentDate: Date): Date {
+        val nextDate = LocalDate.parse(convertDateToString(currentDate), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")).plusDays(1)
+        return Date.from(nextDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+    }
+
+    fun convertTimeStampToDateTime2(time: Long): String {
+        val convertSdfNew = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())
+        return convertSdfNew.format(Date(time))
+    }
+
+//    fun getTimeStamp(): Long =
+//        (Calendar.getInstance().timeInMillis / 1000L)
+
+    // Todo keep old logic + 25200
+    fun getTimeStamp(): Long =
+        (Calendar.getInstance().timeInMillis / 1000L) + 25200
+
+    fun getRealTimeStamp(): Long = Calendar.getInstance().timeInMillis
+
+    fun convertLocationSpeed(location: Location): Double {
+        var speed: Double = 0.0
+        speed = (location.speed * 18 / 5).toDouble()
+        speed = MathUtil.round(speed, 1, BigDecimal.ROUND_HALF_UP)
+        val parseSpeed: BigDecimal = BigDecimal(speed)
+        speed = parseSpeed.setScale(2, BigDecimal.ROUND_HALF_UP).toDouble()
+        return speed
+    }
+
+    fun formatToDateHistory(tittle: String): String {
+        val convertSdfNew = SimpleDateFormat(LOCAL_DATE_FORMAT, Locale.JAPANESE)
+        val day = convertSdfNew.parse(tittle)
+        val convertSdfOld = SimpleDateFormat(LOCAL_DATE_LIST, Locale.JAPANESE)
+        return convertSdfOld.format(day)
+    }
+
+    fun formatToTimeString(viewDate: String): String {
+        Logger.i("viewDate: $viewDate")
+        val convertSdfOld = SimpleDateFormat(LOCAL_TIME_FORMAT, Locale.JAPANESE)
+        val japanDate = convertSdfOld.parse(viewDate)
+        Logger.i("japanDate: $japanDate")
+        val convertSdfNew = SimpleDateFormat(JAPAN_TIME_VIEW_FORMAT, Locale.JAPANESE)
+        Logger.i("formatToLocalDate japanDate :$japanDate")
+        return convertSdfNew.format(japanDate)
+    }
+
+    fun formatToTime(viewDate: String): Date {
+        Logger.i("viewDate: $viewDate")
+        val convertSdfOld = SimpleDateFormat(JAPAN_TIME_VIEW_FORMAT, Locale.JAPANESE)
+        val time = convertSdfOld.parse(viewDate)
+        Logger.i("japanDate: $time")
+        return time
+    }
+}

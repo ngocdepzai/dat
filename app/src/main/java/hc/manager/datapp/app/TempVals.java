@@ -1,0 +1,16 @@
+package hc.manager.datapp.app;
+
+public class TempVals {
+
+    private static TempVals instance;
+    public byte[] tempInfo = new byte[512];
+    public byte[] tempFP = new byte[2048];
+    public int fpCount = 0;
+
+    public static TempVals getInstance() {
+        if (null == instance) {
+            instance = new TempVals();
+        }
+        return instance;
+    }
+}
