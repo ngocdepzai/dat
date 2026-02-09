@@ -1,0 +1,33 @@
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="text_margin">16dp</dimen>
+
+    <!--    Activity    -->
+    <dimen name="app_header">60dp</dimen>
+    <dimen name="header_button_width">80dp</dimen>
+    <dimen name="header_button_height">30dp</dimen>
+    <dimen name="header_margin">20dp</dimen>
+    <dimen name="header_title_text_size">24sp</dimen>
+    <dimen name="header_right_text_size">16sp</dimen>
+    <dimen name="bottom_margin">30dp</dimen>
+    <dimen name="bottom_button_width">100dp</dimen>
+    <dimen name="bottom_button_height">30dp</dimen>
+    <dimen name="bottom_header">60dp</dimen>
+
+    <dimen name="dialog_title_margin">20dp</dimen>
+    <dimen name="dialog_title_text">35sp</dimen>
+    <dimen name="dialog_message_margin">20dp</dimen>
+    <dimen name="dialog_message_margin_bottom">10dp</dimen>
+    <dimen name="dialog_message_text">25sp</dimen>
+    <dimen name="dialog_button_text">20sp</dimen>
+    <dimen name="dialog_button_margin">10dp</dimen>
+    <dimen name="dialog_button_margin_end">10dp</dimen>
+
+    <!--    Training Session Screen    -->
+    <dimen name="user_name_text">18dp</dimen>
+    <dimen name="user_other_info_text">15dp</dimen>
+
+</resources>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group
+        android:id="@+id/appFunction"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/menuCompare"
+            android:title="Đối soát phiên học"
+            android:contentDescription="Kiêm tra lại các phiên học"
+            android:icon="@drawable/menu_details"
+            android:checked="false"/>
+        <item
+            android:id="@+id/clearData"
+            android:checkable="false"
+            android:icon="@drawable/menu_users"
+            android:title="Xóa bộ nhớ"/>
+        <item
+            android:id="@+id/clearCacheData"
+            android:checkable="false"
+            android:icon="@drawable/menu_clean_cache"
+            android:title="Xóa bộ nhớ đệm"/>
+<!--        <item-->
+<!--            android:id="@+id/addFaceRecognition"-->
+<!--            android:checkable="false"-->
+<!--            android:icon="@drawable/menu_option"-->
+<!--            android:title="Cài đặt nhận dạng"/>-->
+
+        <item
+            android:id="@+id/registerFaceRecognize"
+            android:checkable="false"
+            android:icon="@drawable/menu_option"
+            android:title="Cài đặt nhận dạng"/>
+
+        <item
+            android:id="@+id/activeLicense"
+            android:checkable="false"
+            android:icon="@drawable/license_ic"
+            android:title="Kích hoạt chứng chỉ"
+            android:visible="false"/>
+
+        <item
+            android:id="@+id/setupNetwork"
+            android:checkable="false"
+            android:icon="@drawable/menu_network"
+            android:title="Cài đặt mạng"/>
+
+        <item
+            android:id="@+id/nfcManage"
+            android:checkable="false"
+            android:icon="@drawable/ic_nfc_card"
+            android:title="NFC"/>
+
+        <item
+            android:id="@+id/appInfo"
+            android:checkable="false"
+            android:icon="@drawable/menu_about"
+            android:title="Thông tin ứng dụng"/>
+        <item
+            android:id="@+id/appGuide"
+            android:checkable="false"
+            android:icon="@drawable/ic_guide"
+            android:title="Hướng dẫn"/>
+        <item
+            android:id="@+id/restartApp"
+            android:checkable="false"
+            android:icon="@drawable/restart_ic"
+            android:title="Khởi động lại ứng dụng"/>
+    </group>
+
+<!--    <item android:title="Cài đặt">-->
+<!--        <menu>-->
+<!--            <group-->
+<!--                android:id="@+id/configInfo"-->
+<!--                android:checkableBehavior="none">-->
+<!--                <item-->
+<!--                    android:id="@+id/terminalConfig"-->
+<!--                    android:icon="@drawable/ic_config_24"-->
+<!--                    android:title="@string/menu_terminal_config"/>-->
+
+<!--                <item-->
+<!--                    android:id="@+id/about"-->
+<!--                    android:icon="@drawable/ic_about_24"-->
+<!--                    android:title="@string/menu_about"/>-->
+<!--            </group>-->
+<!--        </menu>-->
+<!--    </item>-->
+</menu>

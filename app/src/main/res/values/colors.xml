@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#2F80ED</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+
+    <color name="navigation_bg">#ECEFF0</color>
+    <color name="app_bg">#FFFFFF</color>
+    <color name="navigation_text_button">#FFFFFF</color>
+    <color name="app_text">#4F4F4F</color>
+
+    <color name="gray">#BFBFBF</color>
+    <color name="transparent">#00000000</color>
+    <color name="green_dark">#37474F</color>
+    <color name="blue_bright">#2D9CDB</color>
+    <color name="blue_dark">#2F80ED</color>
+    <color name="gray_bright">#5F5F5F</color>
+    <color name="gray_dark">#4F4F4F</color>
+    <color name="black_bright">#37474F</color>
+    <color name="gray_light">#828282</color>
+    <color name="teal_bright">#79DBD2</color>
+    <color name="yellow">#F2C94C</color>
+    <color name="teal_light">#D9FFFB</color>
+    <color name="teal_dark">#4CB5AB</color>
+    <color name="red">#EF293A</color>
+    <color name="black">#000000</color>
+    <color name="dialog_bg">#FFFFFF</color>
+    <color name="dialog_text">#4F4F4F</color>
+    <color name="white_light">#ECEFF0</color>
+    <!--    <color name="color_input">#E2FBF4</color>-->
+    <color name="color_not_input">#E6E4E4</color>
+    <color name="image_empty_color">#FFFFFFFF</color>
+    <color name="color_register">#cfe2f3</color>
+    <color name="color_editor">#D4F8D6</color>
+
+<!--    <color name="colorPrimary">#0478D3</color>-->
+    <color name="main">#ccc</color>
+<!--    <color name="colorPrimaryDark">#0478D3</color>-->
+<!--    <color name="colorAccent">#00518F</color>-->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black_2">#D8242424</color>
+    <color name="black_3">#90000000</color>
+    <color name="black_4">#16000000</color>
+    <color name="black_5">#DADADA</color>
+<!--    <color name="black">#000000</color>-->
+    <color name="white">#FFFFFF</color>
+    <color name="seaShell">#fff5ee</color>
+    <color name="powderblue">#b0e0e6</color>
+    <color name="white_2">#C9FFFFFF</color>
+    <color name="white_3">#C9E9E9E9</color>
+    <color name="darkred">#8b0000</color>
+    <color name="darkgray">#a9a9a9</color>
+    <color name="grey">#808080</color>
+    <color name="green">#119E34</color>
+<!--    <color name="red">#8B0000</color>-->
+    <color name="red_2">#D13056</color>
+<!--    <color name="gray">#8F8F8F</color>-->
+    <color name="blue">#1C85FF</color>
+    <color name="purple">#802391</color>
+    <color name="blue_2">#4DFFC6</color>
+    <color name="orange">#DF7401</color>
+
+
+
+    <color name="color_1">#2B2B2B</color>
+    <color name="color_2">#11AD3B</color>
+    <color name="color_3">#CC1212</color>
+    <color name="color_4">#DF7401</color>
+    <color name="color_5">#0789E2</color>
+    <color name="color_6">#59C929</color>
+    <color name="color_7">#A521DA</color>
+</resources>

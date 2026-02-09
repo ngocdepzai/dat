@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/blue_2"
+    >
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#ff00"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:id="@+id/tvTitleLogout"
+        android:textSize="40sp"
+        android:text="Đăng xuất học viên?"
+        ></TextView>
+    <LinearLayout
+        android:layout_width="500dp"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/textlines"
+        android:layout_gravity="center"
+        android:layout_height="120dp">
+        <Button
+            android:layout_width="200dp"
+            android:text="HỦY BỎ"
+            android:background="@color/white"
+            android:layout_weight="1"
+            android:id="@+id/btCancelLogout"
+            android:textSize="25dp"
+            android:layout_margin="20dp"
+            android:layout_height="match_parent">
+        </Button>
+        <Button
+            android:layout_width="200dp"
+            android:text="ĐỒNG Ý"
+            android:id="@+id/btOkLogout"
+            android:layout_weight="1"
+            android:background="@color/orange"
+            android:textSize="25dp"
+            android:layout_margin="20dp"
+            android:layout_height="match_parent">
+        </Button>
+    </LinearLayout>
+</LinearLayout>

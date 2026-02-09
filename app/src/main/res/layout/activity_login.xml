@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background"
+    tools:context=".activity.LoginActivity">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B7000000"
+        android:gravity="center"
+        android:orientation="vertical">
+        <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+        android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:textColor="@color/white"
+                    android:textSize="30dp"
+                    android:textStyle="bold"
+                    android:gravity="center_vertical"
+                    android:layout_height="70dp"
+                    android:text="Phiên bản: 3.2"></TextView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_marginTop="10dp"
+                android:layout_height="70dp"
+                android:gravity="right">
+                <Button
+                    android:id="@+id/btLogOutStudent"
+                    android:layout_width="450dp"
+                    android:layout_height="70dp"
+                    android:layout_alignParentRight="true"
+                    android:text="Đăng xuất học viên"
+                    android:background="@color/green"
+                    android:textColor="@color/white"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="5dp"
+                    android:textSize="35sp"
+                    android:textStyle="bold" />
+                <Button
+                    android:id="@+id/btLogOutTeacher"
+                    android:layout_width="500dp"
+                    android:layout_height="70dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_alignParentRight="true"
+                    android:text="Đăng xuất giảng viên"
+                    android:background="@color/green"
+                    android:textColor="@color/white"
+                    android:layout_marginLeft="5dp"
+                    android:textSize="35sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+                <ImageView
+                    android:layout_width="400dp"
+                    android:layout_height="400dp"
+                    android:padding="10dp"
+                    android:src="@drawable/icon" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white_2"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="CHỌN HÌNH THỨC ĐĂNG NHẬP"
+                    android:textAlignment="center"
+                    android:textColor="@color/orange"
+                    android:textSize="50sp"
+                    android:textStyle="bold"
+                    android:gravity="center_horizontal"></TextView>
+<!--                <RadioGroup-->
+<!--                    android:id="@+id/rgUserType"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginStart="40dp"-->
+<!--                    android:layout_marginTop="12dp"-->
+<!--                    android:layout_marginEnd="40dp"-->
+<!--                    android:orientation="horizontal"-->
+<!--                    app:layout_constraintEnd_toEndOf="parent"-->
+<!--                    app:layout_constraintStart_toStartOf="parent"-->
+<!--                    app:layout_constraintTop_toBottomOf="@+id/textView2"-->
+<!--                    android:layout_width="match_parent">-->
+
+<!--                    <RadioButton-->
+<!--                        android:id="@+id/rbStudent"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_weight="1"-->
+<!--                        android:textStyle="bold"-->
+<!--                        android:textSize="18sp"-->
+<!--                        android:checked="true"-->
+
+<!--                        android:textColor="@color/orange"-->
+<!--                        android:text="@string/student" />-->
+
+<!--                    <RadioButton-->
+<!--                        android:id="@+id/rbTeacher"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_weight="1"-->
+<!--                        android:textStyle="bold"-->
+<!--                        android:textSize="18sp"-->
+<!--                        android:textColor="@color/orange"-->
+<!--                        android:text="@string/teacher" />-->
+<!--                </RadioGroup>-->
+                <Button
+                    android:id="@+id/btLogin_face"
+                    android:layout_width="match_parent"
+                    android:layout_height="70dp"
+                    android:layout_marginLeft="40dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginRight="40dp"
+                    android:background="@drawable/selector_button_login"
+                    android:text="@string/login_face"
+                    android:textColor="@color/white"
+                    android:textSize="35sp"
+                    android:textStyle="bold" />
+<!--                <Button-->
+<!--                    android:id="@+id/btLogin_finger"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="70dp"-->
+<!--                    android:layout_marginLeft="40dp"-->
+<!--                    android:layout_marginTop="20dp"-->
+<!--                    android:layout_marginRight="40dp"-->
+<!--                    android:background="@drawable/selector_button_login"-->
+<!--                    android:text="@string/login_finger"-->
+<!--                    android:textColor="@color/white"-->
+<!--                    android:textSize="35sp"-->
+<!--                    android:textStyle="bold" />-->
+                <Button
+                    android:id="@+id/btLogin_rfid"
+                    android:layout_width="match_parent"
+                    android:layout_height="70dp"
+                    android:layout_marginLeft="40dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginRight="40dp"
+                    android:background="@drawable/selector_button_login"
+                    android:text="@string/login_rfid"
+                    android:textColor="@color/white"
+                    android:textSize="35sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="15dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btCompare"
+                android:layout_width="250dp"
+                android:layout_height="70dp"
+                android:layout_alignParentRight="true"
+                android:text="Đối soát"
+                android:background="@color/green"
+                android:textColor="@color/white"
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="5dp"
+                android:textSize="35sp"
+                android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="40dp"
+                android:layout_marginRight="20dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/tvManager"
+                    android:layout_width="90dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/border_hotline"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:text="Quản lý"
+                    android:textStyle="bold"
+                    android:textColor="@color/blue"
+                    android:textSize="40dp" />
+            </LinearLayout>
+
+
+            <LinearLayout
+
+                android:layout_width="match_parent"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="40dp"
+                android:layout_marginRight="20dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvMain"
+                    android:layout_width="90dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/border_hotline"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:text="Màn hình chính"
+                    android:textStyle="bold"
+                    android:textColor="@color/orange"
+                    android:textSize="40dp" />
+            </LinearLayout>
+<!--            <TextView-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:gravity="center"-->
+<!--                android:paddingBottom="5dp"-->
+<!--                android:text="Bạn vui lòng liên hệ số hotline để được hỗ trợ sử dụng phần mềm"-->
+<!--                android:textColor="@color/white_3"-->
+<!--                android:textSize="11sp"-->
+<!--                android:textStyle="italic" />-->
+        </LinearLayout>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

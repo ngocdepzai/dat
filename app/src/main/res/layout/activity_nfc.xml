@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="THẺ RFID"
+            android:textColor="?attr/colorPrimary"
+            android:gravity="center"
+            android:textSize="35sp"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/edtContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="nhập nội dung cần ghi vào thẻ"
+            android:textSize="35sp"/>
+
+        <Button
+            android:id="@+id/btnNFCWrite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="35sp"
+            android:text="Ghi thẻ "
+            android:layout_marginTop="20dp"
+            android:paddingEnd="50dp"
+            android:paddingStart="50dp"/>
+
+        <Button
+            android:id="@+id/btnNFCRead"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="35sp"
+            android:text="Đọc thẻ"
+            android:paddingEnd="50dp"
+            android:paddingStart="50dp"/>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginMenuScreen"
+    tools:ignore="UnusedNavigation">
+<!--    app:startDestination="@id/loginMenuScreen"-->
+    <action
+        android:id="@+id/action_start_loginMenuScreen"
+        app:destination="@id/loginMenuScreen" />
+    <action
+        android:id="@+id/action_goto_registerFaceRecognizeScreen"
+        app:destination="@id/registerFaceRecognizeScreen" />
+    <action
+        android:id="@+id/action_loginMenuScreen_to_infoDeviceScreen"
+        app:destination="@id/infoDeviceScreen" />
+    <action
+        android:id="@+id/action_loginMenuScreen_to_sessionHistoryScreen"
+        app:destination="@id/sessionHistoryScreen" />
+    <action
+        android:id="@+id/action_loginMenuScreen_to_nfcScreen"
+        app:destination="@id/nfcScreen" />
+    <fragment
+        android:id="@+id/loginMenuScreen"
+        android:name="com.hc.dat.view.TeacherLoginScreen"
+        android:label="LoginMenuScreen" >
+        <action
+            android:id="@+id/action_loginMenuScreen_to_trainingSessionScreen"
+            app:destination="@id/trainingSessionScreen"
+            app:popUpTo="@id/loginMenuScreen" />
+        <action
+            android:id="@+id/action_loginMenuScreen_to_registerFaceRecognizeScreen"
+            app:destination="@id/registerFaceRecognizeScreen"
+            app:popUpTo="@id/loginMenuScreen" />
+    </fragment>
+    <fragment
+        android:id="@+id/trainingSessionScreen"
+        android:name="com.hc.dat.view.TrainingSessionScreen"
+        android:label="TrainingSessionScreen" >
+        <action
+            android:id="@+id/action_trainingSessionScreen_to_registerFaceRecognizeScreen"
+            app:destination="@id/registerFaceRecognizeScreen"
+            app:popUpTo="@id/trainingSessionScreen" />
+<!--        <action-->
+<!--            android:id="@+id/action_trainingSessionScreen_to_loginMenuScreen"-->
+<!--            app:destination="@id/loginMenuScreen" />-->
+    </fragment>
+    <fragment
+        android:id="@+id/infoDeviceScreen"
+        android:name="com.hc.dat.view.InfoDeviceScreen"
+        android:label="InfoDeviceScreen" />
+    <fragment
+        android:id="@+id/registerFaceRecognizeScreen"
+        android:name="com.hc.dat.view.RegisterFaceRecognizeScreen"
+        android:label="RegisterFaceRecognizeScreen" />
+    <fragment
+        android:id="@+id/sessionHistoryScreen"
+        android:name="com.hc.dat.view.SessionHistoryScreen"
+        android:label="SessionHistoryScreen" />
+    <fragment
+        android:id="@+id/nfcScreen"
+        android:name="com.hc.dat.view.NFCScreen"
+        android:label="NFCScreen" />
+</navigation>

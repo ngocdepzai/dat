@@ -1,0 +1,847 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    tools:context=".activity.DashbroadActivity2">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:id="@+id/llBackground"
+        tools:layout_editor_absoluteX="4dp"
+        tools:layout_editor_absoluteY="9dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:id="@+id/llHeader"
+            android:layout_margin="5dp"
+            android:background="@drawable/textlineswhile"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvTrainingCenterName"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:padding="5dp"
+                android:textColor="@color/white"
+                android:layout_marginTop="3dp"
+                android:textSize="16dp"
+                android:textStyle="bold" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                />
+            <RadioGroup
+                android:layout_width="wrap_content"
+                android:layout_marginRight="10px"
+                android:layout_marginTop="3dp"
+                android:background="@color/white"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                >
+                <RadioButton
+                    android:id="@+id/rgStyleBlack"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="30px"
+                    android:layout_weight="1"
+                    android:text="Ban ngày" />
+
+                <RadioButton
+                    android:id="@+id/rgStyleWhile"
+                    android:layout_width="wrap_content"
+                    android:layout_marginRight="30px"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Ban đêm" />
+            </RadioGroup>
+
+            <ImageView
+                android:layout_width="25dp"
+                android:layout_marginLeft="4dp"
+                android:id="@+id/ivGpsStatus"
+                android:layout_marginTop="8dp"
+                android:background="@color/white"
+                android:layout_height="25dp"></ImageView>
+            <ImageView
+                android:layout_width="30dp"
+                android:id="@+id/ivStorage"
+                android:layout_marginLeft="4dp"
+                android:layout_marginTop="8dp"
+                android:background="@color/white"
+                android:layout_height="25dp"></ImageView>
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_marginLeft="4dp"
+                android:id="@+id/ivWirelessStatus"
+                android:layout_marginTop="8dp"
+                android:background="@color/white"
+                android:layout_height="25dp"></ImageView>
+            <ImageView
+                android:layout_width="30dp"
+                android:src="@drawable/iconserver"
+                android:layout_marginLeft="4dp"
+                android:layout_marginTop="8dp"
+                android:id="@+id/ivServerStatus"
+                android:background="@color/white"
+                android:layout_height="25dp"></ImageView>
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginLeft="4dp"
+                android:src="@drawable/iconcamera"
+                android:background="@color/white"
+                android:layout_height="25dp"></ImageView>
+            <ImageView
+                android:layout_width="25dp"
+                android:layout_marginLeft="4dp"
+                android:id="@+id/ivWifiStatus"
+                android:layout_marginTop="8dp"
+                android:background="@color/white"
+                android:layout_height="25dp"></ImageView>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:layout_margin="5dp"
+            android:background="@drawable/textlineswhile"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvCourseCode"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingLeft="5dp"
+                android:text="Khóa học: "
+                android:layout_weight="1"
+                android:textColor="@color/white"
+                android:layout_marginTop="3dp"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvDriverLicense"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingLeft="5dp"
+                android:text="Hạng: "
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:layout_marginTop="3dp"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvVehiclePlate"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingLeft="5dp"
+                android:text="Biển số xe: "
+                android:gravity="center"
+                android:layout_weight="1"
+                android:textColor="@color/white"
+                android:layout_marginTop="3dp"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvSeriDevice"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingLeft="5dp"
+                android:text="Seri: "
+                android:gravity="end"
+                android:layout_weight="1"
+                android:textColor="@color/white"
+                android:layout_marginTop="3dp"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:id="@+id/llInfoUser"
+            android:visibility="visible"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:id="@+id/llstudentUnLogin"
+                android:orientation="vertical"
+                android:background="@drawable/textlineswhile">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="HỌC VIÊN CHƯA ĐĂNG NHẬP"
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@color/orange"
+                    android:textSize="32dp"
+                    android:textStyle="bold"></TextView>
+                <Button
+                    android:id="@+id/btLoginStudent"
+                    android:layout_width="350dp"
+                    android:layout_height="50dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_gravity="center"
+                    android:text="Đăng nhập học viên"
+                    android:background="@color/orange"
+                    android:textColor="@color/black"
+                    android:layout_marginLeft="5dp"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:id="@+id/llstudentLogin"
+                android:visibility="gone"
+                android:layout_weight="1"
+                android:background="@drawable/textlineswhile"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/ivAvatarStudent"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_margin="5dp"
+                    android:src="@drawable/textlines" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="2"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+                    <TextView
+                        android:id="@+id/tvFullname"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:textSize="22dp"
+                        android:textStyle="bold"></TextView>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/tvIdNo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/white"
+                            android:textSize="16dp"
+                            android:textStyle="bold"></TextView>
+
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvBirthDay"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/white"
+                            android:textSize="16dp"
+                            android:textStyle="bold"></TextView>
+
+                    </LinearLayout>
+                    <!--                    <LinearLayout-->
+                    <!--                        android:layout_width="match_parent"-->
+                    <!--                        android:layout_height="match_parent"-->
+                    <!--                        android:layout_weight="1"-->
+                    <!--                        android:orientation="horizontal">-->
+
+                    <!--                        <TextView-->
+                    <!--                            android:id="@+id/tvCourseCode"-->
+                    <!--                            android:layout_width="match_parent"-->
+                    <!--                            android:layout_height="wrap_content"-->
+                    <!--                            android:textColor="@color/white"-->
+                    <!--                            android:textSize="16dp"-->
+                    <!--                            android:text="A1"-->
+                    <!--                            android:textStyle="bold"></TextView>-->
+
+                    <!--                    </LinearLayout>-->
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+                    <Button
+                        android:id="@+id/btLogOutStudent"
+                        android:layout_width="match_parent"
+                        android:layout_height="55dp"
+                        android:layout_alignParentRight="true"
+                        android:text="Đăng xuất"
+                        android:background="@color/orange"
+                        android:textColor="@color/black"
+                        android:layout_marginLeft="5dp"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:id="@+id/llteacerUnLogin"
+                android:orientation="vertical"
+                android:background="@drawable/textlineswhile">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="GIẢNG VIÊN CHƯA ĐĂNG NHẬP"
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@color/orange"
+                    android:textSize="32dp"
+                    android:textStyle="bold"></TextView>
+                <Button
+                    android:id="@+id/btLoginTeacher"
+                    android:layout_width="350dp"
+                    android:layout_height="50dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_gravity="center"
+                    android:text="Đăng nhập giảng viên"
+                    android:background="@color/orange"
+                    android:textColor="@color/black"
+                    android:layout_marginLeft="5dp"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:id="@+id/llteacerLogin"
+                android:visibility="gone"
+                android:background="@drawable/textlineswhile">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    android:layout_height="match_parent">
+                    <ImageView
+                        android:id="@+id/ivTeacher"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:layout_margin="5dp"
+                        android:src="@drawable/textlines" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:orientation="vertical"
+                        android:padding="10dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/tvFullnameTeacher"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white"
+                                android:textSize="18dp"
+                                android:textStyle="bold"></TextView>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tvIdNoTeacher"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white"
+                                android:textStyle="bold"></TextView>
+
+                        </LinearLayout>
+
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tvBirthDayTeacher"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white"
+                                android:textStyle="bold"></TextView>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/black"
+                                android:textSize="16dp"
+                                android:textStyle="bold"></TextView>
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+                    <Button
+                        android:id="@+id/btLogOutTeacher"
+                        android:layout_width="match_parent"
+                        android:layout_height="55dp"
+                        android:layout_alignParentRight="true"
+                        android:text="Đăng xuất"
+                        android:background="@color/orange"
+                        android:textColor="@color/black"
+                        android:layout_marginLeft="5dp"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:id="@+id/llInfoUserHaveSpeed"
+            android:layout_margin="5dp"
+            android:visibility="gone"
+            android:background="@drawable/textlines"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:padding="5dp"
+                android:textColor="@color/black"
+                android:id="@+id/tvFullnameHaveSpeed"
+                android:layout_marginTop="3dp"
+                android:textSize="16dp"
+                android:textStyle="bold" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:padding="5dp"
+                android:textColor="@color/black"
+                android:layout_marginTop="3dp"
+                android:id="@+id/tvFullnameTeacherHaveSpeed"
+                android:textSize="16dp"
+                android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginRight="5dp"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:id="@+id/llInfoRunning"
+                android:background="@drawable/textlineswhile"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="Kết quả phiên"
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@color/white"
+                    android:textSize="30dp"
+                    android:textStyle="bold"></TextView>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:background="#FFDDDDDD"
+                    />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="2dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="2dp">
+                    <!--                    <TextView-->
+                    <!--                        android:id="@+id/tvDateNow"-->
+                    <!--                        android:layout_width="match_parent"-->
+                    <!--                        android:layout_height="wrap_content"-->
+                    <!--                        android:gravity="center"-->
+                    <!--                        android:paddingLeft="5dp"-->
+                    <!--                        android:text="16:28:22 30-7-2021"-->
+                    <!--                        android:textColor="@color/white"-->
+                    <!--                        android:textSize="30dp"-->
+                    <!--                        android:textStyle="bold" />-->
+                    <TextView
+                        android:layout_width="280dp"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="5dp"
+                        android:text=""
+                        android:id="@+id/tvDateNow"
+                        android:gravity="center"
+                        android:textStyle="bold"
+                        android:textColor="@color/white"
+                        android:textSize="35dp" />
+
+                    <!--                    <TextView-->
+                    <!--                        android:layout_width="match_parent"-->
+                    <!--                        android:layout_height="wrap_content"-->
+                    <!--                        android:gravity="right"-->
+                    <!--                        android:paddingLeft="10dp"-->
+                    <!--                        android:text="60 Km/giờ"-->
+                    <!--                        android:textColor="@color/white"-->
+                    <!--                        android:textSize="20dp"-->
+                    <!--                        android:id="@+id/tvSpeedMain"-->
+                    <!--                        android:textStyle="bold" />-->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:layout_gravity="center"
+                        android:orientation="horizontal">
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:gravity="center"
+                            android:layout_gravity="center"
+                            android:layout_height="250dp">
+
+                            <ProgressBar
+                                android:id="@+id/progress_bar"
+                                style="@style/CircularDeterminateProgessBar"
+                                android:layout_width="250dp"
+                                android:layout_height="250dp"
+                                android:indeterminateOnly="false"
+                                android:max="300"
+                                android:min="0"
+                                android:progressDrawable="@drawable/circle"
+                                tools:progress="0" />
+
+                            <TextView
+                                android:id="@+id/tvSpeedMain"
+                                android:layout_width="250dp"
+                                android:layout_height="250dp"
+                                android:gravity="center"
+                                android:text="00"
+                                android:textColor="@color/green"
+                                android:textSize="60dp"
+                                android:textStyle="bold">
+
+                            </TextView>
+                        </RelativeLayout>
+                    </LinearLayout>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="2dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="2dp"
+                    >
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="2dp"
+                        android:background="#FFDDDDDD"
+                        />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="00 GIỜ"
+                            android:layout_weight="1"
+                            android:textColor="@color/white"
+                            android:textSize="35dp"
+                            android:id="@+id/tvTotalTime"
+                            android:textStyle="bold"></TextView>
+                        <TextView
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="2dp"
+                            android:background="#FFDDDDDD"
+                            />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="00 KM"
+                            android:layout_weight="1"
+                            android:textColor="@color/white"
+                            android:textSize="35dp"
+                            android:id="@+id/tvTotalDistance"
+                            android:textStyle="bold"></TextView>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginRight="5dp"
+                android:layout_marginLeft="5dp"
+                android:id="@+id/llAuthPicture"
+                android:layout_weight="1"
+                android:background="@drawable/textlineswhile"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:orientation="vertical"
+                        android:padding="10dp">
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/lvAuthPicture"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"></androidx.recyclerview.widget.RecyclerView>
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="280dp"
+                        android:layout_height="280dp"
+                        android:layout_margin="5dp"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="30dp"
+                            android:gravity="center"
+                            android:text="Xác thực"
+                            android:textColor="@color/orange"
+                            android:textSize="20dp"
+                            android:textStyle="bold"></TextView>
+
+                        <FrameLayout
+                            android:id="@+id/frame"
+                            android:layout_marginTop="5dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#ff000000"
+                            android:visibility="visible"
+                            android:gravity="center">
+
+
+                            <com.serenegiant.widget.AspectRatioSurfaceView
+                                android:id="@+id/svCameraViewMain"
+                                android:layout_width="match_parent"
+                                android:layout_height="250dp"
+                                android:layout_gravity="center" />
+
+                            <hc.manager.datapp.camera.FaceView
+                                android:id="@+id/fcview"
+                                android:layout_width="wrap_content"
+                                android:layout_height="250dp" />
+
+                        </FrameLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:padding="10dp"
+                android:id="@+id/llInfoDone"
+                android:gravity="center"
+                android:background="@drawable/textlineswhile"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="Đã hoàn thành"
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@color/green"
+                    android:textSize="30dp"
+                    android:textStyle="bold"></TextView>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:background="#FFDDDDDD"
+                    />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="00 GIỜ"
+                        android:layout_weight="1"
+                        android:textColor="@color/green"
+                        android:textSize="35dp"
+                        android:id="@+id/tvTotalTimeComplete"
+                        android:textStyle="bold"></TextView>
+                    <TextView
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="2dp"
+                        android:background="#FFDDDDDD"
+                        />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="00 KM"
+                        android:layout_weight="1"
+                        android:textColor="@color/green"
+                        android:textSize="35dp"
+                        android:id="@+id/tvTotalDistanceComplete"
+                        android:textStyle="bold"></TextView>
+                </LinearLayout>
+
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:padding="10dp"
+                android:id="@+id/llInfoMissing"
+                android:gravity="center"
+                android:background="@drawable/textlineswhile"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="Còn phải hoàn thành"
+                    android:textColor="@color/green"
+                    android:layout_marginBottom="10dp"
+                    android:textSize="30dp"
+                    android:textStyle="bold"></TextView>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:background="#FFDDDDDD"
+                    />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="200 GIỜ"
+                        android:id="@+id/tvTotalTimeMissing"
+                        android:textColor="@color/red"
+                        android:layout_weight="1"
+                        android:textSize="35dp"
+                        android:textStyle="bold"></TextView>
+                    <TextView
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="2dp"
+                        android:background="#FFDDDDDD"
+                        />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="200 KM"
+                        android:layout_weight="1"
+                        android:textColor="@color/red"
+                        android:id="@+id/tvTotalDistanceMissing"
+                        android:textSize="35dp"
+                        android:textStyle="bold"></TextView>
+                </LinearLayout>
+
+            </LinearLayout>
+            <!--            <LinearLayout-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="match_parent"-->
+            <!--                android:layout_margin="5dp"-->
+            <!--                android:padding="10dp"-->
+            <!--                android:gravity="center"-->
+            <!--                android:layout_weight="1"-->
+            <!--                android:background="@drawable/textlines">-->
+            <!--                -->
+            <!--            </LinearLayout>-->
+        </LinearLayout>
+
+        <!--        <TextView-->
+        <!--            android:id="@+id/textView2"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_margin="5dp"-->
+        <!--            android:background="@drawable/textlines"-->
+        <!--            android:padding="5dp"-->
+        <!--            android:text="HC DAT - Công ty cổ phần HC Group"-->
+        <!--            android:textColor="@color/white"-->
+        <!--            android:textSize="14dp"-->
+        <!--            android:textStyle="bold" />-->
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

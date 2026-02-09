@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/lnItemAuthPicture"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="1dp"
+    android:layout_marginRight="5dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="2dp"
+    app:cardElevation="5dp"
+    android:background="@drawable/border_text"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
+
+            <TextView
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:paddingRight="5dp"
+                android:id="@+id/tvNo"
+                android:text="STT"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textColor="@color/orange"
+                android:textSize="20sp" />
+            <TextView
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvStudentName"
+                android:paddingRight="5dp"
+                android:textStyle="bold"
+                android:text="Tên học viên"
+                android:paddingLeft="5dp"
+                android:textColor="@color/orange"
+                android:textSize="20sp" />
+            <TextView
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvLoginDate"
+                android:paddingRight="5dp"
+                android:text="Đăng nhập"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:paddingLeft="5dp"
+                android:textColor="@color/orange"
+                android:textSize="20sp" />
+            <TextView
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvLogoutDate"
+                android:paddingRight="5dp"
+                android:text="Đăng xuất"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:paddingLeft="5dp"
+                android:textColor="@color/orange"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvTotalTime"
+                android:paddingRight="5dp"
+                android:text="Thời gian"
+                android:textStyle="bold"
+                android:paddingLeft="5dp"
+                android:gravity="center"
+                android:textColor="@color/orange"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvTotalDis"
+                android:paddingRight="5dp"
+                android:text="Quãng đường"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:paddingLeft="5dp"
+                android:textColor="@color/orange"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvStatus"
+                android:paddingRight="5dp"
+                android:gravity="center"
+                android:text="Trạng thái"
+                android:textStyle="bold"
+                android:paddingLeft="5dp"
+                android:textColor="@color/orange"
+                android:textSize="20sp" />
+            <TextView
+                android:layout_width="450dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvId"
+                android:paddingRight="5dp"
+                android:textStyle="bold"
+                android:text="Mã phiên"
+                android:paddingLeft="5dp"
+                android:textColor="@color/orange"
+                android:textSize="20sp" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btnExportSessionReport"
+                android:paddingRight="5dp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:text="Tạo báo cáo"
+                android:paddingLeft="5dp"
+                android:background="@color/orange"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btnUploadLog"
+                android:paddingRight="5dp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:text="Gửi Log"
+                android:paddingLeft="5dp"
+                android:background="@color/orange"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btnCheckDataMissing"
+                android:paddingHorizontal="5dp"
+                android:layout_marginHorizontal="5dp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:text="Gửi lại dữ liệu"
+                android:background="@color/orange"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

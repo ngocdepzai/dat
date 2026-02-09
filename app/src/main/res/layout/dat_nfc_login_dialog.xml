@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+        <import type="android.view.View"/>
+        <variable
+            name="extraCamera"
+            type="Boolean" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:padding="20dp"
+        android:background="#B7000000"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
+
+            <RelativeLayout
+                android:id="@+id/rlCameraPreview"
+                android:layout_width="400dp"
+                android:layout_height="500dp">
+
+                <FrameLayout
+                    android:id="@+id/flCameraView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#ff000000"
+                    android:gravity="center"
+                    android:visibility="visible">
+
+                    <com.lws.device.camerapreview.sample.InternalCameraPreview
+                        android:id="@+id/previewCamera"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="@{(extraCamera == true) ? View.GONE : View.VISIBLE}"
+                        android:layout_gravity="center" />
+
+                    <com.serenegiant.widget.AspectRatioSurfaceView
+                        android:id="@+id/surfaceView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:visibility="@{(extraCamera == true) ? View.VISIBLE : View.GONE}" />
+
+                    <hc.manager.datapp.camera.FaceView
+                        android:id="@+id/faceView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/orange"
+                    android:textSize="17sp"
+                    android:layout_centerHorizontal="true"
+                    android:text="HỌC VIÊN NHÌN VÀO CAMERA KHI ĐĂNG NHẬP"
+                    android:layout_marginTop="10dp"
+                    android:textAlignment="center"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:layout_gravity="center"
+                android:layout_marginLeft="10dp"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/orange"
+                    android:textSize="25sp"
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/tvTitleFinger"
+                    android:gravity="center_horizontal"
+                    android:text="Quyẹt thẻ vào khu vực\nđọc NFC bên thân máy"
+                    android:textAlignment="center"
+                    android:textStyle="bold" />
+                <ImageView
+                    android:layout_width="250dp"
+                    android:layout_height="250dp"
+                    android:src="@drawable/ic_tap_card"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+
+</layout>

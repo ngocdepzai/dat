@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/blue_2"
+    >
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#ff00"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:id="@+id/tvTitleNotification"
+        android:textSize="45sp"
+        android:text="Đăng xuất học viên?"
+        ></TextView>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/textlines"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_height="120dp">
+        <Button
+            android:layout_width="250dp"
+            android:text="ĐỒNG Ý"
+            android:background="@color/white"
+            android:id="@+id/btCancelNotification"
+            android:textSize="25dp"
+            android:layout_margin="20dp"
+            android:layout_height="match_parent">
+        </Button>
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,1205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <import type="android.view.View"/>
+        <variable
+            name="teacherInfo"
+            type="com.hc.dat.model.database.entity.UserEntity" />
+        <variable
+            name="studentInfo"
+            type="com.hc.dat.model.database.entity.UserEntity" />
+        <variable
+            name="nightMode"
+            type="Boolean" />
+        <variable
+            name="extraCamera"
+            type="Boolean" />
+        <variable
+            name="lastImageAuthen"
+            type="String" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@{(nightMode == true) ? @color/white : @color/black}"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:id="@+id/llBackground"
+        tools:layout_editor_absoluteX="4dp"
+        tools:layout_editor_absoluteY="9dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:id="@+id/navigationBt"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="45dp"
+                    android:src="@drawable/navigation_bt"
+                    android:scaleType="fitXY"
+                    app:tint="@color/orange" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="5dp"
+                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                    android:layout_marginStart="3dp"
+                    android:text="MENU"
+                    android:textSize="26dp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/llHeader"
+                android:layout_margin="5dp"
+                android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvTrainingCenterName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:padding="5dp"
+                    android:text="ỨNG DỤNG ĐÀO TẠO LÁI XE HC-HITECK"
+                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                    android:layout_marginTop="3dp"
+                    android:textSize="16dp"
+                    android:textStyle="bold" />
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <RadioGroup
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/rgDayMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="30dp"
+                        android:layout_weight="1"
+                        android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                        android:buttonTint="@{(nightMode == true) ? @color/black : @color/white}"
+                        android:checked="true"
+                        android:text="Ban ngày" />
+
+                    <RadioButton
+                        android:id="@+id/rgNightMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="30dp"
+                        android:layout_weight="1"
+                        android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                        android:buttonTint="@{(nightMode == true) ? @color/black : @color/white}"
+                        android:checked="false"
+                        android:text="Ban đêm" />
+                </RadioGroup>
+
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_marginStart="4dp"
+                    android:id="@+id/ivGpsStatus"
+                    android:layout_marginTop="8dp"
+                    android:src="@drawable/icongps"
+                    android:background="@color/white"
+                    android:layout_height="25dp"/>
+                <ImageView
+                    android:layout_width="30dp"
+                    android:id="@+id/ivStorage"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="8dp"
+                    android:src="@drawable/iconstorage"
+                    android:background="@color/white"
+                    android:layout_height="25dp"/>
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_marginStart="4dp"
+                    android:id="@+id/ivWirelessStatus"
+                    android:layout_marginTop="8dp"
+                    android:src="@drawable/iconwireless"
+                    android:background="@color/white"
+                    android:layout_height="25dp"/>
+                <ImageView
+                    android:layout_width="30dp"
+                    android:src="@drawable/iconserver"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="8dp"
+                    android:id="@+id/ivServerStatus"
+                    android:background="@color/white"
+                    android:layout_height="25dp"/>
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginStart="4dp"
+                    android:src="@drawable/iconcamera"
+                    android:background="@color/white"
+                    android:layout_height="25dp"/>
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_marginStart="4dp"
+                    android:id="@+id/ivWifiStatus"
+                    android:layout_marginTop="8dp"
+                    android:src="@drawable/menu_network"
+                    android:background="@color/white"
+                    android:layout_height="25dp"/>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:layout_margin="5dp"
+            android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvSerialNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingLeft="5dp"
+                android:text="Seri: -/-"
+                android:gravity="start"
+                android:layout_weight="1"
+                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                android:layout_marginTop="3dp"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvVehiclePlate"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingLeft="5dp"
+                android:text="Biển số xe: -/-"
+                android:gravity="start"
+                android:layout_weight="1"
+                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                android:layout_marginTop="3dp"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvCourseCode"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingLeft="5dp"
+                android:text="Khóa học: -/-"
+                android:layout_weight="1"
+                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                android:layout_marginTop="3dp"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvDriverLicense"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingLeft="5dp"
+                android:text="Hạng: -/-"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                android:layout_marginTop="3dp"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:id="@+id/llInfoUser"
+            android:visibility="visible"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:id="@+id/llteacerLogin"
+                android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                    <ImageView
+                        android:id="@+id/ivTeacherAvatar"
+                        android:layout_width="140dp"
+                        android:layout_height="match_parent"
+                        android:layout_margin="10dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_loading" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:orientation="vertical"
+                        android:padding="10dp">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="start"
+                            android:text="Thông tin giảng viên"
+                            android:textColor="@color/orange"
+                            android:textSize="18dp"
+                            android:textStyle="bold"/>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/tvFullnameTeacher"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="@dimen/user_name_text"
+                                android:text="@{teacherInfo.fullName ?? `-/-`}"
+                                android:textStyle="bold"/>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tvIdNoTeacher"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="@dimen/user_other_info_text"
+                                android:text="@{teacherInfo.userCode ?? `-/-`}"
+                                android:textStyle="bold"/>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tvBirthDayTeacher"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="@dimen/user_other_info_text"
+                                android:text="@{teacherInfo.birthday ?? `-/-`}"
+                                android:textStyle="bold"/>
+
+                        </LinearLayout>
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="3"
+                        android:orientation="vertical"
+                        android:padding="10dp">
+
+                        <Button
+                            android:id="@+id/btLogOutTeacher"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="5dp"
+                            android:background="@color/orange"
+                            android:enabled="@{(studentInfo != null) ? false : true}"
+                            android:text="@string/teacher_logout_bt"
+                            android:textAlignment="center"
+                            android:textColor="@color/black"
+                            android:textSize="22sp"
+                            android:textStyle="bold"
+                            tools:ignore="TouchTargetSizeCheck,TouchTargetSizeCheck" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:id="@+id/llstudentUnLogin"
+                android:visibility="@{(studentInfo != null) ? View.GONE : View.VISIBLE}"
+                android:orientation="vertical"
+                android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="ĐĂNG NHẬP HỌC VIÊN"
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@color/orange"
+                    android:textSize="32dp"
+                    android:textStyle="bold"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:weightSum="2"
+                    android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/btLoginFace"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:text="@string/login_face"
+                        android:background="@color/orange"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginEnd="5dp"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                    <Button
+                        android:id="@+id/btLoginRfid"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:text="@string/login_rfid"
+                        android:background="@color/orange"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginEnd="5dp"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:id="@+id/llstudentLogin"
+                android:visibility="@{(studentInfo != null) ? View.VISIBLE : View.GONE}"
+                android:layout_weight="1"
+                android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/ivAvatarStudent"
+                    android:layout_width="140dp"
+                    android:layout_height="match_parent"
+                    android:layout_margin="10dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_loading" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="2"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="start"
+                        android:text="Thông tin học viên"
+                        android:textColor="@color/orange"
+                        android:textSize="18dp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/tvStudentName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                        android:textSize="@dimen/user_name_text"
+                        android:text="@{studentInfo.fullName ?? `-/-`}"
+                        android:textStyle="bold"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/tvIdNo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                            android:textSize="@dimen/user_other_info_text"
+                            android:text="@{studentInfo.userCode ?? `-/-`}"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvBirthDay"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                            android:textSize="@dimen/user_other_info_text"
+                            android:text="@{studentInfo.birthday ?? `-/-`}"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <Button
+                        android:id="@+id/btFinishRiderSession"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginStart="5dp"
+                        android:background="@color/orange"
+                        android:text="Đăng xuất"
+                        android:textColor="@color/black"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        tools:ignore="TouchTargetSizeCheck,TouchTargetSizeCheck" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:id="@+id/llInfoUserHaveSpeed"
+            android:layout_margin="5dp"
+            android:visibility="gone"
+            android:background="@drawable/textlines"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:padding="5dp"
+                android:textColor="@color/black"
+                android:id="@+id/tvFullnameHaveSpeed"
+                android:layout_marginTop="3dp"
+                android:textSize="16dp"
+                android:textStyle="bold" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:padding="5dp"
+                android:textColor="@color/black"
+                android:layout_marginTop="3dp"
+                android:id="@+id/tvFullnameTeacherHaveSpeed"
+                android:textSize="16dp"
+                android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="5dp"
+                android:layout_marginStart="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:id="@+id/llInfoRunning"
+                android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="Tiến trình phiên học"
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                    android:textSize="30dp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:background="#FFDDDDDD"
+                    />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="2dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="2dp">
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:id="@+id/tvDateNow"
+                            android:layout_width="280dp"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:gravity="center"
+                            android:paddingRight="5dp"
+                            android:text="--/--/----\n--:--:--"
+                            android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                            android:textSize="35dp"
+                            android:textStyle="bold" />
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentBottom="true"
+                            android:layout_marginStart="5dp"
+                            android:orientation="horizontal">
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/location_ic"
+                                android:layout_gravity="center"
+                                android:tint="@{(nightMode == true) ? @color/black : @color/white}"
+                                tools:ignore="UseAppTint" />
+                            <TextView
+                                android:id="@+id/tvLastLocation"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="-/-, -/-"
+                                android:textStyle="italic"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="15sp" />
+                        </LinearLayout>
+                    </RelativeLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:layout_gravity="center"
+                        android:orientation="horizontal">
+                        <RelativeLayout
+                            android:id="@+id/rlCurrentSpeed"
+                            android:layout_width="250dp"
+                            android:layout_height="250dp"
+                            android:gravity="center"
+                            android:layout_gravity="center">
+
+                            <ProgressBar
+                                android:id="@+id/progressBarSpeed"
+                                style="@style/CircularDeterminateProgessBar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:indeterminateOnly="false"
+                                android:max="300"
+                                android:min="0"
+                                android:rotation="-90"
+                                android:progressDrawable="@drawable/circle"
+                                tools:progress="0" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_centerInParent="true"
+                                android:orientation="vertical">
+                                <TextView
+                                    android:id="@+id/tvCurrentSpeed"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:text="-/-"
+                                    android:textColor="@color/green"
+                                    android:textSize="60sp"
+                                    android:textStyle="bold"/>
+                                <View
+                                    android:layout_width="100dp"
+                                    android:layout_height="1dp"
+                                    android:gravity="center"
+                                    android:background="@{(nightMode == true) ? @color/gray : @color/white}"/>
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:text="Km/h"
+                                    android:textColor="@{(nightMode == true) ? @color/gray : @color/white}"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                        </RelativeLayout>
+                    </LinearLayout>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:paddingLeft="15dp"
+                    android:paddingTop="2dp"
+                    android:paddingRight="15dp"
+                    android:paddingBottom="2dp"
+                    >
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="2dp"
+                        android:background="#FFDDDDDD"
+                        />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/tvTotalTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="-/- GIỜ"
+                            android:layout_weight="1"
+                            android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                            android:textSize="35dp"
+                            android:textStyle="bold"/>
+                        <TextView
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="2dp"
+                            android:background="#FFDDDDDD"
+                            />
+                        <TextView
+                            android:id="@+id/tvTotalDistance"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="-/- KM"
+                            android:layout_weight="1"
+                            android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                            android:textSize="35dp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginStart="5dp"
+                    android:id="@+id/llAuthPicture"
+                    android:visibility="@{(studentInfo != null) ? View.VISIBLE : View.GONE}"
+                    android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:weightSum="5"
+                        android:orientation="horizontal">
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="2"
+                            android:orientation="vertical"
+                            android:padding="10dp">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="30dp"
+                                android:layout_marginBottom="10dp"
+                                android:gravity="center"
+                                android:text="@string/face_verify_result_title"
+                                android:textColor="@color/orange"
+                                android:textSize="20sp"
+                                android:textStyle="bold"/>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:text="@string/verify_success_title"
+                                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                    android:textSize="20sp"
+                                    android:maxLines="1"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:id="@+id/tvSuccessCounter"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:layout_marginStart="5dp"
+                                    android:text="-/-"
+                                    android:textColor="@color/green"
+                                    android:textSize="25sp"
+                                    android:textStyle="bold"/>
+                            </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:text="@string/verify_fail_title"
+                                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                    android:textSize="20sp"
+                                    android:maxLines="1"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:id="@+id/tvFailCounter"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:layout_marginStart="5dp"
+                                    android:text="-/-"
+                                    android:textColor="@color/red"
+                                    android:textSize="25sp"
+                                    android:textStyle="bold"/>
+                            </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:text="@string/verify_last_time_title"
+                                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                    android:textSize="20sp"
+                                    android:maxLines="1"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:id="@+id/tvLastCheck"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:layout_marginStart="5dp"
+                                    android:text="-/-"
+                                    android:textColor="@color/green"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"/>
+                            </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:orientation="vertical">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:text="@string/verify_success_percentage_title"
+                                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                    android:textSize="20sp"
+                                    android:maxLines="1"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:id="@+id/tvVerifySuccessPercentage"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:text="-/-%"
+                                    android:textColor="@color/green"
+                                    android:textSize="35sp"
+                                    android:textStyle="bold"/>
+                            </LinearLayout>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="start"
+                                android:text="@string/upload_result_title"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="20sp"
+                                android:maxLines="1"
+                                android:textStyle="bold"/>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:text="@string/image_title"
+                                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                    android:textSize="20sp"
+                                    android:maxLines="1"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:id="@+id/tvUploadResultImage"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:layout_marginStart="5dp"
+                                    android:text="-/-"
+                                    android:textColor="@color/green"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"/>
+                            </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:text="@string/gps_title"
+                                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                    android:textSize="20sp"
+                                    android:maxLines="1"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:id="@+id/tvUploadResultGPS"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:layout_marginStart="5dp"
+                                    android:text="-/-"
+                                    android:textColor="@color/green"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"/>
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:text="@string/gps_satellite_title"
+                                    android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                    android:textSize="20sp"
+                                    android:maxLines="1"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:id="@+id/tvQuantityGPSSatellite"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="start"
+                                    android:layout_marginStart="5dp"
+                                    android:text="-/-"
+                                    android:textColor="@color/green"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="3"
+                            android:layout_margin="5dp"
+                            android:orientation="vertical">
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="30dp"
+                                android:gravity="center"
+                                android:text="Ghi hình học viên"
+                                android:textColor="@color/orange"
+                                android:textSize="20dp"
+                                android:textStyle="bold"/>
+
+                            <FrameLayout
+                                android:id="@+id/frame"
+                                android:layout_marginTop="5dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="#ff000000"
+                                android:visibility="visible"
+                                android:gravity="center">
+
+                                <com.lws.device.camerapreview.sample.InternalCameraPreview
+                                    android:id="@+id/previewCamera"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:visibility="@{(extraCamera == true) ? View.GONE : View.VISIBLE}"
+                                    android:layout_gravity="center" />
+
+                                <com.serenegiant.widget.AspectRatioSurfaceView
+                                    android:id="@+id/surfaceView"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:visibility="@{(extraCamera == true) ? View.VISIBLE : View.GONE}"
+                                    android:layout_gravity="center" />
+
+                                <hc.manager.datapp.camera.FaceView
+                                    android:id="@+id/faceView"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent" />
+                            </FrameLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </LinearLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="@{(studentInfo != null) ? View.GONE : View.VISIBLE}"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon" />
+                <RelativeLayout
+                    android:id="@+id/vLastImageAuthen"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
+                    android:alpha="1"
+                    android:visibility="invisible"
+                    android:padding="3dp"
+                    android:background="@color/white">
+                    <ImageView
+                        android:id="@+id/ivLastImageAuthen"
+                        android:layout_width="100dp"
+                        android:layout_height="80dp"
+                        android:scaleType="fitXY" />
+                </RelativeLayout>
+            </RelativeLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:padding="10dp"
+                android:id="@+id/llInfoDone"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="Hoàn\nthành"
+                    android:textColor="@color/green"
+                    android:textSize="25sp"
+                    android:textStyle="bold"/>
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="#FFDDDDDD" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:weightSum="4"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="2"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="-/- GIỜ"
+                            android:layout_weight="1"
+                            android:textColor="@color/green"
+                            android:textSize="25sp"
+                            android:id="@+id/tvTotalTimeComplete"
+                            android:textStyle="bold"/>
+                        <TextView
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="2dp"
+                            android:background="#FFDDDDDD"
+                            />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="-/- KM"
+                            android:layout_weight="1"
+                            android:textColor="@color/green"
+                            android:textSize="25sp"
+                            android:id="@+id/tvTotalDistanceComplete"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="2dp"
+                        android:background="#FFDDDDDD" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:layout_gravity="center"
+                        android:weightSum="2"
+                        android:orientation="horizontal">
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:layout_weight="1">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:text="Giờ đêm:"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="20sp"
+                                android:textStyle="bold"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="10dp"
+                                android:text="-/- GIỜ"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="20sp"
+                                android:id="@+id/tvTotalNightTime"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+                        <TextView
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="2dp"
+                            android:background="#FFDDDDDD" />
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:layout_weight="1">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:text="Giờ AT:"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="20sp"
+                                android:textStyle="bold"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="10dp"
+                                android:text="-/- GIỜ"
+                                android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                                android:textSize="20sp"
+                                android:id="@+id/tvTotalAutoTime"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="10dp"
+                        android:background="#FFDDDDDD" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:text="TGLX trong ngày: "
+                            android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvTotalTimeInDay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="10dp"
+                            android:text="-/- GIỜ"
+                            android:textColor="@{(nightMode == true) ? @color/black : @color/white}"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:padding="10dp"
+                android:id="@+id/llInfoMissing"
+                android:gravity="center"
+                android:background="@{(nightMode == true) ? @drawable/textlines : @drawable/textlineswhile}"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="Còn phải hoàn thành"
+                    android:textColor="@color/green"
+                    android:layout_marginBottom="10dp"
+                    android:textSize="30dp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:background="#FFDDDDDD"
+                    />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="-/- GIỜ"
+                        android:id="@+id/tvTotalTimeRemaining"
+                        android:textColor="@color/red"
+                        android:layout_weight="1"
+                        android:textSize="30dp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="2dp"
+                        android:background="#FFDDDDDD" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="-/- KM"
+                        android:layout_weight="1"
+                        android:textColor="@color/red"
+                        android:id="@+id/tvTotalDistanceRemaining"
+                        android:textSize="30dp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</layout>
