@@ -1,0 +1,59 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    def dependDefinition = rootProject.extensions.getByName("ext")
+
+    compileSdkVersion dependDefinition["androidCompileSdkVersion"]
+    buildToolsVersion dependDefinition["androidBuildToolVersion"]
+
+    defaultConfig {
+        minSdkVersion dependDefinition["androidMinSdkVersion"]
+        targetSdkVersion dependDefinition["androidTargetSdkVersion"]
+        versionCode dependDefinition["serviceVersionCode"]
+        versionName dependDefinition["serviceVersionName"]
+
+        testInstrumentationRunner dependDefinition["testInstrumentationRunner"]
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    def libs = rootProject.ext.libraries
+
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+
+    implementation libs.kotlinStdLib
+    implementation libs.coreKtx
+
+    // Kotlin Coroutines
+    implementation libs.coroutinesCore
+    implementation libs.coroutinesAndroid
+
+    // Retrofit & Gson & Okhttp
+    implementation libs.retrofit
+    implementation libs.gson
+    implementation libs.converterGson
+    implementation libs.okhttp3
+
+    testImplementation libs.jUnit
+    androidTestImplementation libs.jUnitExt
+    androidTestImplementation libs.espressoCore
+
+}
