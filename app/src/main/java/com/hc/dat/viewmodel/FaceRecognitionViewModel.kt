@@ -281,7 +281,9 @@ data class FaceRecognitionViewModel @Inject constructor(
                             faceRecogImage = faceRecognitionImageEntity,
                             channel = addFaceChannel,
                     )
+                withTimeoutOrNull(15000) {
                     addFaceChannel.receive()
+                }
             }
             CoroutineScope(Dispatchers.Main).launch {
                 callback?.let {
