@@ -13,6 +13,7 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.SystemClock
 import android.provider.Settings
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
@@ -55,6 +56,7 @@ import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 class TrainingSessionScreen : DatBaseScreen() {
     private lateinit var viewBinding: ScreenTrainingSessionBinding
@@ -119,6 +121,12 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var timeStartRecognition: Long = 0
     private var timeSendAuthData: Long = 0
     private var adminLogoutRequestCount: Int = 0
+
+    private var fakeJob: Job? = null
+    private var fakeLat = 21.0285
+    private var fakeLng = 105.8542
+    private var fakeTime = System.currentTimeMillis()
+    private var METERS_PER_DEGREE_LAT = 111_111f
 
     var timeSecondCounter = 0L
     var deviceStatusSecondCounter = 0L
@@ -1897,6 +1905,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
                 GPSAction.LOCATION_UPDATED -> {
                     val location = data as Location
+                    Logger.i("location speed accuracy: ${location.speedAccuracyMetersPerSecond} | accuracy: ${location.accuracy} | elapsedRealtimeNanos: ${location.elapsedRealtimeNanos}  | provider: ${location.provider}")
                     Logger.i("location speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
                     LogRecorder.i("Lấy GPS thành công", "speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
                     LogRecorder.i("Số lượng vệ tinh GPS được sử dụng: ", quantityGPSSatellite)
@@ -3113,6 +3122,37 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
+    fun fakeLocation(speedKmh: Float) {
+
+        val speedMps = speedKmh / 3.6f
+
+        // 30% frame tạo GPS jump lớn
+        val isJump = Random.nextFloat() < 0.3f
+
+        val timeOffset = (100..300).random().toLong()
+        fakeTime += timeOffset
+
+        val distance = if (isJump) {
+            300f  // nhảy 300 mét trong <300ms
+        } else {
+            speedMps * (timeOffset / 1000f)
+        }
+
+        val deltaLat = distance / METERS_PER_DEGREE_LAT
+        fakeLat += deltaLat
+
+        val location = Location("mock").apply {
+            latitude = fakeLat
+            longitude = fakeLng
+            this.speed = speedMps
+            accuracy = 3f
+            time = fakeTime
+            elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
+        }
+
+        gpsEventListener.onGPSUpdate(GPSAction.LOCATION_UPDATED, location)
+    }
+
     override fun onResume() {
         Logger.d("onResume")
         super.onResume()
@@ -3124,6 +3164,15 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
 //        activity?.drawerLayout?.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
         riderSessionViewModel.startGPSEventListener(gpsEventListener)
+//        fakeJob = CoroutineScope(Dispatchers.Main).launch {
+//            var speed = 0f
+//            while (isActive) {
+//                speed += 5f
+//                if (speed > 80) speed = 0f
+//                fakeLocation(speed)
+//                delay(1000)
+//            }
+//        }
         if (riderSessionViewModel.teacherAuthInfo != null &&
             studentAuthInfo != null &&
             riderSessionViewModel.getSessionInProgress() != null
@@ -3195,6 +3244,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         LogRecorder.i("Trạng thái","onPause" )
         super.onPause()
         riderSessionViewModel.stopGPSEventListener(gpsEventListener)
+//        fakeJob?.cancel()
         pauseHandleProcess()
         riderSessionViewModel.saveInProgressSessionInterruptTime()
     }

@@ -39,8 +39,8 @@ data class SessionVerificationInfo(
         ) {
             // calculate distance base on max speed assumption is not more than 100km/h -> not than 28m/s
             val calculateDistance: Float = latestLocation?.distanceTo(location) ?: 0.0f
-            val durationCalculate: Int =
-                if (latestLocation != null) ((location.time - latestLocation!!.time) / 1000).toInt() else 0
+            val durationCalculate: Int = if (latestLocation != null) ((location.time - latestLocation!!.time).toInt() / 1000) else 0
+//            val durationCalculate: Float = if (latestLocation != null) ((location.time - latestLocation!!.time) / 1000f) else 0f
             val speedCalculate: Float = calculateDistance / durationCalculate
 //            Logger.i("Location calculateDistance: $calculateDistance | durationCalculate: $durationCalculate")
 //            Logger.i("Location speedCalculate: $speedCalculate compare with 28m/s")
@@ -76,6 +76,7 @@ data class SessionVerificationInfo(
                 lastLocationUpdateTime = Utils.getRealTimeStamp()/1000
             } else {
                 Logger.e("Warning: Location maybe fake , because distance get than 28m per second -> ignore this location")
+//                latestLocation = location
             }
         } else {
             Logger.e("Wrong location: lat: ${location.latitude} | long: ${location.longitude}")

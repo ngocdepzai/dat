@@ -9,6 +9,8 @@ import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.*
 import androidx.annotation.RequiresApi
@@ -21,6 +23,7 @@ import com.hc.dat.model.UserInfo
 import com.hc.dat.model.database.entity.UserEntity
 import com.hc.dat.model.database.entity.convertToModelEntity
 import com.hc.dat.service.ServiceDefinition
+import com.hc.dat.view.BaseDialog.dismissProgress
 import com.hc.dat.view.adapter.DialogButtonClickListener
 import com.hc.dat.view.dialog.FaceRecognizeDialog
 import com.hc.dat.view.dialog.FaceRecognizeLoginAction
@@ -523,18 +526,17 @@ class TeacherLoginScreen : DatBaseScreen() {
                         }
                     )
                 } else {
-                    viewBinding.tvVehiclePlate.text = getString(
-                        R.string.vehicle_plate_info,
-                        appViewModel.vehicleInfo?.plateSlug ?: "-/-"
-                    )
+                    viewBinding.tvVehiclePlate.text = getString(R.string.vehicle_plate_info,appViewModel.vehicleInfo?.plateSlug ?: "-/-")
 //                    checkTeacherReLogin()
                     showProgressDialog(message = getString(R.string.loading_user_assigned_in_device))
                     faceRecognitionViewModel.getListUserAssignInDevice(
-                        riderSessionViewModel.getImeiDevice(
-                            requireContext()
-                        ),
+                        riderSessionViewModel.getImeiDevice(requireContext()),
                         faceRecognitionCallback
                     )
+                    // Time out 8s dismiss dialog
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        dismissProgress()
+                    }, 8000)
                 }
             }
             AppAction.INIT_CONFIG_DATA_FAIL_BY_INTERNET -> {

@@ -120,8 +120,7 @@ data class FaceRecognitionViewModel @Inject constructor(
             }
         ) {
             delay(3000)
-            val resResult: ResponseResult<List<UserInfo>> =
-                repository.getListUserAssignInDevice(imei)
+            val resResult: ResponseResult<List<UserInfo>> = repository.getListUserAssignInDevice(imei)
             if (resResult.isError) {
                 Logger.e("Error: ${resResult.errorMessage}")
                 CoroutineScope(Dispatchers.Main).launch {
@@ -281,9 +280,7 @@ data class FaceRecognitionViewModel @Inject constructor(
                             faceRecogImage = faceRecognitionImageEntity,
                             channel = addFaceChannel,
                     )
-                withTimeoutOrNull(15000) {
                     addFaceChannel.receive()
-                }
             }
             CoroutineScope(Dispatchers.Main).launch {
                 callback?.let {
