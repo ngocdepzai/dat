@@ -342,6 +342,15 @@ fun getDeviceInfo(context: Context): UploadDeviceInfoRequest {
         return speed
     }
 
+    fun convertLocationSpeedCalculate(speedCalculate: Float): Double {
+        var speed: Double = 0.0
+        speed = (speedCalculate * 18 / 5).toDouble()
+        speed = MathUtil.round(speed, 1, BigDecimal.ROUND_HALF_UP)
+        val parseSpeed: BigDecimal = BigDecimal(speed)
+        speed = parseSpeed.setScale(2, BigDecimal.ROUND_HALF_UP).toDouble()
+        return speed
+    }
+
     fun formatToDateHistory(tittle: String): String {
         val convertSdfNew = SimpleDateFormat(LOCAL_DATE_FORMAT, Locale.JAPANESE)
         val day = convertSdfNew.parse(tittle)

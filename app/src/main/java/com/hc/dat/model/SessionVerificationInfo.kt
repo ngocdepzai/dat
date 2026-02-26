@@ -3,6 +3,7 @@ package com.hc.dat.model
 import android.location.Location
 import com.hc.dat.utils.Utils
 import com.hc.dat.viewmodel.VerifyResult
+import com.lws.type.LogRecorder
 import com.lws.type.Logger
 import java.io.File
 
@@ -34,17 +35,17 @@ data class SessionVerificationInfo(
 //        Logger.i("Location lat: ${location.latitude} | long: ${location.longitude} | accuracy: ${location.accuracy}")
 //        Logger.i("Location hasSpeed: ${location.hasSpeed()} | speed: ${location.speed*(3600/1000)}KM/h")
         // filter location has lat, long incorrect in vietnam geo
-        if (location.latitude > 8 && location.latitude < 23 &&
-            location.longitude > 102 && location.longitude < 110
+        if (location.latitude > 8 && location.latitude < 23 && location.longitude > 102 && location.longitude < 110
         ) {
             // calculate distance base on max speed assumption is not more than 100km/h -> not than 28m/s
             val calculateDistance: Float = latestLocation?.distanceTo(location) ?: 0.0f
 //            val durationCalculate: Int = if (latestLocation != null) ((location.time - latestLocation!!.time).toInt() / 1000) else 0
             val durationCalculate: Float = if (latestLocation != null) ((location.time - latestLocation!!.time) / 1000f) else 0f
-            val speedCalculate: Float = calculateDistance / durationCalculate
+            val speedCalculate = if (durationCalculate > 0f) calculateDistance / durationCalculate else 0f
 //            Logger.i("Location calculateDistance: $calculateDistance | durationCalculate: $durationCalculate")
 //            Logger.i("Location speedCalculate: $speedCalculate compare with 28m/s")
-
+            Logger.i("HoangSpeed so sánh speed & speedCalculate: " + "calculateDistance: $calculateDistance |  durationCalculate: $durationCalculate | speedCalculate: $speedCalculate | speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
+            LogRecorder.i("Lấy GPS thành công so sánh speed & speedCalculate", "calculateDistance: $calculateDistance |  durationCalculate: $durationCalculate | speedCalculate: $speedCalculate | speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
             /**
              * comment logic check jump gps because can not calculate when case speed always return 0
              */
@@ -70,7 +71,8 @@ data class SessionVerificationInfo(
                     duration = location.time - this.time
                 }
                 latestLocation = location
-                speed = Utils.convertLocationSpeed(location)
+//                speed = Utils.convertLocationSpeed(location)
+                speed = Utils.convertLocationSpeedCalculate(speedCalculate)
                 lat = location.latitude
                 long = location.longitude
                 lastLocationUpdateTime = Utils.getRealTimeStamp()/1000
