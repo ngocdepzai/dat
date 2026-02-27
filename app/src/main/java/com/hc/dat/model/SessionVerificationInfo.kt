@@ -78,7 +78,7 @@ data class SessionVerificationInfo(
                 lastLocationUpdateTime = Utils.getRealTimeStamp()/1000
             } else {
                 Logger.e("Warning: Location maybe fake , because distance get than 28m per second -> ignore this location")
-                latestLocation = location
+//                latestLocation = location
             }
         } else {
             Logger.e("Wrong location: lat: ${location.latitude} | long: ${location.longitude}")
