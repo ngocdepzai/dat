@@ -16,8 +16,8 @@ android {
         applicationId "hc.manager.datapp"
         minSdkVersion 21 //Luu y anh huong den kich hoat chung chi, khong duoc thay doi min SDK nha
         targetSdkVersion 33
-        versionCode 30305044
-        versionName "3.3.5_44"
+        versionCode 30305045
+        versionName "3.3.5_45"
         vectorDrawables.useSupportLibrary true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions.annotationProcessorOptions.arguments['dagger.hilt.disableModulesHaveInstallInCheck'] = 'true'
