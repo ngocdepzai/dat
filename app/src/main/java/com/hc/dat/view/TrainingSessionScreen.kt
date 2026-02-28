@@ -127,6 +127,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var fakeLng = 105.8542
     private var fakeTime = System.currentTimeMillis()
     private var METERS_PER_DEGREE_LAT = 111_111f
+    private var METERS_PER_DEGREE_LNG = 111_111f
 
     var timeSecondCounter = 0L
     var deviceStatusSecondCounter = 0L
@@ -3122,36 +3123,98 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
-    fun fakeLocation(speedKmh: Float) {
+    fun fakeLocation(realSpeedKmh: Float) {
 
-        val speedMps = speedKmh / 3.6f
+        val random = Random.nextFloat()
 
-        // 30% frame tạo GPS jump lớn
-        val isJump = Random.nextFloat() < 0.3f
-
-        val timeOffset = (100..300).random().toLong()
+        val timeOffset = (800..1500).random().toLong()   // GPS yếu -> update không đều
         fakeTime += timeOffset
 
-        val distance = if (isJump) {
-            300f  // nhảy 300 mét trong <300ms
-        } else {
-            speedMps * (timeOffset / 1000f)
+        val speedMps = realSpeedKmh / 3.6f
+        val realDistance = speedMps * (timeOffset / 1000f)
+
+        var distance = realDistance
+
+        var reportedSpeed = speedMps
+        var accuracyValue = 5f
+
+        when {
+            // 30% GPS đứng yên dù đang chạy
+            random < 0.3f -> {
+                distance = 0.5f   // gần như không di chuyển
+                reportedSpeed = 0f
+                accuracyValue = 80f
+            }
+
+            // 20% GPS jump loạn
+            random < 0.5f -> {
+                distance = (100..400).random().toFloat()
+                reportedSpeed = 0f
+                accuracyValue = 150f
+            }
+
+            // 30% rung nhẹ (jitter)
+            random < 0.8f -> {
+                distance += (-5..5).random()
+                reportedSpeed *= Random.nextFloat()
+                accuracyValue = 30f
+            }
+
+            // 20% bình thường
+            else -> {
+                accuracyValue = 5f
+            }
         }
 
         val deltaLat = distance / METERS_PER_DEGREE_LAT
-        fakeLat += deltaLat
+        val deltaLng = distance / METERS_PER_DEGREE_LNG
+
+        // thêm nhiễu ngẫu nhiên nhỏ
+        fakeLat += deltaLat + Random.nextDouble(-0.00001, 0.00001)
+        fakeLng += deltaLng + Random.nextDouble(-0.00001, 0.00001)
 
         val location = Location("mock").apply {
             latitude = fakeLat
             longitude = fakeLng
-            this.speed = speedMps
-            accuracy = 3f
+            speed = reportedSpeed
+            accuracy = accuracyValue
             time = fakeTime
             elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
         }
 
         gpsEventListener.onGPSUpdate(GPSAction.LOCATION_UPDATED, location)
     }
+
+//    fun fakeLocation(speedKmh: Float) {
+//
+//        val speedMps = speedKmh / 3.6f
+//
+//        // 30% frame tạo GPS jump lớn
+//        val isJump = Random.nextFloat() < 0.3f
+//
+//        val timeOffset = (100..300).random().toLong()
+//        fakeTime += timeOffset
+//
+//        val distance = if (isJump) {
+//            300f  // nhảy 300 mét trong <300ms
+//        } else {
+//            speedMps * (timeOffset / 1000f)
+//        }
+//
+//        val deltaLat = distance / METERS_PER_DEGREE_LAT
+//        fakeLat += deltaLat
+//
+//        val location = Location("mock").apply {
+//            latitude = fakeLat
+//            longitude = fakeLng
+//            this.speed = speedMps
+//            accuracy = 3f
+//            time = fakeTime
+//            elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
+//        }
+//
+//        gpsEventListener.onGPSUpdate(GPSAction.LOCATION_UPDATED, location)
+//    }
 
     override fun onResume() {
         Logger.d("onResume")
@@ -3164,6 +3227,43 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
 //        activity?.drawerLayout?.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
         riderSessionViewModel.startGPSEventListener(gpsEventListener)
+//        fakeJob = CoroutineScope(Dispatchers.Main).launch {
+//
+//            var realSpeed = 0f
+//            var state = "ACCEL"   // ACCEL, CRUISE, STOP
+//
+//            while (isActive) {
+//
+//                when (state) {
+//
+//                    "ACCEL" -> {
+//                        realSpeed += 5f
+//                        if (realSpeed >= 50f) {
+//                            realSpeed = 50f
+//                            state = "CRUISE"
+//                        }
+//                    }
+//
+//                    "CRUISE" -> {
+//                        // 10% xác suất dừng đèn đỏ
+//                        if (Random.nextFloat() < 0.1f) {
+//                            state = "STOP"
+//                        }
+//                    }
+//
+//                    "STOP" -> {
+//                        realSpeed = 0f
+//                        // dừng 5–10s
+//                        delay((5000..10000).random().toLong())
+//                        state = "ACCEL"
+//                    }
+//                }
+//
+//                fakeLocation(realSpeed)
+//
+//                delay(1000)
+//            }
+//        }
 //        fakeJob = CoroutineScope(Dispatchers.Main).launch {
 //            var speed = 0f
 //            while (isActive) {

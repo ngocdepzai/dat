@@ -351,6 +351,27 @@ fun getDeviceInfo(context: Context): UploadDeviceInfoRequest {
         return speed
     }
 
+    fun isValidGpsSpeed(location: Location, calculatedSpeed: Float): Boolean {
+
+        if (!location.hasSpeed()) return false
+
+        val gpsSpeed = location.speed // m/s
+
+        // Reject speed âm hoặc quá lớn (> 180 km/h)
+        if (gpsSpeed < 0f || gpsSpeed > 50f) return false
+
+        // Accuracy quá tệ
+        if (location.accuracy > 50f) return false
+
+        // Nếu tốc độ thấp (<5 m/s ~18km/h) thì bỏ qua so sánh %
+        if (calculatedSpeed > 5f) {
+            val diff = kotlin.math.abs(gpsSpeed - calculatedSpeed)
+            if (diff / calculatedSpeed > 0.4f) return false
+        }
+
+        return true
+    }
+
     fun formatToDateHistory(tittle: String): String {
         val convertSdfNew = SimpleDateFormat(LOCAL_DATE_FORMAT, Locale.JAPANESE)
         val day = convertSdfNew.parse(tittle)

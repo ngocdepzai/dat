@@ -2,6 +2,7 @@ package com.hc.dat.model
 
 import android.location.Location
 import com.hc.dat.utils.Utils
+import com.hc.dat.utils.Utils.isValidGpsSpeed
 import com.hc.dat.viewmodel.VerifyResult
 import com.lws.type.LogRecorder
 import com.lws.type.Logger
@@ -71,14 +72,19 @@ data class SessionVerificationInfo(
                     duration = location.time - this.time
                 }
                 latestLocation = location
-//                speed = Utils.convertLocationSpeed(location)
-                speed = Utils.convertLocationSpeedCalculate(speedCalculate)
+
+                if (isValidGpsSpeed(location, speedCalculate)) {
+                    speed = Utils.convertLocationSpeed(location)
+                } else {
+                    speed = Utils.convertLocationSpeedCalculate(speedCalculate)
+                }
+
                 lat = location.latitude
                 long = location.longitude
                 lastLocationUpdateTime = Utils.getRealTimeStamp()/1000
             } else {
                 Logger.e("Warning: Location maybe fake , because distance get than 28m per second -> ignore this location")
-//                latestLocation = location
+                latestLocation = location
             }
         } else {
             Logger.e("Wrong location: lat: ${location.latitude} | long: ${location.longitude}")
