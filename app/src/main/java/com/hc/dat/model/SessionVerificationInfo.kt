@@ -78,20 +78,20 @@ data class SessionVerificationInfo(
                 }
                 latestLocation = location
 
-//                if (isValidGpsSpeed(location, speedCalculate)) {
-//                    speed = Utils.convertLocationSpeed(location)
-//                } else {
-//                    speed = Utils.convertLocationSpeedCalculate(speedCalculate)
-//                }
-
-                val rawSpeed = if (isValidGpsSpeed(location, speedCalculate)) {
-                    location.speed
+                if (isValidGpsSpeed(location, speedCalculate)) {
+                    speed = Utils.convertLocationSpeed(location)
                 } else {
-                    speedCalculate
+                    speed = Utils.convertLocationSpeedCalculate(speedCalculate)
                 }
 
-                val smoothSpeed = speedKalman.update(rawSpeed)
-                speed = smoothSpeed.toDouble()
+//                val rawSpeed = if (isValidGpsSpeed(location, speedCalculate)) {
+//                    location.speed
+//                } else {
+//                    speedCalculate
+//                }
+
+//                val smoothSpeed = speedKalman.update(rawSpeed)
+//                speed = smoothSpeed.toDouble()
 
                 lat = location.latitude
                 long = location.longitude
