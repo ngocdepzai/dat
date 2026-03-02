@@ -171,6 +171,7 @@ dependencies {
 
     implementation project(':libuvccamera')
     implementation 'com.github.getActivity:XXPermissions:16.8'
+    implementation files('libs/CH341SER_ANDROID.jar')
 
 //    annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
     testImplementation 'junit:junit:4.13.2'
