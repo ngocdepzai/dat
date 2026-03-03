@@ -23,7 +23,6 @@ import com.hc.dat.model.UserInfo
 import com.hc.dat.model.database.entity.UserEntity
 import com.hc.dat.model.database.entity.convertToModelEntity
 import com.hc.dat.service.ServiceDefinition
-import com.hc.dat.view.BaseDialog.dismissProgress
 import com.hc.dat.view.adapter.DialogButtonClickListener
 import com.hc.dat.view.dialog.FaceRecognizeDialog
 import com.hc.dat.view.dialog.FaceRecognizeLoginAction
@@ -48,43 +47,22 @@ import java.io.File
 
 class TeacherLoginScreen : DatBaseScreen() {
     private val REQUEST_CODE_READ_PHONE_STATE = 101
-
     private lateinit var viewBinding: ScreenTeacherLoginBinding
     private lateinit var riderSessionViewModel: RiderSessionViewModel
     private lateinit var faceRecognitionViewModel: FaceRecognitionViewModel
-
     private var nfcAvailable: Boolean = true // default true because must login teacher first
     private var byPassCheckSpeed = false
-
     private var teacherAuthInfo: UserEntity? = null
     private var cameraRotation = 0
-    private val cameraFacingFront = true
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        // Inflate the layout for this fragment
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         viewBinding = ScreenTeacherLoginBinding.inflate(inflater, container, false)
-        riderSessionViewModel =
-            ViewModelProviders.of(
-                requireActivity(),
-                viewModelFactory
-            )[RiderSessionViewModel::class.java]
-        faceRecognitionViewModel =
-            ViewModelProviders.of(
-                requireActivity(),
-                viewModelFactory
-            )[FaceRecognitionViewModel::class.java]
-
+        riderSessionViewModel = ViewModelProviders.of(requireActivity(), viewModelFactory)[RiderSessionViewModel::class.java]
+        faceRecognitionViewModel = ViewModelProviders.of(requireActivity(), viewModelFactory)[FaceRecognitionViewModel::class.java]
         checkAndRequestPhoneStatePermission()
-
         nfcAvailable = appViewModel.checkNFCAvailable()
-
         initView()
-
         LogRecorder.d("", "Đăng nhập giảng viên")
 
         return viewBinding.root
@@ -92,41 +70,23 @@ class TeacherLoginScreen : DatBaseScreen() {
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private fun checkAndRequestPhoneStatePermission() {
-
-        if (ContextCompat.checkSelfPermission(
-                requireActivity(),
-                Manifest.permission.READ_PHONE_STATE
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(
-                arrayOf(Manifest.permission.READ_PHONE_STATE),
-                REQUEST_CODE_READ_PHONE_STATE
-            )
+        if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.READ_PHONE_STATE), REQUEST_CODE_READ_PHONE_STATE)
         } else {
-            Logger.i("vinhdt:")
             appViewModel.getDeviceConfig()
             appViewModel.getAPIPathUploadImage()
-            viewBinding.tvSerialNumber.text =
-                getString(
-                    R.string.serial_number_info,
-                    riderSessionViewModel.getImeiDevice(requireContext())
-                )
+            viewBinding.tvSerialNumber.text = getString(R.string.serial_number_info, riderSessionViewModel.getImeiDevice(requireContext()))
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_READ_PHONE_STATE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 appViewModel.getDeviceConfig()
                 appViewModel.getAPIPathUploadImage()
-                viewBinding.tvSerialNumber.text =
-                    getString(
+                viewBinding.tvSerialNumber.text = getString(
                         R.string.serial_number_info,
                         riderSessionViewModel.getImeiDevice(requireContext())
                     )
@@ -141,16 +101,12 @@ class TeacherLoginScreen : DatBaseScreen() {
             title = getString(R.string.title_notification),
             message = getString(R.string.require_permission),
             cancelable = false,
-            buttonList = listOf(
-                getString(R.string.ok),
-                getString(R.string.go_setting)
-            ),
+            buttonList = listOf(getString(R.string.ok), getString(R.string.go_setting)),
             listener = object : DialogButtonClickListener {
                 override fun onDialogButtonClick(position: Int) {
                     dismissDialog()
                     if (position == 1) {
-                        val intent =
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                         startActivity(intent)
                     }
                 }
@@ -179,20 +135,6 @@ class TeacherLoginScreen : DatBaseScreen() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-//        loadDatDeviceConfig()
-
-        val windowRotation =
-            (requireActivity().getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation * 90
-//        cameraRotation = if (windowRotation == 0) {
-//            FacePassImageRotation.DEG90
-//        } else if (windowRotation == 90) {
-//            FacePassImageRotation.DEG0
-//        } else if (windowRotation == 270) {
-//            FacePassImageRotation.DEG180
-//        } else {
-//            FacePassImageRotation.DEG270
-//        }
-
     }
 
     private fun loadDatDeviceConfig() {
@@ -206,9 +148,7 @@ class TeacherLoginScreen : DatBaseScreen() {
     }
 
     private fun initView() {
-
-        viewBinding.tvVehiclePlate.text =
-            getString(R.string.vehicle_plate_info, appViewModel.getPlateSlug() ?: "-/-")
+        viewBinding.tvVehiclePlate.text = getString(R.string.vehicle_plate_info, appViewModel.getPlateSlug() ?: "-/-")
         viewBinding.navigationBt.setOnClickListener {
             requireActivity().drawerLayout?.openDrawer(Gravity.LEFT)
         }
@@ -360,7 +300,6 @@ class TeacherLoginScreen : DatBaseScreen() {
                         requireContext(),
                         userEntity
                     ) { confirm, data ->
-//                        UserInfoDialog.dismiss()
                         if (confirm) {
                             if (ServiceDefinition.UPLOAD_IMAGE_AUTHEN_PROGRESS_URL.isEmpty()) {
                                 checkURLUploadImageAvailable()
@@ -458,18 +397,6 @@ class TeacherLoginScreen : DatBaseScreen() {
                         }
                     )
                 }
-//                FaceRecognizeLoginAction.FACE_LOGIN_FAIL -> {
-//                    showDialog(
-//                        title = getString(R.string.title_notification),
-//                        message = getString(R.string.login_face_fail),
-//                        buttonList = listOf(getString(R.string.ok),),
-//                        listener = object : DialogButtonClickListener {
-//                            override fun onDialogButtonClick(position: Int) {
-//                                dismissDialog()
-//                            }
-//                        }
-//                    )
-//                }
                 else -> {
                     Logger.w("Action $action not yet handle!")
                 }
@@ -527,7 +454,6 @@ class TeacherLoginScreen : DatBaseScreen() {
                     )
                 } else {
                     viewBinding.tvVehiclePlate.text = getString(R.string.vehicle_plate_info,appViewModel.vehicleInfo?.plateSlug ?: "-/-")
-//                    checkTeacherReLogin()
                     showProgressDialog(message = getString(R.string.loading_user_assigned_in_device))
                     faceRecognitionViewModel.getListUserAssignInDevice(
                         riderSessionViewModel.getImeiDevice(requireContext()),
@@ -572,19 +498,10 @@ class TeacherLoginScreen : DatBaseScreen() {
                         }
                     )
                 } else {
-                    UserInfoDialog.showDialog(
-                        requireContext(),
-                        userInfo.convertToModelEntity()
-                    ) { confirm, data ->
+                    UserInfoDialog.showDialog(requireContext(), userInfo.convertToModelEntity()) { confirm, data ->
                         if (confirm) {
                             // check current GPS signal
-                            Logger.i(
-                                "Check GPS: ${
-                                    riderSessionViewModel.checkGPSAvailable(
-                                        requireActivity()
-                                    )
-                                }"
-                            )
+                            Logger.i("Check GPS: ${riderSessionViewModel.checkGPSAvailable(requireActivity())}")
                             if (ServiceDefinition.UPLOAD_IMAGE_AUTHEN_PROGRESS_URL.isEmpty()) {
                                 checkURLUploadImageAvailable()
                             } else {
@@ -621,16 +538,12 @@ class TeacherLoginScreen : DatBaseScreen() {
                                             title = getString(R.string.title_notification),
                                             message = getString(R.string.gps_turn_off_error),
                                             cancelable = false,
-                                            buttonList = listOf(
-                                                getString(R.string.ok),
-                                                getString(R.string.go_setting_enable_gps_bt)
-                                            ),
+                                            buttonList = listOf(getString(R.string.ok), getString(R.string.go_setting_enable_gps_bt)),
                                             listener = object : DialogButtonClickListener {
                                                 override fun onDialogButtonClick(position: Int) {
                                                     dismissDialog()
                                                     if (position == 1) {
-                                                        val intent =
-                                                            Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                                                         startActivity(intent)
                                                     }
                                                 }
@@ -641,7 +554,6 @@ class TeacherLoginScreen : DatBaseScreen() {
                                     UserInfoDialog.dismiss()
                                     showAppVersionLockedMessage()
                                 }
-
                             }
                         } else {
                             riderSessionViewModel.dropTeachOutWorking()
@@ -682,10 +594,8 @@ class TeacherLoginScreen : DatBaseScreen() {
                 checkURLUploadImageAvailable("Lấy đường dẫn lưu ảnh thất bại. \n$errorMessage")
             }
             AppAction.GET_PATH_API_IMAGE_UPLOAD_FAIL_BY_INTERNET -> {
-                val errorMessage: String =
-                    "Lấy đường dẫn lưu ảnh thất bại do không có kết nối mạng.\nVui lòng kiểm tra lại kết nối!"
+                val errorMessage: String = "Lấy đường dẫn lưu ảnh thất bại do không có kết nối mạng.\nVui lòng kiểm tra lại kết nối!"
                 checkURLUploadImageAvailable(errorMessage)
-
             }
             else -> {}
         }
@@ -719,24 +629,6 @@ class TeacherLoginScreen : DatBaseScreen() {
         Logger.d("riderSessionCallback action: $action | data: $data")
         dismissProgress()
         when (action) {
-//            RiderSessionAction.GET_LIST_CARS_STUDENT_SUCCESS -> {
-//                val listCars: List<CarInfo> = data as List<CarInfo>
-//                if (listCars.isEmpty()) {
-//                    showDialog(
-//                        title = getString(R.string.title_notification),
-//                        message = getString(R.string.car_not_in_course),
-//                        buttonList = listOf(getString(R.string.ok)),
-//                        listener = object : DialogButtonClickListener {
-//                            override fun onDialogButtonClick(position: Int) {
-//                                dismissDialog()
-//                            }
-//                        }
-//                    )
-//                } else {
-//                    // Todo
-//                }
-//            }
-//            RiderSessionAction.GET_LIST_CARS_STUDENT_FAIL,
             RiderSessionAction.GET_LIST_CARS_TEACHER_FAIL -> {
                 LogRecorder.e("Đăng nhập giảng viên thất bại", data as String)
                 // clear teacher info
@@ -773,8 +665,7 @@ class TeacherLoginScreen : DatBaseScreen() {
                     teacherAuthInfo?.also {
                         riderSessionViewModel.pushTeacherInWorking(it)
                     }
-                    viewBinding.root.findNavController()
-                        .navigate(R.id.action_loginMenuScreen_to_trainingSessionScreen)
+                    viewBinding.root.findNavController().navigate(R.id.action_loginMenuScreen_to_trainingSessionScreen)
                 }
             }
             RiderSessionAction.GET_LIST_CARS_TEACHER_FAIL_BY_INTERNET -> {
@@ -792,8 +683,7 @@ class TeacherLoginScreen : DatBaseScreen() {
                 teacherAuthInfo?.also {
                     riderSessionViewModel.pushTeacherInWorking(it)
                 }
-                viewBinding.root.findNavController()
-                    .navigate(R.id.action_loginMenuScreen_to_trainingSessionScreen)
+                viewBinding.root.findNavController().navigate(R.id.action_loginMenuScreen_to_trainingSessionScreen)
             }
             else -> {
                 Logger.w("Action not handle!")
@@ -808,7 +698,6 @@ class TeacherLoginScreen : DatBaseScreen() {
 //        startNFCReading()
         appViewModel.stopNFCCard()
         riderSessionViewModel.startGPSEventListener(gpsEventListener)
-//        activity?.drawerLayout?.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
     }
 
     override fun onPause() {
@@ -836,5 +725,4 @@ class TeacherLoginScreen : DatBaseScreen() {
             }
         }
     }
-
 }

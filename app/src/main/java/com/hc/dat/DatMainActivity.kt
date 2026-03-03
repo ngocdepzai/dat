@@ -28,15 +28,12 @@ import com.hc.dat.view.BaseDialog
 import com.hc.dat.view.BaseNotification
 import com.hc.dat.view.CommonAppUI
 import com.hc.dat.view.NavigationEventHandler
-import com.hc.dat.view.SessionHistoryScreen
 import com.hc.dat.view.adapter.DialogButtonClickListener
 import com.hc.dat.viewmodel.FaceRecognitionViewModel
-import com.hc.dat.viewmodel.RiderSessionViewModel
 import com.lws.device.Device
 import com.lws.type.LogRecorder
 import com.lws.type.Logger
 import hc.manager.datapp.R
-import hc.manager.datapp.activity.CompareSession
 import hc.manager.datapp.databinding.DatActivityMainBinding
 import kotlinx.android.synthetic.main.dat_activity_main.*
 import kotlinx.coroutines.*
@@ -44,10 +41,8 @@ import java.io.File
 import javax.inject.Inject
 
 class DatMainActivity : BaseActivity(), CommonAppUI {
-
     private lateinit var app: DatApplication
     private lateinit var viewBinding: DatActivityMainBinding
-
     private var navigationEventHandler: NavigationEventHandler? = null
     private val navController by lazy { findNavController(R.id.app_frag) }
 
@@ -62,7 +57,6 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
     private var nfcAdapter: NfcAdapter? = null
 
     // Permission old logic
-    // Todo refactor late
     private val PERMISSIONS_REQUEST: Int = 1
     private val PERMISSION_CAMERA = Manifest.permission.CAMERA
     private val PERMISSION_READ_PHONE_STATE = Manifest.permission.READ_PHONE_STATE
@@ -70,13 +64,6 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
     private val PERMISSION_READ_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
     private val PERMISSION_INTERNET = Manifest.permission.INTERNET
     private val PERMISSION_ACCESS_NETWORK_STATE = Manifest.permission.ACCESS_NETWORK_STATE
-    private val permissions = arrayOf(
-        PERMISSION_CAMERA,
-        PERMISSION_WRITE_STORAGE,
-        PERMISSION_READ_STORAGE,
-        PERMISSION_INTERNET,
-        PERMISSION_ACCESS_NETWORK_STATE
-    )
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onRequestPermissionsResult(
@@ -91,9 +78,7 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
                 if (result != PackageManager.PERMISSION_GRANTED) granted = false
             }
             if (!granted) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) if (!shouldShowRequestPermissionRationale(
-                        PERMISSION_CAMERA
-                    ) ||
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) if (!shouldShowRequestPermissionRationale(PERMISSION_CAMERA) ||
                     !shouldShowRequestPermissionRationale(PERMISSION_READ_STORAGE) ||
                     !shouldShowRequestPermissionRationale(PERMISSION_WRITE_STORAGE) ||
                     !shouldShowRequestPermissionRationale(PERMISSION_INTERNET) ||
@@ -117,13 +102,11 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
 
     private fun hasPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            checkSelfPermission(PERMISSION_CAMERA) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                PERMISSION_READ_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(PERMISSION_WRITE_STORAGE) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                PERMISSION_INTERNET
-            ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                PERMISSION_ACCESS_NETWORK_STATE
-            ) == PackageManager.PERMISSION_GRANTED
+            checkSelfPermission(PERMISSION_CAMERA) == PackageManager.PERMISSION_GRANTED
+                    && checkSelfPermission(PERMISSION_READ_STORAGE) == PackageManager.PERMISSION_GRANTED
+                    && checkSelfPermission(PERMISSION_WRITE_STORAGE) == PackageManager.PERMISSION_GRANTED
+                    && checkSelfPermission(PERMISSION_INTERNET) == PackageManager.PERMISSION_GRANTED
+                    && checkSelfPermission(PERMISSION_ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED
         } else {
             true
         }
@@ -132,11 +115,8 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
     private fun showDialogCheckPermission() {
         AlertDialog.Builder(this@DatMainActivity)
             .setMessage("VUI LÒNG CẤP QUYỂN TRUY CẬP BỘ NHỚ, CAMERA, VỊ TRÍ TRƯỚC KHI SỬ DỤNG!")
-            .setPositiveButton(
-                "Đi đến cài đặt"
-            ) { paramDialogInterface, paramInt ->
-                val intent =
-                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            .setPositiveButton("Đi đến cài đặt") { paramDialogInterface, paramInt ->
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 val uri = Uri.fromParts("package", packageName, null)
                 intent.data = uri
@@ -145,7 +125,6 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
             .setNegativeButton("Hủy bỏ", null)
             .show()
     }
-    // Todo refactor
 
     companion object {
         private val NFC_ACTION_FILTER = arrayOf(
@@ -346,8 +325,6 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
     }
 
     override fun onBackPressed() {
-//        navController.popBackStack()
-//        super.onBackPressed()
         if (!navController.popBackStack()) {
             finish()
         }
@@ -371,7 +348,6 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
             // Delay 1000 for activity finish start
             delay(2000)
             device.getCurrentGPS()?.startGPSService(this@DatMainActivity)
-
             nfcAdapter?.enableForegroundDispatch(
                 this@DatMainActivity,
                 pendingIntent,
@@ -393,7 +369,6 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
-//        Logger.d("dispatchTouchEvent event: $ev")
         KeyboardManager.setKeyboardVisible(false)
         Countdown.restartCountdown()
         return super.dispatchTouchEvent(ev)
@@ -405,10 +380,7 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
         textRight: String?,
         descriptionRight: String?
     ) {
-        Logger.d(
-            "setAppHeader btLeft: $btLeft title: " +
-                "$title textRight: $textRight descriptionRight: $descriptionRight"
-        )
+        Logger.d("setAppHeader btLeft: $btLeft title: " + "$title textRight: $textRight descriptionRight: $descriptionRight")
     }
 
     override fun setAppBottom(btLeft: String?, btCenter: String?, btRight: String?) {
