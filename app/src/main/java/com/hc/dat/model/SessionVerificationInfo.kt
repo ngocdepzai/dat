@@ -52,24 +52,6 @@ data class SessionVerificationInfo(
 //            Logger.i("Location speedCalculate: $speedCalculate compare with 28m/s")
             Logger.i("HoangSpeed so sánh speed & speedCalculate: " + "calculateDistance: $calculateDistance |  durationCalculate: $durationCalculate | speedCalculate: $speedCalculate | speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
             LogRecorder.i("Lấy GPS thành công so sánh speed & speedCalculate", "calculateDistance: $calculateDistance |  durationCalculate: $durationCalculate | speedCalculate: $speedCalculate | speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
-            /**
-             * comment logic check jump gps because can not calculate when case speed always return 0
-             */
-//            val accelerationCalculate: Float = if (latestLocation != null)
-//                    ((location.speed - latestLocation!!.speed)/(durationCalculate))
-//            else 0F
-//            val v0t: Float = if (latestLocation != null) latestLocation?.speed!! * durationCalculate else 0.0F
-//            val at2: Float = accelerationCalculate * durationCalculate * durationCalculate
-//            val distanceEstimate: Float = (v0t + at2/2)
-//            // gps distance pass when it's not more than x2 distanceEstimate
-//            val checkJumpGps = (calculateDistance/2) <= distanceEstimate
-//            Logger.i("Location calculateDistance: $calculateDistance | accelerationCalculate: $accelerationCalculate | distanceEstimate: $distanceEstimate | checkJumpGps: $checkJumpGps")
-//            if (speedCalculate <= 28F && checkJumpGps)
-//                BaseNotification.showMessage("Thỏa mãn: $calculateDistance mét")
-//            else
-//                BaseNotification.showError("Loại bỏ: $calculateDistance mét")
-            // latestLocation is null if first location when start app
-//            if (latestLocation == null || (speedCalculate <= 28F && checkJumpGps)) {
 
             if (latestLocation == null || speedCalculate <= 28F) {
                 latestLocation?.apply {

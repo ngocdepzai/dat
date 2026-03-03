@@ -18,6 +18,7 @@ import android.provider.Settings
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
 import android.view.*
+import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProviders
@@ -62,42 +63,34 @@ class TrainingSessionScreen : DatBaseScreen() {
     private lateinit var viewBinding: ScreenTrainingSessionBinding
     private lateinit var riderSessionViewModel: RiderSessionViewModel
     private lateinit var faceRecognitionViewModel: FaceRecognitionViewModel
-
     private var nfcAvailable: Boolean = true // default true because must login teacher first
     private var studentImageLogin: File? = null
     private var studentImageLogout: File? = null
     var studentAuthInfo: UserEntity? = null
-
-    private var hcImageFolder: File =
-        File(Environment.getExternalStorageDirectory().toString() + "/HC_DAT_IMAGES")
+    private var hcImageFolder: File = File(Environment.getExternalStorageDirectory().toString() + "/HC_DAT_IMAGES")
     private lateinit var cameraPreviewDevice: CameraPreviewDevice
     private var studentSessionFolder: File? = null
     private var isStudentContinueSession: Boolean = false
     private var byPassCheckSpeed: Boolean = false
     private var loginRfid: Boolean? = null
 
-    private var cameraPreviewDataQueue: ArrayBlockingQueue<Nv21ImageData> =
-        ArrayBlockingQueue(CAMERA_DATA_QUEUE_SIZE)
-    private var faceDetectedMessageQueue: ArrayBlockingQueue<FaceImageData> =
-        ArrayBlockingQueue(FACE_DATA_QUEUE_SIZE)
+    private var cameraPreviewDataQueue: ArrayBlockingQueue<Nv21ImageData> = ArrayBlockingQueue(CAMERA_DATA_QUEUE_SIZE)
+    private var faceDetectedMessageQueue: ArrayBlockingQueue<FaceImageData> = ArrayBlockingQueue(FACE_DATA_QUEUE_SIZE)
     private var cameraRotation = 0
     private var notFace: Boolean = true
     private var notMask: Boolean = true
     private var isSuccessAtLast = true
     private var recognizeFirstTime = true
     private var countTimeCheckLastImageDetected = 0L
-
     private var faceMatching: Boolean = false
     private var searchScore: Float = 0F
     private var successScore: Float = 0F
     private var failScore: Float = 0F
     private var searchThreshold: Float = 65F
-
     private var isThreadRunningJob: Job? = null
     private var recognitionJob: Job? = null
     @Volatile
     private var timeCounterThread: Thread? = null
-
     private var nfcResultData: String? = null
     private var learningOverTimeDuration = 2L
     private var learningTimeOver10HoursDuration = 2L
@@ -106,11 +99,8 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var recognizeFaceTimeDuration = TIME_FREQUENCY_FACE_RECOGNITION
     private var authDataMissingTimeDuration = 2L
     private var updateSearchThresholdDuration = 1L * 60L
-
-    // Todo check
     private var myListener: MyPhoneStateListener? = null
     private var telephonyManager: TelephonyManager? = null
-
     // flag
     private var connectServiceFailCounter: Int = 0
     private var connectServiceFailFlag = false
@@ -121,7 +111,6 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var timeStartRecognition: Long = 0
     private var timeSendAuthData: Long = 0
     private var adminLogoutRequestCount: Int = 0
-
     private var fakeJob: Job? = null
     private var fakeLat = 21.0285
     private var fakeLng = 105.8542
@@ -148,13 +137,11 @@ class TrainingSessionScreen : DatBaseScreen() {
         const val TIME_FREQUENCY_SENT_GPS: Long = 10L
         const val TIME_FREQUENCY_TRACKING_LAST_IMAGE_RECOGNIZED: Long = 1 * 60L
         const val TIME_FREQUENCY_TRACKING_LAST_AUTHEN_DATA: Long = 1 * 60L // second
-
         const val TIME_CHECKING_PARAM_NOT_DISPLAY: Long = 6 * 60L  // second
         const val TIME_CHECKING_MISSING_IMAGE_DETECTED: Long = 10 * 60L  // second
         const val TIME_CHECKING_MISSING_AUTHEN_DATA: Long = 10 * 60L // second
         const val TIME_CHECKING_SESSION_INTERRUPT: Long = 10 // minute
         const val TIME_AUTO_LOGOUT: Long = 60 // second
-
         const val FACE_RECOGNITION_CHECKING_TIME: Long = 30 * 1000
         const val GOOD_SUCCESS_PERCENTAGE = 80
         const val NORMAL_SUCCESS_PERCENTAGE = 75
@@ -166,14 +153,12 @@ class TrainingSessionScreen : DatBaseScreen() {
         const val FREQUENCY_CHECK_LEARNING_TIME = 2 * 60L
         const val CHECKING_GPS_TIME: Long = 3 * 60L  // second
         const val CHECKING_LAST_GPS_UPLOAD_TIME: Long = 2 * 60L  // second
-
         const val TRACKING_GPS_TIME = 1 * 60L
         const val TIME_WARNING_OVER = 5 * 60L
         const val TIME_ERROR_OVER = 1 * 60L
         const val LEARNING_TIME_OVER = 4 * 60 * 60
         const val AUTO_LOGOUT_TIME_IN_SESSION = 3 * 60 * 60 + 55 * 60
         const val AUTO_LOGOUT_TIME_IN_DAY = 9 * 60 * 60 + 50 * 60
-
         const val LEARNING_TIME_OVER_IN_24H = 10 * 60 * 60
         const val WARNING_TIME_REMAINING_TO_30_MINUTES = 30 * 60
         const val WARNING_TIME_REMAINING_TO_10_MINUTES = 10 * 60
@@ -185,11 +170,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
-    private fun logicBlockChecking(
-        secondCounter: Long,
-        secondDuration: Long,
-        block: () -> Unit
-    ): Long {
+    private fun logicBlockChecking(secondCounter: Long, secondDuration: Long, block: () -> Unit): Long {
         if (secondCounter >= secondDuration) {
             block()
             return 0
@@ -211,20 +192,12 @@ class TrainingSessionScreen : DatBaseScreen() {
                     if (riderSessionViewModel.inProgressSession?.totalVerifyCounter == 0 && recognizeFirstTime) {
                         recognizeFirstTime = false
                         recognizeFaceTimeDuration = 4 // second
-
                         // delay 20s for face recognition can be detect
                         sendAuthenDataDuration = 20 // second
-
                         // time to calculate data validation time
                         timeSendAuthData = sendAuthenDataDuration
                         timeStartRecognition = Calendar.getInstance().timeInMillis / 1000
-
                     }
-//                    else if (recognizeFirstTime && riderSessionViewModel.inProgressSession != null) {
-//                        recognizeFirstTime = false
-//                        recognizeFaceTimeDuration = 4 // second
-//                    }
-
                     // Device status checking logic block
                     deviceStatusSecondCounter = logicBlockChecking(
                         secondCounter = deviceStatusSecondCounter,
@@ -302,9 +275,7 @@ class TrainingSessionScreen : DatBaseScreen() {
 
     private fun updateSearchThresholdBlock() {
         CoroutineScope(Dispatchers.IO).launch(
-            CoroutineExceptionHandler { _, _ ->
-                Logger.w("Error in updateSearchThresholdBlock!")
-            }
+            CoroutineExceptionHandler { _, _ -> Logger.w("Error in updateSearchThresholdBlock!")}
         ) {
             Logger.d("updateSearchThresholdBlock!")
             val calendar = Calendar.getInstance()
@@ -322,9 +293,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private fun handleAutoLogout() {
         autoLogoutDuration = TIME_AUTO_LOGOUT
         var autoLogoutTime = 0
-        val totalTimeIn24h =
-            riderSessionViewModel.inProgressSession!!.totalTime + (riderSessionViewModel.inProgressSession!!.timeIn24H
-                ?: 0.0)
+        val totalTimeIn24h = riderSessionViewModel.inProgressSession!!.totalTime + (riderSessionViewModel.inProgressSession!!.timeIn24H ?: 0.0)
 
         CoroutineScope(Dispatchers.Default).launch {
             autoLogoutTime = riderSessionViewModel.getAutoLogoutTime() * 60
@@ -338,7 +307,6 @@ class TrainingSessionScreen : DatBaseScreen() {
 
     private fun checkTimeCounterThread() {
         Logger.d("startTimeCounter")
-
         isThreadRunningJob?.cancel()
         isThreadRunningJob = CoroutineScope(Dispatchers.Default).launch(
             CoroutineExceptionHandler { _, _ ->
@@ -355,18 +323,17 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun sendDataAuthenBlock() {
         // re-set sendAuthenDataDuration to default
         sendAuthenDataDuration = TIME_FREQUENCY_SENT_DATA
-
         CoroutineScope(Dispatchers.IO).launch(
             CoroutineExceptionHandler { _, _ ->
                 Logger.w("Error in SentData!")
             }
         ) {
             Logger.d("Finish one round send data!")
-            riderSessionViewModel.sessionVerificationInfo.timeAuth =
-                Calendar.getInstance().timeInMillis
+            riderSessionViewModel.sessionVerificationInfo.timeAuth = Calendar.getInstance().timeInMillis
             handleSendDataAuthentication()
         }
     }
@@ -380,24 +347,16 @@ class TrainingSessionScreen : DatBaseScreen() {
             val lastUploadGPSTime = riderSessionViewModel.inProgressSession?.lastUploadGPSTime ?: 0L
 
             if (lastUploadGPSTime != 0L && (currentTime - lastUploadGPSTime) >= CHECKING_LAST_GPS_UPLOAD_TIME) {
-                BaseNotification.showWarning(
-                        getString(R.string.upload_gps_error)
-                )
+                BaseNotification.showWarning(getString(R.string.upload_gps_error))
             }
 
             if (lat == 0.0 && long == 0.0) {
-                BaseNotification.showError(
-                        getString(R.string.gps_error),
-                        priority = Priority.HIGH,
-                )
+                BaseNotification.showError(getString(R.string.gps_error), priority = Priority.HIGH)
             }
             if(riderSessionViewModel.notifyDistanceNotChange){
                 if ((currentTime - lastLocationUpdateTime) >= CHECKING_GPS_TIME && lastLocationUpdateTime != 0L) {
-                    BaseNotification.showWarning(
-                        getString(R.string.distance_not_change)
-                    )
+                    BaseNotification.showWarning(getString(R.string.distance_not_change))
                     LogRecorder.w("Thông báo: ",getString(R.string.distance_not_change))
-
                 }
             }
         }
@@ -413,7 +372,6 @@ class TrainingSessionScreen : DatBaseScreen() {
             if (countTimeCheckLastImageDetected >= TIME_CHECKING_MISSING_IMAGE_DETECTED) {
                 val interruptedTime: Int = (countTimeCheckLastImageDetected/60).toInt()
                 val sessionContinues = riderSessionViewModel.canContinueSessionAfterDisruption(interruptedTime = interruptedTime)
-
                 val message = getString(R.string.missing_image_detected_message, (countTimeCheckLastImageDetected / 60).toInt())
                 LogRecorder.d("", getString(R.string.missing_image_detected_message, (countTimeCheckLastImageDetected / 60).toInt()))
                 withContext(Dispatchers.Main) {
@@ -422,14 +380,9 @@ class TrainingSessionScreen : DatBaseScreen() {
                         message = message,
                         cancelable = false,
                         buttonList = if (sessionContinues) {
-                            listOf(
-                                getString(R.string.quit_session),
-                                getString(R.string.deny_bt)
-                            )
+                            listOf(getString(R.string.quit_session), getString(R.string.deny_bt))
                         } else {
-                            listOf(
-                                getString(R.string.quit_session)
-                            )
+                            listOf(getString(R.string.quit_session))
                         },
                         listener = object : DialogButtonClickListener {
                             override fun onDialogButtonClick(position: Int) {
@@ -443,10 +396,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
                 delay(1000)
                 withContext(Dispatchers.Main) {
-                    BaseNotification.showWarning(
-                        message,
-                        showToast = false
-                    )
+                    BaseNotification.showWarning(message, showToast = false)
                 }
             }
         }
@@ -456,12 +406,9 @@ class TrainingSessionScreen : DatBaseScreen() {
         Logger.d("trackingLastAuthenTimeBlock")
         // handle checking last authen time
         CoroutineScope(Dispatchers.IO).launch {
-
             val currentTime = Calendar.getInstance().timeInMillis / 1000
-
             if (riderSessionViewModel.sessionVerificationInfo.timeAuth != null) {
-                var lastAuthenTime =
-                    riderSessionViewModel.sessionVerificationInfo.timeAuth!! / 1000
+                var lastAuthenTime = riderSessionViewModel.sessionVerificationInfo.timeAuth!! / 1000
                 val missingTime = currentTime - lastAuthenTime
                 Logger.i("missingTimeAuthData: $missingTime")
                 if (missingTime >= TIME_CHECKING_MISSING_AUTHEN_DATA) {
@@ -489,32 +436,23 @@ class TrainingSessionScreen : DatBaseScreen() {
         CoroutineScope(Dispatchers.IO).launch {
             val interruptedTime: Int = (missingTime/60).toInt()
             val sessionContinues = riderSessionViewModel.canContinueSessionAfterDisruption(interruptedTime = interruptedTime)
-
             val message = getString(
                 R.string.missing_image_detected_message,
                 (missingTime / 60).toInt()
             )
-            LogRecorder.i(
-                "",
-                getString(
+            LogRecorder.i("", getString(
                     R.string.missing_image_detected_message,
                     (missingTime / 60).toInt()
-                )
-            )
+                ))
             withContext(Dispatchers.Main) {
                 showDialog(
                     title = getString(R.string.title_notification),
                     message = message,
                     cancelable = false,
                     buttonList = if (sessionContinues) {
-                        listOf(
-                            getString(R.string.quit_session),
-                            getString(R.string.deny_bt)
-                        )
+                        listOf(getString(R.string.quit_session), getString(R.string.deny_bt))
                     } else {
-                        listOf(
-                            getString(R.string.quit_session)
-                        )
+                        listOf(getString(R.string.quit_session))
                     },
                     listener = object : DialogButtonClickListener {
                         override fun onDialogButtonClick(position: Int) {
@@ -528,10 +466,7 @@ class TrainingSessionScreen : DatBaseScreen() {
             }
             delay(1000)
             withContext(Dispatchers.Main) {
-                BaseNotification.showWarning(
-                    message,
-                    showToast = false
-                )
+                BaseNotification.showWarning(message, showToast = false)
             }
         }
     }
@@ -554,15 +489,10 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
     private suspend fun notifyUse4G() {
         withContext(Dispatchers.Main) {
-            val connManager =
-                requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val mWifi =
-                connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)?.isConnected == true
+            val connManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)?.isConnected == true
             if (mWifi && riderSessionViewModel.notifyUse4G) {
-                BaseNotification.showWarning(
-                    getString(R.string.only_use_4g_message),
-                    showToast = false
-                )
+                BaseNotification.showWarning(getString(R.string.only_use_4g_message), showToast = false)
             }
         }
     }
@@ -581,10 +511,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                             }
                             delay(1000)
                         }
-                        LogRecorder.i(
-                            "Thông báo:",
-                            getString(R.string.param_session_not_display)
-                        )
+                        LogRecorder.i("Thông báo:", getString(R.string.param_session_not_display))
                     }
                 }
                 // delay for check param in session
@@ -604,7 +531,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
                 if (zeroVelocityCount >= timeTrackingVelocity) {
                     if (isAdded) {
-
                         withContext(Dispatchers.Main) {
                             BaseNotification.showWarning(getString(R.string.velocity_error))
                         }
@@ -613,7 +539,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
                 delay(1000)
             }
-
         }
     }
 
@@ -629,13 +554,10 @@ class TrainingSessionScreen : DatBaseScreen() {
         var lastFaceRecognized: FaceImageData? = null
         faceMatching = false
         searchScore = 0f
-
         recognitionJob?.cancel()
         recognitionJob = CoroutineScope(Dispatchers.Default).launch {
             while ((Utils.getRealTimeStamp() - startTime < checkingTime) && !resultCheck && isActive) {
-//                Logger.i("Current time: ${Utils.getRealTimeStamp()} | startTime: $startTime | faceDetectedMessageQueue.isEmpty(): ${faceDetectedMessageQueue.isEmpty()}")
                 //reset recognition score
-
                 if (faceDetectedMessageQueue.isEmpty()) {
                     notFaceCounter++
                     if (notFaceCounter >= 20) {
@@ -656,13 +578,11 @@ class TrainingSessionScreen : DatBaseScreen() {
                     val faceDetectedMessage: FaceImageData? = faceDetectedMessageQueue.take()
                     LogRecorder.i("Kiểm tra: ", "Dữ liệu ảnh: ${faceDetectedMessage != null}")
                     if (faceDetectedMessage != null) {
-                        val frameBitmap =
-                            faceRecognitionViewModel.cameraPreviewDataToBitmap(faceDetectedMessage.nv21ImageData)
+                        val frameBitmap = faceRecognitionViewModel.cameraPreviewDataToBitmap(faceDetectedMessage.nv21ImageData)
                         faceRecognitionViewModel.facialAnalysis(
                             frameBitmap,
                             studentAuthInfo?.userCode
                         )
-
                         lastFaceRecognized = faceDetectedMessage
                         val result = searchScore >= searchThreshold
                         Logger.i("handleRecognizeFaceDetected result: $result")
@@ -671,11 +591,9 @@ class TrainingSessionScreen : DatBaseScreen() {
                             if (wearMaskCounter > 10) {
                                 wearMaskCounter = 0
                                 withContext(Dispatchers.Main) {
-                                    BaseNotification.showWarning(
-                                        getString(
+                                    BaseNotification.showWarning(getString(
                                             R.string.no_wearing_mask
-                                        )
-                                    )
+                                        ))
                                 }
                             }
                         } else if (result) {
@@ -685,11 +603,9 @@ class TrainingSessionScreen : DatBaseScreen() {
                             // show success message if has been show warning before
                             if (verifyFailCounter > 0 || recognizeFail) {
                                 withContext(Dispatchers.Main) {
-                                    BaseNotification.showMessage(
-                                        getString(
+                                    BaseNotification.showMessage(getString(
                                             R.string.face_verify_success
-                                        )
-                                    )
+                                        ))
                                 }
                             }
                             resultCheck = true
@@ -698,7 +614,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                         } else {
                             // notify not face matching
                             ++notFaceMatchingCounter
-
                             if (notFaceMatchingCounter > 10) {
                                 Logger.w("Not face matching!")
                                 recognizeFail = true
@@ -709,13 +624,9 @@ class TrainingSessionScreen : DatBaseScreen() {
                                         priority = Priority.HIGH,
                                         showToast = false
                                     )
-                                    LogRecorder.i(
-                                        "Thông báo: ",
-                                        "${getString(R.string.warning_verify_fail_counter)
-                                    }: $searchScore ")
+                                    LogRecorder.i("Thông báo: ","${getString(R.string.warning_verify_fail_counter)}: $searchScore ")
                                 }
                             }
-                            // Not first time and queue is empty  -> finish one turn recognition
                         }
                     }
                 }
@@ -724,16 +635,12 @@ class TrainingSessionScreen : DatBaseScreen() {
             // try 3 times if fail
             if (!resultCheck && verifyFailCounter <= 3) {
                 withContext(Dispatchers.Main) {
-                    BaseNotification.showWarning(
-                        getString(
+                    BaseNotification.showWarning(getString(
                             R.string.warning_verify_fail_counter
-                        )
-                    )
-                    LogRecorder.i(
-                        "Thông báo: ", getString(
+                        ))
+                    LogRecorder.i("Thông báo: ", getString(
                             R.string.warning_verify_fail_counter
-                        )
-                    )
+                        ))
                 }
                 handleRecognizeFaceDetected1()
             } else {
@@ -762,19 +669,15 @@ class TrainingSessionScreen : DatBaseScreen() {
                 previewData?.also { previewData ->
                     faceRecognitionViewModel.faceDetect(previewData) { rect ->
                         CoroutineScope(Dispatchers.IO).launch() {
-
                             showFacePassFace(rect)
                             if (rect != null) {
-                                faceDetectedMessageQueue.offer(
-                                    FaceImageData(previewData, previewData.nv21Data)
-                                )
+                                faceDetectedMessageQueue.offer(FaceImageData(previewData, previewData.nv21Data))
                             } else {
                                 withContext(Dispatchers.Main) {
                                     viewBinding.faceView.clear()
                                     viewBinding.faceView.invalidate()
                                 }
                             }
-
                         }
                     }
                 }
@@ -794,51 +697,35 @@ class TrainingSessionScreen : DatBaseScreen() {
     private fun checkLearningOver10HoursBlock() {
         CoroutineScope(Dispatchers.Main).launch {
             val additionalTime = 15 * 60
-            val totalTimeIn24h =
-                riderSessionViewModel.inProgressSession!!.totalTime + (riderSessionViewModel.inProgressSession!!.timeIn24H
-                    ?: 0.0)
+            val totalTimeIn24h = riderSessionViewModel.inProgressSession!!.totalTime + (riderSessionViewModel.inProgressSession!!.timeIn24H ?: 0.0)
             val remainingTimeIn24H = LEARNING_TIME_OVER_IN_24H - totalTimeIn24h
             Logger.i("totalTimeIn24h: ${DateUtil.ConvertHms(totalTimeIn24h)}")
             Logger.i("remainingTime: ${DateUtil.ConvertHms(remainingTimeIn24H)}")
-
             if (remainingTimeIn24H <= 0) {
-                LogRecorder.e(
-                    "Phiên học", getString(
+                LogRecorder.e("Phiên học", getString(
                         R.string.over_time_24h_error, DateUtil.ConvertHms(totalTimeIn24h)
-                    )
-                )
-                BaseNotification.showError(
-                    getString(
+                    ))
+                BaseNotification.showError(getString(
                         R.string.over_time_24h_error, DateUtil.ConvertHms(totalTimeIn24h)
-                    )
-                )
+                    ))
                 learningTimeOver10HoursDuration = TIME_ERROR_OVER
                 delay(TIME_ERROR_OVER)
             } else if (remainingTimeIn24H <= WARNING_TIME_REMAINING_TO_10_MINUTES) {
-                LogRecorder.w(
-                    "Phiên học", getString(
+                LogRecorder.w("Phiên học", getString(
                         R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
-                    )
-                )
-                BaseNotification.showWarning(
-                    getString(
+                    ))
+                BaseNotification.showWarning(getString(
                         R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
-                    )
-                )
+                    ))
                 learningTimeOver10HoursDuration = TIME_ERROR_OVER
             } else if (remainingTimeIn24H <= (WARNING_TIME_REMAINING_TO_30_MINUTES - additionalTime)) {
-                LogRecorder.w(
-                    "Phiên học", getString(
+                LogRecorder.w("Phiên học", getString(
                         R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
-                    )
-                )
-                BaseNotification.showWarning(
-                    getString(
+                    ))
+                BaseNotification.showWarning(getString(
                         R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
-                    )
-                )
+                    ))
                 learningTimeOver10HoursDuration = TIME_WARNING_OVER
-
             } else {
                 learningTimeOver10HoursDuration = FREQUENCY_CHECK_LEARNING_TIME
             }
@@ -848,8 +735,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private fun checkLearningOver4HoursBlock() {
         learningOverTimeDuration = FREQUENCY_CHECK_LEARNING_TIME
         val additionalTime = 15 * 60
-        val remainingTime =
-            LEARNING_TIME_OVER - riderSessionViewModel.inProgressSession!!.totalTime
+        val remainingTime = LEARNING_TIME_OVER - riderSessionViewModel.inProgressSession!!.totalTime
         Logger.i("totalTime: ${riderSessionViewModel.inProgressSession!!.totalTime}")
         Logger.i("remainingTime: ${DateUtil.ConvertHms(remainingTime)}")
         // If learn more than 3 hours and 55 minutes, then will auto log out
@@ -860,46 +746,34 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
         CoroutineScope(Dispatchers.Main).launch {
             if (remainingTime <= 0) {
-                LogRecorder.e(
-                    "Phiên học", getString(
+                LogRecorder.e("Phiên học", getString(
                         R.string.over_time_error,
                         DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    )
-                )
-                BaseNotification.showError(
-                    getString(
+                    ))
+                BaseNotification.showError(getString(
                         R.string.over_time_error,
                         DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    )
-                )
+                    ))
                 learningOverTimeDuration = TIME_ERROR_OVER
             } else if (remainingTime <= WARNING_TIME_REMAINING_TO_10_MINUTES) {
-                LogRecorder.w(
-                    "Phiên học", getString(
+                LogRecorder.w("Phiên học", getString(
                         R.string.over_time_warning,
                         DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    )
-                )
-                BaseNotification.showWarning(
-                    getString(
+                    ))
+                BaseNotification.showWarning(getString(
                         R.string.over_time_warning,
                         DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    )
-                )
+                    ))
                 learningOverTimeDuration = TIME_ERROR_OVER
             } else if (remainingTime <= (WARNING_TIME_REMAINING_TO_30_MINUTES - additionalTime)) {
-                LogRecorder.w(
-                    "Phiên học", getString(
+                LogRecorder.w("Phiên học", getString(
                         R.string.over_time_warning,
                         DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    )
-                )
-                BaseNotification.showWarning(
-                    getString(
+                    ))
+                BaseNotification.showWarning(getString(
                         R.string.over_time_warning,
                         DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    )
-                )
+                    ))
                 learningOverTimeDuration = TIME_WARNING_OVER
             } else {
                 learningOverTimeDuration = FREQUENCY_CHECK_LEARNING_TIME
@@ -911,14 +785,11 @@ class TrainingSessionScreen : DatBaseScreen() {
         CoroutineScope(Dispatchers.Main).launch {
             viewBinding.tvDateNow.text = Utils.getCurrentDateTime()
             riderSessionViewModel.inProgressSession?.also { inProgressSession ->
-
                 val startTime = riderSessionViewModel.getSessionStartTime() ?: Utils.getRealTimeStamp()
                 //convert to seconds
                 inProgressSession.totalTime = (Utils.getRealTimeStamp() - startTime).toDouble() / 1000
-                viewBinding.tvTotalTime.text =
-                    DateUtil.ConvertHms(inProgressSession.totalTime)
-                viewBinding.tvTotalTimeInDay.text =
-                    inProgressSession.timeIn24H?.let { it1 -> DateUtil.ConvertHms(it1 + inProgressSession.totalTime) }
+                viewBinding.tvTotalTime.text = DateUtil.ConvertHms(inProgressSession.totalTime)
+                viewBinding.tvTotalTimeInDay.text = inProgressSession.timeIn24H?.let { it1 -> DateUtil.ConvertHms(it1 + inProgressSession.totalTime) }
             }
         }
     }
@@ -930,8 +801,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 deviceStatusCheckingBlock()
             }
         ) {
-            val connManager =
-                requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val connManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
             var mMobile = false
             val networks = connManager.allNetworks
@@ -956,36 +826,28 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
                 if (mMobile) {
                     // Do whatever
-                    val bImage =
-                        BitmapFactory.decodeResource(resources, R.drawable.iconwireless)
+                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconwireless)
                     viewBinding.ivWirelessStatus.setImageBitmap(bImage)
                     LogRecorder.i("Trạng thái kết nối 4G: bật","")
                 } else {
-                    val bImage =
-                        BitmapFactory.decodeResource(resources, R.drawable.iconnonwireless)
+                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconnonwireless)
                     viewBinding.ivWirelessStatus.setImageBitmap(bImage)
                     LogRecorder.i("Trạng thái kết nối 4G: tắt","")
                 }
                 if (mWifi?.isConnected != true && mMobile != true) {
                     LogRecorder.e("Hệ thống", "Không có kết nối network")
                     messageError += " ${getString(R.string.network_not_available)}"
-//                        BaseNotification.showWarning(getString(R.string.network_not_available))
                 }
                 if (Environment.MEDIA_MOUNTED == Environment.getExternalStorageState()) {
                     // Do whatever
-                    val bImage =
-                        BitmapFactory.decodeResource(resources, R.drawable.iconstorage)
+                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconstorage)
                     viewBinding.ivStorage.setImageBitmap(bImage)
                 } else {
-                    val bImage =
-                        BitmapFactory.decodeResource(resources, R.drawable.iconnonstorage)
+                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconnonstorage)
                     viewBinding.ivStorage.setImageBitmap(bImage)
                     LogRecorder.e("Hệ thống", "Bộ nhớ lưu trũ full")
                 }
-                    // use onGPSUpdate() to check GPS
-//                checkGPSAvailable()
-
-//                    / Tìm cách kiểm tra camera trước có hoạt động không
+                // Tìm cách kiểm tra camera trước có hoạt động không
                 if (messageError.isNotBlank()) {
                     BaseNotification.showWarning(messageError, showToast = false)
                     LogRecorder.e("Thông báo: ","$messageError")
@@ -997,10 +859,8 @@ class TrainingSessionScreen : DatBaseScreen() {
     private fun checkGPSAvailable() {
         val startTime = Utils.getRealTimeStamp()
         val checkingTime = 20000 // 20 giây (mili giây)
-
         CoroutineScope(Dispatchers.Default).launch {
             var isGPSAvailable = riderSessionViewModel.checkGPSAvailable(requireActivity())
-
             withContext(Dispatchers.Main) {
                 viewBinding.ivGpsStatus.setImageResource(
                     if (isGPSAvailable) R.drawable.icongps else R.drawable.iconnongps
@@ -1024,30 +884,15 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
         viewBinding = ScreenTrainingSessionBinding.inflate(inflater, container, false)
-        riderSessionViewModel =
-            ViewModelProviders.of(
-                requireActivity(),
-                viewModelFactory
-            )[RiderSessionViewModel::class.java]
-        faceRecognitionViewModel =
-            ViewModelProviders.of(
-                requireActivity(),
-                viewModelFactory
-            )[FaceRecognitionViewModel::class.java]
+        riderSessionViewModel = ViewModelProviders.of(requireActivity(), viewModelFactory)[RiderSessionViewModel::class.java]
+        faceRecognitionViewModel = ViewModelProviders.of(requireActivity(), viewModelFactory)[FaceRecognitionViewModel::class.java]
         cameraPreviewDevice = faceRecognitionViewModel.getCameraPreviewDevice()!!
         viewBinding.teacherInfo = riderSessionViewModel.teacherAuthInfo
         searchThreshold = appViewModel.searchThreshold
         riderSessionViewModel.teacherAuthInfo?.avatarId?.also {
-//            ImageUtil.imageLoader
-//                ?.load("${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it")
-//                ?.into(viewBinding.ivTeacherAvatar)
             val request = ImageRequest.Builder(requireContext())
                 .data("${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it")
                 .setHeader("User-Agent", "Mozilla/5.0")
@@ -1059,37 +904,22 @@ class TrainingSessionScreen : DatBaseScreen() {
             ImageLoader.imageLoader?.enqueue(request)
         }
             ?: also { viewBinding.ivTeacherAvatar.setImageDrawable(requireContext().getDrawable(R.drawable.nonavatar)) }
-
         nfcAvailable = appViewModel.checkNFCAvailable()
-//        cameraManager = CameraManager()
         initView()
-
         checkStudentContinueSession()
-
-        // call checkFacePassGroupReady for delete old facegroup
-//        faceRecognitionViewModel.checkFacePassGroupReady()
-
-//        riderSessionViewModel.startGPSEventListener(gpsEventListener)
-
         LogRecorder.d("", "Màn hình phiên học")
         return viewBinding.root
     }
 
     private fun initView() {
-        viewBinding.tvSerialNumber.text =
-            getString(R.string.serial_value, riderSessionViewModel.getImeiDevice(requireContext()))
-        viewBinding.tvVehiclePlate.text =
-            getString(R.string.vehicle_value, appViewModel.getPlateSlug())
+        viewBinding.tvSerialNumber.text = getString(R.string.serial_value, riderSessionViewModel.getImeiDevice(requireContext()))
+        viewBinding.tvVehiclePlate.text = getString(R.string.vehicle_value, appViewModel.getPlateSlug())
         viewBinding.tvTrainingCenterName.text = appViewModel.getTrainingCenterName() ?: "-/-"
-
         viewBinding.rgNightMode.setOnCheckedChangeListener { _, checked ->
             autoChangeNightMode = false
             LogRecorder.d("", "Bật chế độ ban đêm")
             if (checked) {
                 viewBinding.nightMode = true
-//                val attributes = requireActivity().window.attributes
-//                attributes.screenBrightness = 1f
-//                requireActivity().window.attributes = attributes
             }
         }
         viewBinding.rgDayMode.setOnCheckedChangeListener { _, checked ->
@@ -1262,12 +1092,10 @@ class TrainingSessionScreen : DatBaseScreen() {
 
         viewBinding.rlCurrentSpeed.setOnClickListener{
             animateSpeedChange(
-                startValue = viewBinding.tvCurrentSpeed.text.trim().toString().toIntOrNull()
-                    ?: 0,
+                startValue = viewBinding.tvCurrentSpeed.text.trim().toString().toIntOrNull() ?: 0,
                 stopValue = 0
             )
             byPassCheckSpeed = true
-
             // After 5 seconds without logout or login, byPassCheckSpeed = false
             GlobalScope.launch {
                 delay(5000)
@@ -1282,19 +1110,15 @@ class TrainingSessionScreen : DatBaseScreen() {
                     it1, false, updateFaceSampleCallback)
             }
         }
-
     }
 
     private fun handleLogoutTeacher() {
         riderSessionViewModel.dropTeachOutWorking()
         viewBinding.teacherInfo = null
         requireActivity().onBackPressed()
-//        parentFragmentManager.popBackStack()
     }
 
     private fun handleFinishRiderSession(sessionContinues: Boolean = true, autoLogout: Boolean = false) {
-//        riderSessionViewModel.dropStudentOutSession()
-//        viewBinding.studentInfo = null
         pauseHandleProcess()
         FinishSessionDialog.showDialog(
             requireActivity(),
@@ -1404,10 +1228,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                     showDialog(
                         title = getString(R.string.title_notification),
                         message = getString(R.string.student_not_have_sample_image),
-                        buttonList = listOf(
-                            getString(R.string.skip_bt),
-                            getString(R.string.setup_face_bt)
-                        ),
+                        buttonList = listOf(getString(R.string.skip_bt), getString(R.string.setup_face_bt)),
                         listener = object : DialogButtonClickListener {
                             override fun onDialogButtonClick(position: Int) {
                                 dismissDialog()
@@ -1451,18 +1272,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                         }
                     )
                 }
-//                FaceRecognizeLoginAction.FACE_LOGIN_FAIL -> {
-//                    showDialog(
-//                        title = getString(R.string.title_notification),
-//                        message = getString(R.string.login_face_fail),
-//                        buttonList = listOf(getString(R.string.ok),),
-//                        listener = object : DialogButtonClickListener {
-//                            override fun onDialogButtonClick(position: Int) {
-//                                dismissDialog()
-//                            }
-//                        }
-//                    )
-//                }
                 else -> {
                     Logger.w("Action $action not yet handle!")
                 }
@@ -1470,61 +1279,44 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun setupRiderSession() {
         Logger.d("setupRiderSession")
         riderSessionViewModel.saveInProgressSession(riderSessionViewModel.inProgressSession!!.id)
-
         // make folder save images recognition student face
         val studentFolder = File(hcImageFolder, studentAuthInfo?.userCode ?: "unknown-user")
         if (!studentFolder.exists()) {
             studentFolder.mkdirs()
         }
-        studentSessionFolder =
-            File(studentFolder, riderSessionViewModel.inProgressSession?.id ?: "unknown-session")
+        studentSessionFolder = File(studentFolder, riderSessionViewModel.inProgressSession?.id ?: "unknown-session")
         if (studentSessionFolder?.exists() == false) {
             studentSessionFolder?.mkdirs()
         }
-
         viewBinding.studentInfo = studentAuthInfo
-
-        viewBinding.tvCourseCode.text =
-            getString(R.string.course_value, studentAuthInfo?.courseCode)
-        viewBinding.tvDriverLicense.text =
-            getString(R.string.level_value, studentAuthInfo?.courseLicense)
-
+        viewBinding.tvCourseCode.text = getString(R.string.course_value, studentAuthInfo?.courseCode)
+        viewBinding.tvDriverLicense.text = getString(R.string.level_value, studentAuthInfo?.courseLicense)
         val totalDistanceInCourse: Float = studentAuthInfo?.totalCourseDistance ?: 0.0F
         var totalDistanceDone: Float = studentAuthInfo?.totalDistanceRode ?: 0.0F
-        var totalDistanceRemaining: Int =
-            ((totalDistanceInCourse - totalDistanceDone) / 1000.0).toInt()
+        var totalDistanceRemaining: Int = ((totalDistanceInCourse - totalDistanceDone) / 1000.0).toInt()
         if (totalDistanceRemaining < 0) totalDistanceRemaining = 0
         val totalDistanceDoneValue: Int = (totalDistanceDone / 1000.0).toInt()
-
         val totalTimeInCourse: Double = ((studentAuthInfo?.totalCourseTime ?: 0.0) * 60)
         val totalTimeDone: Double = ((studentAuthInfo?.totalTimeStudied ?: 0.0) * 60)
         LogRecorder.i("thời gian và quãng đường đã học","quãng đường: ${studentAuthInfo?.totalDistanceRode}km, thời gian: ${studentAuthInfo?.totalTimeStudied}")
         var totalTimeRemaining = totalTimeInCourse - totalTimeDone
         if (totalTimeRemaining < 0) totalTimeRemaining = 0.0
-
-        viewBinding.tvTotalDistanceRemaining.text =
-            getString(R.string.counter_distance_value, totalDistanceRemaining.toString())
-        viewBinding.tvTotalDistanceComplete.text =
-            getString(R.string.counter_distance_value, totalDistanceDoneValue.toString())
+        viewBinding.tvTotalDistanceRemaining.text = getString(R.string.counter_distance_value, totalDistanceRemaining.toString())
+        viewBinding.tvTotalDistanceComplete.text = getString(R.string.counter_distance_value, totalDistanceDoneValue.toString())
         viewBinding.tvTotalTimeRemaining.text = DateUtil.ConvertHms(totalTimeRemaining)
         viewBinding.tvTotalTimeComplete.text = DateUtil.ConvertHms(totalTimeDone)
         riderSessionViewModel.inProgressSession?.also {
-
-            viewBinding.tvTotalAutoTime.text =
-                String.format("%.2f GIỜ", (((it.automaticTransmissionTime ?: 0.0) / 3600 * 100).toInt() / 100.0))
-            viewBinding.tvTotalNightTime.text =
-                String.format("%.2f GIỜ", (((it.nightTime ?: 0.0) / 3600 * 100).toInt() / 100.0))
+            viewBinding.tvTotalAutoTime.text = String.format("%.2f GIỜ", (((it.automaticTransmissionTime ?: 0.0) / 3600 * 100).toInt() / 100.0))
+            viewBinding.tvTotalNightTime.text = String.format("%.2f GIỜ", (((it.nightTime ?: 0.0) / 3600 * 100).toInt() / 100.0))
         }
 
         loadImageAvatar()
-
         openCamera()
-
         updateVerifyResultCounter()
-
         notifyUserSessionParamNotDisplayed()
     }
 
@@ -1564,8 +1356,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         Logger.e("Call reload authenImages ${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it Error!!")
                         loadImageAvatar()
                     }
-                )
-                .build()
+                ).build()
             ImageLoader.imageLoader?.enqueue(request)
         }
             ?: also { viewBinding.ivAvatarStudent.setImageDrawable(requireContext().getDrawable(R.drawable.nonavatar)) }
@@ -1576,7 +1367,6 @@ class TrainingSessionScreen : DatBaseScreen() {
             handleStatus: CameraHandlerStatus,
             imageData: Nv21ImageData?
         ) {
-//                    Logger.i("onTakenPicture imageData: $imageData")
             imageData?.also {
                 cameraPreviewDataQueue.offer(imageData)
             }
@@ -1634,7 +1424,6 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
 
     private fun pauseHandleProcess() {
-//        cameraManager?.release()
         faceRecognitionViewModel.stopRecognition()
         isThreadRunningJob?.cancel(cause = CancellationException("Cancel by pause process!"))
         timeCounterThread?.interrupt()
@@ -1645,9 +1434,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private val finishSessionConfirmCallback: (action: ActionFinishSession, isNotSendTC: Boolean, imageFile: File?)
     -> Unit = { action: ActionFinishSession, isNotSendTC: Boolean, imageFile: File? ->
         Logger.i("finishSessionConfirmCallback action: $action | isNotSendTC: $isNotSendTC")
-//        openCamera()
         CoroutineScope(Dispatchers.Main).launch {
-
             if(timeCounterThread?.isAlive == false || timeCounterThread == null || timeCounterThread?.isInterrupted == true){
                 startTimeCounter()
             }
@@ -1741,30 +1528,15 @@ class TrainingSessionScreen : DatBaseScreen() {
             this.successScore = searchScore.toFloat()
         }
         else this.failScore = searchScore.toFloat()
-
-
         Logger.i("startRecognition searchScore:$searchScore, notFace:$notFace, notMask:$notMask")
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         myListener = MyPhoneStateListener(requireActivity())
-        telephonyManager =
-            requireContext().getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        telephonyManager = requireContext().getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         telephonyManager?.listen(myListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS)
-
         requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        val windowRotation =
-            (requireActivity().getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation * 90
-//        cameraRotation = if (windowRotation == 0) {
-//            FacePassImageRotation.DEG90
-//        } else if (windowRotation == 90) {
-//            FacePassImageRotation.DEG0
-//        } else if (windowRotation == 270) {
-//            FacePassImageRotation.DEG180
-//        } else {
-//            FacePassImageRotation.DEG270
-//        }
     }
 
     private fun startNFCReading() {
@@ -1813,7 +1585,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                             NFCLoginDialog.dismiss()
                             appViewModel.stopNFCCard()
                             showProgressDialog()
-//                        appViewModel.getUserInfoByRfidCode(cardData = result, callback = appCallback)
                             nfcResultData = data
                         }
                         else -> {}
@@ -1842,27 +1613,20 @@ class TrainingSessionScreen : DatBaseScreen() {
                 GPSAction.GPS_SETTING_CHANGED -> {
                     enableGps = data as Boolean
                     Logger.i("GPS_SETTING_CHANGED enableGps: $enableGps")
-                    LogRecorder.i(
-                        "Hệ thống",
-                        getString(if (enableGps) R.string.gps_available else R.string.gps_not_available)
-                    )
+                    LogRecorder.i("Hệ thống", getString(if (enableGps) R.string.gps_available else R.string.gps_not_available))
 
                     if (!gpsChecking) {
                         gpsChecking = true
                         CoroutineScope(Dispatchers.Default).launch {
                             while (timestampCheckGPS < 30) {
                                 ++timestampCheckGPS
-
                                 if (timestampCheckGPS >= 30) {
                                     gpsChecking = false
                                     timestampCheckGPS = 0
                                     withContext(Dispatchers.Main) {
                                         if (!enableGps) {
                                             statusGps = true
-                                            LogRecorder.e(
-                                                "Thông báo",
-                                                getString(R.string.gps_not_available)
-                                            )
+                                            LogRecorder.e("Thông báo", getString(R.string.gps_not_available))
                                             BaseNotification.showWarning(
                                                 getString(R.string.gps_not_available),
                                                 showToast = false
@@ -1870,14 +1634,10 @@ class TrainingSessionScreen : DatBaseScreen() {
                                             viewBinding.ivGpsStatus.setImageResource(R.drawable.iconnongps)
 
                                         } else {
-                                            LogRecorder.i(
-                                                "Thông báo",
-                                                getString(R.string.gps_available)
-                                            )
+                                            LogRecorder.i("Thông báo", getString(R.string.gps_available))
                                             BaseNotification.showMessage(getString(R.string.gps_available))
                                             viewBinding.ivGpsStatus.setImageResource(R.drawable.icongps)
                                         }
-
                                     }
                                 }
 
@@ -1892,10 +1652,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                     }
                     if (statusGps) {
                         statusGps = false
-                        LogRecorder.i(
-                            "Thông báo",
-                            getString(R.string.gps_available)
-                        )
+                        LogRecorder.i("Thông báo", getString(R.string.gps_available))
                         BaseNotification.showMessage(getString(R.string.gps_available))
                         viewBinding.ivGpsStatus.setImageResource(R.drawable.icongps)
                     }
@@ -1906,46 +1663,30 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
                 GPSAction.LOCATION_UPDATED -> {
                     val location = data as Location
-                    Logger.i("location speed accuracy: ${location.speedAccuracyMetersPerSecond} | accuracy: ${location.accuracy} | elapsedRealtimeNanos: ${location.elapsedRealtimeNanos}  | provider: ${location.provider}")
+                    Logger.i("accuracy: ${location.accuracy} | elapsedRealtimeNanos: ${location.elapsedRealtimeNanos}  | provider: ${location.provider}")
                     Logger.i("location speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
                     LogRecorder.i("Lấy GPS thành công", "speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
                     LogRecorder.i("Số lượng vệ tinh GPS được sử dụng: ", quantityGPSSatellite)
                     riderSessionViewModel.sessionVerificationInfo.apply {
                         setLastLocation(location)
-//                        lat = location.latitude
-//                        long = location.longitude
                     }
-//                    viewBinding.tvCurrentSpeed.text = riderSessionViewModel.sessionVerificationInfo.getSpeed().toInt().toString()
                     viewBinding.tvLastLocation.text = "${location.latitude}, ${location.longitude}"
                     animateSpeedChange(
-                        startValue = viewBinding.tvCurrentSpeed.text.trim().toString().toIntOrNull()
-                            ?: 0,
+                        startValue = viewBinding.tvCurrentSpeed.text.trim().toString().toIntOrNull() ?: 0,
                         stopValue = riderSessionViewModel.sessionVerificationInfo.getSpeed().toInt()
                     )
                     ObjectAnimator.ofInt(
-                        viewBinding.progressBarSpeed,
-                        "progress",
-                        riderSessionViewModel.sessionVerificationInfo.getSpeed().toInt()
+                        viewBinding.progressBarSpeed,"progress", riderSessionViewModel.sessionVerificationInfo.getSpeed().toInt()
                     ).setDuration(2000).start()
-
-//                    viewBinding.progressBarSpeed.progress = riderSessionViewModel.sessionVerificationInfo.getSpeed().toInt()
                     riderSessionViewModel.inProgressSession?.also { inProgressSession ->
-
-                        viewBinding.tvUploadResultImage.text =
-                                "${inProgressSession.totalAuthDataUploadSuccess}/${inProgressSession.totalAuthDataUpload}(${1 + Math.floor(inProgressSession.totalTime).toInt()/300})"
+                        viewBinding.tvUploadResultImage.text = "${inProgressSession.totalAuthDataUploadSuccess}/${inProgressSession.totalAuthDataUpload}(${1 + Math.floor(inProgressSession.totalTime).toInt()/300})"
                         viewBinding.tvUploadResultImage.setTextColor(if (inProgressSession.totalAuthDataUploadSuccess == inProgressSession.totalAuthDataUpload) Color.GREEN else Color.RED)
-
-                        viewBinding.tvUploadResultGPS.text =
-                                "${inProgressSession.totalGPSUploadSuccess}/${inProgressSession.totalGPSUpload}(${1 + Math.floor(inProgressSession.totalTime).toInt()/10})"
+                        viewBinding.tvUploadResultGPS.text = "${inProgressSession.totalGPSUploadSuccess}/${inProgressSession.totalGPSUpload}(${1 + Math.floor(inProgressSession.totalTime).toInt()/10})"
                         viewBinding.tvUploadResultGPS.setTextColor(if (inProgressSession.totalGPSUploadSuccess == inProgressSession.totalGPSUpload) Color.GREEN else Color.RED)
-
-
-                        viewBinding.tvTotalTime.text =
-                            DateUtil.ConvertHms(inProgressSession.totalTime)
+                        viewBinding.tvTotalTime.text = DateUtil.ConvertHms(inProgressSession.totalTime)
                         inProgressSession.totalDis += riderSessionViewModel.sessionVerificationInfo.distance
                         val totalDistance: Float = inProgressSession.totalDis / 1000f
-                        viewBinding.tvTotalDistance.text =
-                            getString(R.string.total_distance_value, (totalDistance * 100).toInt() / 100.0)
+                        viewBinding.tvTotalDistance.text = getString(R.string.total_distance_value, (totalDistance * 100).toInt() / 100.0)
 
                         riderSessionViewModel.pushGPSData(
                             gpsStatus = myListener?.signalNum ?: -1,
@@ -2072,18 +1813,13 @@ class TrainingSessionScreen : DatBaseScreen() {
                         showDialog(
                             title = getString(R.string.title_notification),
                             message = getString(R.string.student_not_have_sample_image),
-                            buttonList = listOf(
-                                getString(R.string.skip_bt),
-                                getString(R.string.setup_face_bt)
-                            ),
+                            buttonList = listOf(getString(R.string.skip_bt), getString(R.string.setup_face_bt)),
                             listener = object : DialogButtonClickListener {
                                 override fun onDialogButtonClick(position: Int) {
                                     dismissDialog()
                                     if (position == 1) {
                                         val userEntity = data as UserEntity
-                                        val bundle = bundleOf(
-                                            "user_info" to userEntity
-                                        )
+                                        val bundle = bundleOf("user_info" to userEntity)
                                         viewBinding.root.findNavController().navigate(
                                             R.id.action_trainingSessionScreen_to_registerFaceRecognizeScreen,
                                             bundle
@@ -2165,12 +1901,12 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     val riderSessionCallback: (action: RiderSessionAction, data: Any?)
     -> Unit = { action: RiderSessionAction, data: Any? ->
         Logger.d("riderSessionCallback action: $action | data: $data")
         when (action) {
             RiderSessionAction.CHECK_STUDENT_AVAILABLE_SUCCESS -> {
-//                dismissProgress()
                 // check teach has in session
                 handleGetTeacherInProgressSession(riderSessionViewModel.teacherAuthInfo!!.userCode)
             }
@@ -2240,7 +1976,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                                 }
                             }
                         )
-
                     }
                 }
             }
@@ -2257,8 +1992,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 riderSessionViewModel.inProgressSession?.also { inProgressSession ->
                     inProgressSession.totalDis = pairData.first
                     val totalDistance: Float = inProgressSession.totalDis / 1000f
-                    viewBinding.tvTotalDistance.text =
-                        getString(R.string.total_distance_value, (totalDistance * 100).toInt() / 100.0)
+                    viewBinding.tvTotalDistance.text = getString(R.string.total_distance_value, (totalDistance * 100).toInt() / 100.0)
                     inProgressSession.totalTime = pairData.second
                     viewBinding.tvTotalTime.text = DateUtil.ConvertHms(inProgressSession.totalTime)
                     // [DAT CER]: only use for get DAT certification
@@ -2266,7 +2000,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                         totalTime = inProgressSession.totalTime,
                         totalDistance = inProgressSession.totalDis
                     )
-                    // [DAT CER]
                 }
                 if (connectServiceFailFlag) {
                     // reset counter
@@ -2283,9 +2016,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         title = getString(R.string.error_title_dialog),
                         message = getString(R.string.send_tc_error_message),
                         cancelable = false,
-                        buttonList = listOf(
-                            getString(R.string.finish_with_out_send_tc),
-                        ),
+                        buttonList = listOf(getString(R.string.finish_with_out_send_tc)),
                         listener = object : DialogButtonClickListener {
                             override fun onDialogButtonClick(position1: Int) {
                                 dismissDialog()
@@ -2351,9 +2082,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         title = getString(R.string.title_notification),
                         message = message,
                         cancelable = false,
-                        buttonList = listOf(
-                            getString(R.string.ok)
-                        ),
+                        buttonList = listOf(getString(R.string.ok)),
                         listener = object : DialogButtonClickListener {
                             override fun onDialogButtonClick(position: Int) {
                                 dismissDialog()
@@ -2469,14 +2198,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                     }
                 )
             }
-//            RiderSessionAction.UPLOAD_IMAGE_START_SESSION_SUCCESS -> {
-//                // Start create session
-//                // keep student login image to session verify
-//                riderSessionViewModel.sessionVerificationInfo.studentImageAuthUrl = data as String
-//                handlePrepareStartSession()
-//            }
             RiderSessionAction.START_RIDER_SESSION_SUCCESS -> {
-
                 val loginTypeSuffix = when (loginRfid) {
                     true -> "_RFID"
                     false -> "_MA"
@@ -2492,8 +2214,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                     versionApp = BuildConfig.VERSION_NAME,
                     startTime = riderSessionViewModel.getSessionStartTime(),
                     loginStatus = loginStatus,
-                    timeLogin = riderSessionViewModel.getSessionStartTime()
-                        ?.let { Utils.convertTimeStampToTime(it) }
+                    timeLogin = riderSessionViewModel.getSessionStartTime()?.let { Utils.convertTimeStampToTime(it) }
                 )
                 // start session success -> push student info to rider session
                 setupRiderSession()
@@ -2602,8 +2323,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
     private fun handleLogoutByAdmin(){
         CoroutineScope(Dispatchers.Default).launch {
-            val lastAuthenImage =
-                riderSessionViewModel.sessionVerificationInfo.faceImageFile
+            val lastAuthenImage = riderSessionViewModel.sessionVerificationInfo.faceImageFile
             lastAuthenImage?.let {
                 riderSessionViewModel.adminLogoutHandler(studentLogoutImage = lastAuthenImage)
             }
@@ -2611,7 +2331,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                 handleSessionCompletionEvent()
             }
         }
-
     }
     private fun handleSessionCompletionEvent(){
         dismissProgress()
@@ -2621,12 +2340,14 @@ class TrainingSessionScreen : DatBaseScreen() {
         requireActivity().onBackPressed()
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun handleGetStudentInProgressSession(userCode: String) {
         // check exist session in-progress by student
         Logger.d("handleGetStudentInProgressSession by userCode: $userCode")
         riderSessionViewModel.getInProgressSessionByStudent(userCode, riderSessionCallback)
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun handleGetTeacherInProgressSession(userCode: String) {
         // check exist session in-progress by student
         Logger.d("handleGetTeacherInProgressSession by userCode: $userCode")
@@ -2641,10 +2362,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 title = getString(R.string.title_notification),
                 message = getString(R.string.student_face_recognition_null),
                 cancelable = false,
-                buttonList = listOf(
-                    getString(R.string.reject_make_face_recog_bt),
-                    getString(R.string.make_student_face_recog_bt)
-                ),
+                buttonList = listOf(getString(R.string.reject_make_face_recog_bt), getString(R.string.make_student_face_recog_bt)),
                 listener = object : DialogButtonClickListener {
                     override fun onDialogButtonClick(position: Int) {
                         dismissDialog()
@@ -2662,10 +2380,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                     title = getString(R.string.title_notification),
                     message = getString(R.string.gps_turn_off_error),
                     cancelable = false,
-                    buttonList = listOf(
-                        getString(R.string.ok),
-                        getString(R.string.go_setting_enable_gps_bt)
-                    ),
+                    buttonList = listOf(getString(R.string.ok), getString(R.string.go_setting_enable_gps_bt)),
                     listener = object : DialogButtonClickListener {
                         override fun onDialogButtonClick(position: Int) {
                             dismissDialog()
@@ -2685,11 +2400,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                         studentImageLogin!!,
                         riderSessionCallback
                     )
-//                    riderSessionViewModel.uploadImageStartSession(
-//                        imageFile = studentImageLogin!!,
-//                        userCode = studentAuthInfo!!.userCode!!,
-//                        callback = riderSessionCallback
-//                    )
                 } else {
                     dismissProgress()
                     showDialog(
@@ -2707,6 +2417,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun handleCheckSessionInProgress(inProgressSession: InProgressSession?) {
         Logger.i("inProgressSession: $inProgressSession")
         if (inProgressSession == null) {
@@ -2767,15 +2478,12 @@ class TrainingSessionScreen : DatBaseScreen() {
                     }
                 )
             } else {
-//                riderSessionViewModel.inProgressSession = inProgressSession
                 CoroutineScope(Dispatchers.Default).launch(
                 ) {
                     riderSessionViewModel.continueInProgressSession(inProgressSession)
-
                     resetTimeCounter()
                     sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
                             timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
-
                     )
                     // time to calculate data validation time
                     timeSendAuthData = sendAuthenDataDuration
@@ -2808,9 +2516,9 @@ class TrainingSessionScreen : DatBaseScreen() {
         recognizeFaceTimeDuration = 4 // second
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private suspend fun handleSendDataAuthentication() {
         Logger.d("handleSendDataAuthentication")
-
         // call checking resend data upload failed
         CoroutineScope(Dispatchers.Default).launch{
             riderSessionViewModel.checkAndReUploadData()
@@ -2837,28 +2545,20 @@ class TrainingSessionScreen : DatBaseScreen() {
     private fun setVerifyResult(result: VerifyResult) {
         Logger.d("setVerifyResult")
         riderSessionViewModel.sessionVerificationInfo.verifyResult = result
-
         // reset countTimeCheckLastImageDetected to 0
         countTimeCheckLastImageDetected = 0
     }
 
-    private fun handleRecognizeResult(
-        imageFaceRecognized: FaceImageData?,
-        resultCheck: Boolean,
-    ) {
+    private fun handleRecognizeResult(imageFaceRecognized: FaceImageData?, resultCheck: Boolean) {
         Logger.d("handleRecognizeResult")
         var faceImageData: FaceImageData? = null
         // save image authenticate to local and upload to server
         imageFaceRecognized?.also {
             // update progress status
-            setVerifyResult(
-                result = if (resultCheck) VerifyResult.VERIFY_SUCCESS else VerifyResult.VERIFY_FAIL
-            )
+            setVerifyResult(result = if (resultCheck) VerifyResult.VERIFY_SUCCESS else VerifyResult.VERIFY_FAIL)
             riderSessionViewModel.sessionVerificationInfo.searchScore = successScore
             LogRecorder.i("Thông báo: ","Giá trị ảnh nhận dạng: $successScore")
-
             faceImageData = imageFaceRecognized
-//            handlePushAuthData(it.nv21ImageData)
             // clear queue
             cameraPreviewDataQueue.clear()
             faceDetectedMessageQueue.clear()
@@ -2867,16 +2567,13 @@ class TrainingSessionScreen : DatBaseScreen() {
             val nv21ImageData = cameraPreviewDataQueue.take()
             riderSessionViewModel.sessionVerificationInfo.searchScore = failScore
             LogRecorder.i("Thông báo: ","Giá trị ảnh nhận dạng: $failScore")
-            setVerifyResult(
-                result = VerifyResult.VERIFY_FAIL
-            )
+            setVerifyResult(result = VerifyResult.VERIFY_FAIL)
             nv21ImageData?.also {
                 faceImageData = FaceImageData(it, it.nv21Data)
             }
         }
         faceImageData?.also {
-            val fileImageAuth =
-                File(studentSessionFolder, "student_auth_${Utils.getRealTimeStamp()}.png")
+            val fileImageAuth = File(studentSessionFolder, "student_auth_${Utils.getRealTimeStamp()}.png")
             LogRecorder.i("","Chụp ảnh thành công: ${fileImageAuth.name}")
             fileImageAuth.apply {
                 if (exists()) delete()
@@ -2889,10 +2586,8 @@ class TrainingSessionScreen : DatBaseScreen() {
                     it.nv21ImageData.height,
                     null
                 )
-//            Logger.i("handlePushAuthData image width: ${faceImageData.nv21ImageData.width} | height: ${faceImageData.nv21ImageData.height}")
                 val imageRatio: Float = 800.0F / it.nv21ImageData.width.toFloat()
                 val quality = (100F * imageRatio).toInt().coerceIn(0, 100)
-//            Logger.i("handlePushAuthData imageRatio: $imageRatio | quality: $quality")
                 yuvImage.compressToJpeg(
                     Rect(0, 0, it.nv21ImageData.width, it.nv21ImageData.height),
                     quality,
@@ -2903,7 +2598,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                 Logger.d("Save image temporary success")
                 riderSessionViewModel.sessionVerificationInfo.faceImageFile = fileImageAuth
                 CoroutineScope(Dispatchers.Main).launch {
-                    // show to view
                     viewBinding.vLastImageAuthen.visibility = View.VISIBLE
                     val request = ImageRequest.Builder(requireContext())
                         .data(fileImageAuth.path)
@@ -2930,23 +2624,17 @@ class TrainingSessionScreen : DatBaseScreen() {
             timeStartRecognition = 0
             timeSendAuthData = 0
         }
-
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun handlePushAuthData(fileImageAuth: File) {
-        riderSessionViewModel.uploadImageInSession(
-            imageFile = fileImageAuth,
-            userCode = studentAuthInfo!!.userCode,
-        ) { action: RiderSessionAction, data: Any? ->
+        riderSessionViewModel.uploadImageInSession(imageFile = fileImageAuth, userCode = studentAuthInfo!!.userCode) { action: RiderSessionAction, data: Any? ->
             Logger.d("handlePushAuthData uploadImageStartSession action: $action | data: $data")
-//            dismissProgress()
             when (action) {
                 RiderSessionAction.UPLOAD_IMAGE_CAPTURE_SUCCESS -> {
                     // keep student authenticate image to session verify
-                    riderSessionViewModel.sessionVerificationInfo.studentImageAuthUrl =
-                        data as String
-                    riderSessionViewModel.sessionVerificationInfo.studentImageAuthPath =
-                        fileImageAuth.path
+                    riderSessionViewModel.sessionVerificationInfo.studentImageAuthUrl = data as String
+                    riderSessionViewModel.sessionVerificationInfo.studentImageAuthPath = fileImageAuth.path
                     riderSessionViewModel.pushAuthenticateData(){
                         updateVerifyResultCounter()
                     }
@@ -2969,6 +2657,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     @SuppressLint("SetTextI18n")
     private fun updateVerifyResultCounter() {
         riderSessionViewModel.inProgressSession?.also { inProgressSession ->
@@ -2989,37 +2678,24 @@ class TrainingSessionScreen : DatBaseScreen() {
                 viewBinding.tvVerifySuccessPercentage.text = "$successPercentage%"
                 val color = if (successPercentage >= GOOD_SUCCESS_PERCENTAGE) Color.GREEN
                 else if (successPercentage in NORMAL_SUCCESS_PERCENTAGE until GOOD_SUCCESS_PERCENTAGE) Color.YELLOW
-                else if (successPercentage in LOW_SUCCESS_PERCENTAGE until NORMAL_SUCCESS_PERCENTAGE) requireContext().getColor(
-                    R.color.orange
-                )
+                else if (successPercentage in LOW_SUCCESS_PERCENTAGE until NORMAL_SUCCESS_PERCENTAGE) requireContext().getColor(R.color.orange)
                 else Color.RED
                 val lastCheck = if (isSuccessAtLast) getString(R.string.verify_success_result) else getString(R.string.verify_fail_result)
                 viewBinding.tvVerifySuccessPercentage.setTextColor(color)
                 viewBinding.tvLastCheck.text = lastCheck
-
                 viewBinding.tvLastCheck.setTextColor(if (isSuccessAtLast) Color.GREEN else Color.RED)
-
-                viewBinding.tvUploadResultImage.text =
-                        "${inProgressSession.totalAuthDataUploadSuccess}/${inProgressSession.totalAuthDataUpload}(${1 + Math.floor(inProgressSession.totalTime).toInt()/300})"
+                viewBinding.tvUploadResultImage.text = "${inProgressSession.totalAuthDataUploadSuccess}/${inProgressSession.totalAuthDataUpload}(${1 + Math.floor(inProgressSession.totalTime).toInt()/300})"
                 viewBinding.tvUploadResultImage.setTextColor(if (inProgressSession.totalAuthDataUploadSuccess == inProgressSession.totalAuthDataUpload) Color.GREEN else Color.RED)
-
-                viewBinding.tvUploadResultGPS.text =
-                        "${inProgressSession.totalGPSUploadSuccess}/${inProgressSession.totalGPSUpload}(${1 + Math.floor(inProgressSession.totalTime).toInt()/10})"
+                viewBinding.tvUploadResultGPS.text = "${inProgressSession.totalGPSUploadSuccess}/${inProgressSession.totalGPSUpload}(${1 + Math.floor(inProgressSession.totalTime).toInt()/10})"
                 viewBinding.tvUploadResultGPS.setTextColor(if (inProgressSession.totalGPSUploadSuccess == inProgressSession.totalGPSUpload) Color.GREEN else Color.RED)
-
-                LogRecorder.i(
-                    "",
-                    "Kết quả xác thực phiên: Thành công: $successCounter lần, Thất bại: $failCounter lần, Lần cuối: $lastCheck, Tỷ lệ xác thực: ${successPercentage}%, giá trị nhận dạng: ${appViewModel.getSearchThreshold() ?: searchThreshold}"
-                )
+                LogRecorder.i("","Kết quả xác thực phiên: Thành công: $successCounter lần, Thất bại: $failCounter lần, Lần cuối: $lastCheck, Tỷ lệ xác thực: ${successPercentage}%, giá trị nhận dạng: ${appViewModel.getSearchThreshold() ?: searchThreshold}")
             }
         }
     }
 
     private suspend fun showFacePassFace(rect: Rect?) {
-
         if(rect != null){
             viewBinding.faceView.clear()
-
             val mirror = viewBinding.extraCamera == false
             val faceIdString = StringBuilder()
             val faceRollString = StringBuilder()
@@ -3028,8 +2704,7 @@ class TrainingSessionScreen : DatBaseScreen() {
             val faceBlurString = StringBuilder()
             val smileString = StringBuilder()
             val faceRecognitionRate = StringBuilder()
-            faceRecognitionRate.append(if (faceMatching) successScore.toInt() else failScore.toInt())
-                .append("/").append(searchThreshold.toInt())
+            faceRecognitionRate.append(if (faceMatching) successScore.toInt() else failScore.toInt()).append("/").append(searchThreshold.toInt())
             val mat = Matrix()
             val w = cameraPreviewDevice.getPreviewSize().first
             val h = cameraPreviewDevice.getPreviewSize().second
@@ -3047,18 +2722,12 @@ class TrainingSessionScreen : DatBaseScreen() {
                     bottom = rect.bottom.toFloat()
                     mat.setScale(if (mirror) -1f else 1f, 1f)
                     mat.postTranslate(if (mirror) cameraWidth.toFloat() else 0f, 0f)
-                    mat.postScale(
-                            w.toFloat() / cameraWidth.toFloat(),
-                            h.toFloat() / cameraHeight.toFloat()
-                    )
+                    mat.postScale(w.toFloat() / cameraWidth.toFloat(),h.toFloat() / cameraHeight.toFloat())
                 }
                 90 -> {
                     mat.setScale((if (mirror) -1.0f else 1.0f), 1f)
                     mat.postTranslate(if (mirror) cameraHeight.toFloat() else 0f, 0f)
-                    mat.postScale(
-                            w.toFloat() / cameraHeight.toFloat(),
-                            h.toFloat() / cameraWidth.toFloat()
-                    )
+                    mat.postScale(w.toFloat() / cameraHeight.toFloat(),h.toFloat() / cameraWidth.toFloat())
                     left = rect.top.toFloat()
                     top = (cameraWidth - rect.right).toFloat()
                     right = rect.bottom.toFloat()
@@ -3067,10 +2736,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 180 -> {
                     mat.setScale(1f, 1f)
                     mat.postTranslate(0f, 0f)
-                    mat.postScale(
-                            w.toFloat() / cameraWidth.toFloat(),
-                            h.toFloat() / cameraHeight.toFloat()
-                    )
+                    mat.postScale(w.toFloat() / cameraWidth.toFloat(),h.toFloat() / cameraHeight.toFloat())
                     left = rect.right.toFloat()
                     top = rect.bottom.toFloat()
                     right = rect.left.toFloat()
@@ -3079,10 +2745,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 270 -> {
                     mat.setScale((if (mirror) -1.0f else 1.0f), 1f)
                     mat.postTranslate(if (mirror) cameraHeight.toFloat() else 0f, 0f)
-                    mat.postScale(
-                            w.toFloat() / cameraHeight.toFloat(),
-                            h.toFloat() / cameraWidth.toFloat()
-                    )
+                    mat.postScale(w.toFloat() / cameraHeight.toFloat(),h.toFloat() / cameraWidth.toFloat())
                     left = (cameraHeight - rect.bottom).toFloat()
                     top = rect.left.toFloat()
                     right = (cameraHeight - rect.top).toFloat()
@@ -3124,7 +2787,6 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
 
     fun fakeLocation(realSpeedKmh: Float) {
-
         val random = Random.nextFloat()
 
         val timeOffset = (800..1500).random().toLong()   // GPS yếu -> update không đều
@@ -3181,7 +2843,6 @@ class TrainingSessionScreen : DatBaseScreen() {
             time = fakeTime
             elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
         }
-
         gpsEventListener.onGPSUpdate(GPSAction.LOCATION_UPDATED, location)
     }
 
@@ -3225,7 +2886,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         if(isThreadRunningJob?.isActive == false || isThreadRunningJob == null){
             checkTimeCounterThread()
         }
-//        activity?.drawerLayout?.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
         riderSessionViewModel.startGPSEventListener(gpsEventListener)
 //        fakeJob = CoroutineScope(Dispatchers.Main).launch {
 //
@@ -3285,7 +2945,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                 )
             }
         }
-
         checkSessionInterrupt()
     }
 
@@ -3293,7 +2952,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         val interruptedTime = riderSessionViewModel.getInProgressSessionInterruptInMinutes()
         Logger.i("checkSessionInterrupt interruptedTime: $interruptedTime")
         LogRecorder.i("", "checkSessionInterrupt interruptedTime:  $interruptedTime")
-//        viewBinding.tvSerialNumber.text = "interruptedTime: $interruptedTime"
         return if (interruptedTime >= TIME_CHECKING_SESSION_INTERRUPT) {
             CoroutineScope(Dispatchers.IO + Job()).launch(
                 CoroutineExceptionHandler { _, _ ->
@@ -3308,14 +2966,9 @@ class TrainingSessionScreen : DatBaseScreen() {
                         message = message,
                         cancelable = false,
                         buttonList = if (sessionContinues) {
-                            listOf(
-                                getString(R.string.quit_session),
-                                getString(R.string.deny_bt)
-                            )
+                            listOf(getString(R.string.quit_session), getString(R.string.deny_bt))
                         } else {
-                            listOf(
-                                getString(R.string.quit_session)
-                            )
+                            listOf(getString(R.string.quit_session))
                         },
                         listener = object : DialogButtonClickListener {
                             override fun onDialogButtonClick(position: Int) {
@@ -3329,10 +2982,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
                 delay(1000)
                 withContext(Dispatchers.Main) {
-                    BaseNotification.showWarning(
-                        message,
-                        showToast = false
-                    )
+                    BaseNotification.showWarning(message, showToast = false)
                 }
             }
             false
@@ -3371,14 +3021,9 @@ class TrainingSessionScreen : DatBaseScreen() {
         // fix issue show error dialog after session finish success
         dismissDialog()
     }
-
-//    override fun onPictureTaken(cameraPreviewData: CameraPreviewData?) {
-//        cameraPreviewDataQueue.offer(cameraPreviewData)
-//    }
 }
 
 data class FaceImageData(
     val nv21ImageData: Nv21ImageData,
-//    val nv21ImageDataOriginal: Nv21ImageData,
     val imageData: ByteArray
 )
