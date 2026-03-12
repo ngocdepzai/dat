@@ -1163,6 +1163,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         isSentGeneral = true
                         val userEntity = data as UserEntity
                         BaseNotification.showWarning(getString(R.string.confirm_user_info_message))
+                        Logger.i("Hoang1: " + getString(R.string.confirm_user_info_message))
                         LogRecorder.i("Thông báo: ", getString(R.string.confirm_user_info_message))
                         UserInfoDialog.showDialog(
                             requireContext(),
@@ -1830,6 +1831,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         )
                     } else {
                         BaseNotification.showWarning(getString(R.string.confirm_user_info_message))
+                        Logger.i("Hoang2: " + getString(R.string.confirm_user_info_message))
                         LogRecorder.i("Thông báo: ", getString(R.string.confirm_user_info_message))
                         UserInfoDialog.showDialog(
                             requireContext(),

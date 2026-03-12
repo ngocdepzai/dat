@@ -75,23 +75,27 @@ internal object UserInfoDialog {
             .setView(viewBinding.root).create()
         dialog?.setOnShowListener {
             dialog?.window?.setLayout(
-                view.width + 100,
+                view.width + 100,.
+
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
         dialog?.show()
 
         viewBinding.btCancelDialog.setOnClickListener {
+            dialog?.dismiss()
+            dialog = null
             callback(false, userEntity)
-            dismiss()
         }
         viewBinding.btConfirm.setOnClickListener {
+            dialog?.dismiss()
+            dialog = null
             callback(true, userEntity)
-            dismiss()
         }
     }
 
     fun dismiss() {
         dialog?.dismiss()
+        dialog = null
     }
 }
