@@ -75,7 +75,7 @@ internal object UserInfoDialog {
             .setView(viewBinding.root).create()
         dialog?.setOnShowListener {
             dialog?.window?.setLayout(
-                view.width + 100,.
+                view.width + 100,
 
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )

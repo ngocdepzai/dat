@@ -458,10 +458,10 @@ class TeacherLoginScreen : DatBaseScreen() {
                         riderSessionViewModel.getImeiDevice(requireContext()),
                         faceRecognitionCallback
                     )
-                    // Time out 8s dismiss dialog
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        dismissProgress()
-                    }, 8000)
+//                    // Time out 8s dismiss dialog
+//                    Handler(Looper.getMainLooper()).postDelayed({
+//                        dismissProgress()
+//                    }, 8000)
                 }
             }
             AppAction.INIT_CONFIG_DATA_FAIL_BY_INTERNET -> {

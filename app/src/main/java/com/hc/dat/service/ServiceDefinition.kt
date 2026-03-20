@@ -3,9 +3,9 @@ package com.hc.dat.service
 object ServiceDefinition {
     const val CONNECTING_TIMEOUTS_DEFAULT = 120L // second
     const val HOST_BASE_URL = "http://api.hcsky.vn/"
-    const val HOST_BASE_URL2 = "http://27.118.25.80:8010/"
-    const val IMAGE_FULL_SIZE_URL = "http://hcsky.vn/api/Resource/v2024/get_link_image/"
-    const val IMAGE_RESIZE_URL = "http://hcsky.vn/api/Resource/v2024/get_link_image_resize/"
+    const val HOST_BASE_URL2 = "http://27.118.25.80:8007/"
+    const val IMAGE_FULL_SIZE_URL = "http://api.hcsky.vn/api/Resource/v2024/get_link_image/"
+    const val IMAGE_RESIZE_URL = "http://api.hcsky.vn/api/Resource/v2024/get_link_image_resize/"
     const val GUIDE_URL = "http://hcsky.vn/huong-dan"
 
     const val GET_USER_INFO_URL = "api/User/v2024/v1/get_by_idCard"
