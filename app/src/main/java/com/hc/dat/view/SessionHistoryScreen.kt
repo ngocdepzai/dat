@@ -33,6 +33,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
@@ -162,9 +163,24 @@ class SessionHistoryScreen : DatBaseScreen() {
                             studentCode = riderSessionEntity.studentCode,
                         )
                     }
-                reportFile?.let {
-                    appViewModel.pushFile(files = listOf(reportFile), callback = appCallback)
-                } ?: dismissProgress()
+
+                withContext(Dispatchers.Main) {
+                    // ✅ Fragment đã detach thì bỏ
+                    if (!isAdded || activity == null) return@withContext
+
+                    val act = requireActivity()
+                    if (act.isFinishing || act.isDestroyed) return@withContext
+
+                    reportFile?.let {
+                        appViewModel.pushFile(
+                                files = listOf(reportFile),
+                                callback = appCallback
+                        )
+                    } ?: dismissProgress()
+                }
+//                reportFile?.let {
+//                    appViewModel.pushFile(files = listOf(reportFile), callback = appCallback)
+//                } ?: dismissProgress()
             }
         }
 

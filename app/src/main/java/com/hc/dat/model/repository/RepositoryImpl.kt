@@ -316,47 +316,128 @@ class RepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun uploadLogs(files: List<File>, imei: String): ResponseResult<Any?> {
-        Logger.d("uploadLogs userCode: imei: $imei | files: ${files.size}")
+    override suspend fun uploadLogs(
+            files: List<File>,
+            imei: String
+    ): ResponseResult<Any?> {
+
+        Logger.d("=== uploadLogs START ===")
+        Logger.d("IMEI: $imei")
+        Logger.d("Input files size: ${files.size}")
+
         try {
-            val files: List<MultipartBody.Part>? = files.generateBodyRequest()
-            if (files != null && files.isNotEmpty()) {
-                val response = datService.uploadLogs(
-                    files = files,
-                    imei = imei.generateBodyRequest()
-                )
-                val responseData = response.body()
-                Logger.i("uploadLogs responseData: $responseData")
-                return when (response.code()) {
-                    ResponseStatus.SUCCESS -> {
-                        if (responseData?.status == 1) {
-                            ResponseResult()
-                        } else {
-                            ResponseResult(
+            // 🔍 Log từng file
+            files.forEachIndexed { index, file ->
+                Logger.d("File[$index]: path=${file.absolutePath}")
+                Logger.d("File[$index]: exists=${file.exists()} | size=${file.length()} | canRead=${file.canRead()}")
+            }
+
+            val parts = files.generateBodyRequest()
+
+            Logger.d("Generated multipart parts: ${parts?.size}")
+
+            if (parts == null || parts.isEmpty()) {
+                Logger.e("❌ Multipart parts NULL or EMPTY")
+                return ResponseResult(isError = true)
+            }
+
+            // 🔍 Log từng part
+            parts.forEachIndexed { index, part ->
+                Logger.d("Part[$index]: headers=${part.headers}")
+            }
+
+            val imeiPart = imei.generateBodyRequest()
+            Logger.d("IMEI part: $imeiPart")
+
+            Logger.d("🚀 CALL API uploadLogs...")
+
+            val response = datService.uploadLogs(
+                    files = parts,
+                    imei = imeiPart
+            )
+
+            Logger.d("⬅️ Response received")
+            Logger.d("HTTP Code: ${response.code()}")
+            Logger.d("Raw response: ${response.raw()}")
+
+            val responseData = response.body()
+
+            Logger.d("Parsed body: $responseData")
+
+            return when (response.code()) {
+                ResponseStatus.SUCCESS -> {
+                    if (responseData?.status == 1) {
+                        Logger.d("✅ Upload SUCCESS")
+                        ResponseResult()
+                    } else {
+                        Logger.e("❌ Server trả lỗi logic: ${responseData?.message}")
+                        ResponseResult(
                                 isError = true,
                                 errorCode = responseData?.status ?: -1,
                                 errorMessage = responseData?.message ?: ""
-                            )
-                        }
-                    }
-                    else -> {
-                        ResponseResult(
-                            isError = true
                         )
                     }
                 }
-            } else {
-                return ResponseResult(
-                    isError = true
-                )
+
+                else -> {
+                    Logger.e("❌ HTTP ERROR: ${response.code()}")
+                    Logger.e("Error body: ${response.errorBody()?.string()}")
+                    ResponseResult(isError = true)
+                }
             }
+
         } catch (ex: UnknownHostException) {
-            Logger.i("Error ${ex.message}")
-            return ResponseResult(
-                isError = true
-            )
+            Logger.e("❌ UnknownHostException (NO INTERNET): ${ex.message}")
+            return ResponseResult(isError = true)
+
+        } catch (ex: Exception) {
+            Logger.e("❌ Exception: ${ex.message}")
+            ex.printStackTrace()
+            return ResponseResult(isError = true)
         }
     }
+
+//    override suspend fun uploadLogs(files: List<File>, imei: String): ResponseResult<Any?> {
+//        Logger.d("uploadLogs userCode: imei: $imei | files: ${files.size}")
+//        try {
+//            val files: List<MultipartBody.Part>? = files.generateBodyRequest()
+//            if (files != null && files.isNotEmpty()) {
+//                val response = datService.uploadLogs(
+//                    files = files,
+//                    imei = imei.generateBodyRequest()
+//                )
+//                val responseData = response.body()
+//                Logger.i("uploadLogs responseData: $responseData")
+//                return when (response.code()) {
+//                    ResponseStatus.SUCCESS -> {
+//                        if (responseData?.status == 1) {
+//                            ResponseResult()
+//                        } else {
+//                            ResponseResult(
+//                                isError = true,
+//                                errorCode = responseData?.status ?: -1,
+//                                errorMessage = responseData?.message ?: ""
+//                            )
+//                        }
+//                    }
+//                    else -> {
+//                        ResponseResult(
+//                            isError = true
+//                        )
+//                    }
+//                }
+//            } else {
+//                return ResponseResult(
+//                    isError = true
+//                )
+//            }
+//        } catch (ex: UnknownHostException) {
+//            Logger.i("Error ${ex.message}")
+//            return ResponseResult(
+//                isError = true
+//            )
+//        }
+//    }
 
     override suspend fun uploadDeviceInfo(
         deviceInfo: UploadDeviceInfoRequest
