@@ -67,6 +67,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var studentImageLogin: File? = null
     private var studentImageLogout: File? = null
     var studentAuthInfo: UserEntity? = null
+    var isGpsAvailableShown = false
     private var hcImageFolder: File = File(Environment.getExternalStorageDirectory().toString() + "/HC_DAT_IMAGES")
     private lateinit var cameraPreviewDevice: CameraPreviewDevice
     private var studentSessionFolder: File? = null
@@ -1627,17 +1628,20 @@ class TrainingSessionScreen : DatBaseScreen() {
                                     withContext(Dispatchers.Main) {
                                         if (!enableGps) {
                                             statusGps = true
+                                            isGpsAvailableShown = false
                                             LogRecorder.e("Thông báo", getString(R.string.gps_not_available))
                                             BaseNotification.showWarning(
                                                 getString(R.string.gps_not_available),
                                                 showToast = false
                                             )
                                             viewBinding.ivGpsStatus.setImageResource(R.drawable.iconnongps)
-
                                         } else {
-                                            LogRecorder.i("Thông báo", getString(R.string.gps_available))
-                                            BaseNotification.showMessage(getString(R.string.gps_available))
-                                            viewBinding.ivGpsStatus.setImageResource(R.drawable.icongps)
+                                            if (!isGpsAvailableShown) {
+                                                isGpsAvailableShown = true
+                                                LogRecorder.i("Thông báo", getString(R.string.gps_available))
+                                                BaseNotification.showMessage(getString(R.string.gps_available))
+                                                viewBinding.ivGpsStatus.setImageResource(R.drawable.icongps)
+                                            }
                                         }
                                     }
                                 }
@@ -1653,9 +1657,12 @@ class TrainingSessionScreen : DatBaseScreen() {
                     }
                     if (statusGps) {
                         statusGps = false
-                        LogRecorder.i("Thông báo", getString(R.string.gps_available))
-                        BaseNotification.showMessage(getString(R.string.gps_available))
-                        viewBinding.ivGpsStatus.setImageResource(R.drawable.icongps)
+                        if (!isGpsAvailableShown) {
+                            isGpsAvailableShown = true
+                            LogRecorder.i("Thông báo", getString(R.string.gps_available))
+                            BaseNotification.showMessage(getString(R.string.gps_available))
+                            viewBinding.ivGpsStatus.setImageResource(R.drawable.icongps)
+                        }
                     }
                 }
                 GPSAction.SATELLITE_COUNT_UPDATED -> {

@@ -85,6 +85,7 @@
                     android:layout_gravity="center"
                     android:background="@color/orange"
                     android:text="nhập thông tin thiết bị"
+                    android:visibility="gone"
                     android:textColor="@color/white"
                     android:textSize="35sp"
                     android:textStyle="bold" />
