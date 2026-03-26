@@ -97,8 +97,8 @@ data class SessionVerificationInfo(
                     "distance=$distance m | duration=$duration s | speedCalc=$speedCalculate m/s | rawSpeed=${location.speed} | acc=${location.accuracy}"
             )
 
-            // 🚨 RULE 1: tốc độ không thực tế ( >180km/h )
-            if (speedCalculate > 50f) {
+            // 🚨 RULE 1: tốc độ không thực tế ( >144km/h )
+            if (speedCalculate > 40f) {
                 Logger.e("GPS JUMP (speed too high)")
                 LogRecorder.i("GPS_DROP", "❌ JUMP_SPEED distance=$distance duration=$duration speedCalc=$speedCalculate")
                 this.distance = 0f
@@ -137,7 +137,7 @@ data class SessionVerificationInfo(
                     "✅ VALID distance=$distance duration=$duration"
             )
 
-            // ✅ xử lý speed (KHÔI PHỤC logic của bạn)
+            // ✅ xử lý speed
             speed = if (isValidGpsSpeed(location, speedCalculate)) {
                 Utils.convertLocationSpeed(location)
             } else {
