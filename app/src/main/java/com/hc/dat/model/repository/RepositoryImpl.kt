@@ -316,11 +316,7 @@ class RepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun uploadLogs(
-            files: List<File>,
-            imei: String
-    ): ResponseResult<Any?> {
-
+    override suspend fun uploadLogs(files: List<File>, imei: String): ResponseResult<Any?> {
         Logger.d("=== uploadLogs START ===")
         Logger.d("IMEI: $imei")
         Logger.d("Input files size: ${files.size}")
@@ -333,7 +329,6 @@ class RepositoryImpl @Inject constructor(
             }
 
             val parts = files.generateBodyRequest()
-
             Logger.d("Generated multipart parts: ${parts?.size}")
 
             if (parts == null || parts.isEmpty()) {
@@ -348,7 +343,6 @@ class RepositoryImpl @Inject constructor(
 
             val imeiPart = imei.generateBodyRequest()
             Logger.d("IMEI part: $imeiPart")
-
             Logger.d("🚀 CALL API uploadLogs...")
 
             val response = datService.uploadLogs(
@@ -361,7 +355,6 @@ class RepositoryImpl @Inject constructor(
             Logger.d("Raw response: ${response.raw()}")
 
             val responseData = response.body()
-
             Logger.d("Parsed body: $responseData")
 
             return when (response.code()) {
@@ -389,7 +382,6 @@ class RepositoryImpl @Inject constructor(
         } catch (ex: UnknownHostException) {
             Logger.e("❌ UnknownHostException (NO INTERNET): ${ex.message}")
             return ResponseResult(isError = true)
-
         } catch (ex: Exception) {
             Logger.e("❌ Exception: ${ex.message}")
             ex.printStackTrace()
@@ -1069,7 +1061,6 @@ class RepositoryImpl @Inject constructor(
     override suspend fun getRequestRetrieverLog(imei: String): ResponseResult<GetRequestRetrieverLogResponse> {
         Logger.d("getRequestRetrieverLog imei: $imei")
         try {
-            // TODO create new service because API haven't just merge to main service
             val secondService: DatService = Service.buildService(
                 DatService::class.java,
                 ServiceDefinition.HOST_BASE_URL2,

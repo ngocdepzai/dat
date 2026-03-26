@@ -1678,7 +1678,8 @@ class TrainingSessionScreen : DatBaseScreen() {
                     riderSessionViewModel.sessionVerificationInfo.apply {
                         setLastLocation(location)
                     }
-                    viewBinding.tvLastLocation.text = "${location.latitude}, ${location.longitude}"
+                    val info = riderSessionViewModel.sessionVerificationInfo
+                    viewBinding.tvLastLocation.text = "${info.lat}, ${info.long}"
                     animateSpeedChange(
                         startValue = viewBinding.tvCurrentSpeed.text.trim().toString().toIntOrNull() ?: 0,
                         stopValue = riderSessionViewModel.sessionVerificationInfo.getSpeed().toInt()
