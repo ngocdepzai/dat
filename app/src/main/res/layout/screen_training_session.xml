@@ -113,6 +113,16 @@
                 <ImageView
                     android:layout_width="25dp"
                     android:layout_marginStart="4dp"
+                    android:id="@+id/ivPinStatus"
+                    android:layout_marginTop="8dp"
+                    android:src="@drawable/iconpin"
+                    android:background="@color/white"
+                    android:visibility="gone"
+                    android:layout_height="25dp"/>
+
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_marginStart="4dp"
                     android:id="@+id/ivGpsStatus"
                     android:layout_marginTop="8dp"
                     android:src="@drawable/icongps"
