@@ -32,6 +32,7 @@ import com.hc.dat.model.database.entity.UserEntity
 import com.hc.dat.model.database.entity.UserType
 import com.hc.dat.model.database.entity.convertToModelEntity
 import com.hc.dat.service.ServiceDefinition
+import com.hc.dat.service.model.DateMissing
 import com.hc.dat.utils.ImageLoader
 import com.hc.dat.utils.Utils
 import com.hc.dat.view.adapter.DialogButtonClickListener
@@ -1463,7 +1464,62 @@ class TrainingSessionScreen : DatBaseScreen() {
                                 }
                             }
                         )
-                    } else {
+                    }
+//                    else {
+//                        riderSessionViewModel.inProgressSession?.id?.let { sessionId ->
+//                            riderSessionViewModel.checkMissingDataSession(
+//                                    sessionId = sessionId,
+//                                    callback = { action, data ->
+//                                        when (action) {
+//                                            RiderSessionAction.CHECK_MISSING_DATA_SUCCESS -> {
+//                                                // Không thiếu dữ liệu
+//                                                if (data == null) {
+//                                                    BaseNotification.showWarning(getString(R.string.confirm_logout_info_message))
+//
+//                                                    ConFirmLogoutDialog.showDialog(
+//                                                            activity = requireActivity(),
+//                                                            imageLogin = studentImageLogin ?: riderSessionViewModel.getImageLogin(),
+//                                                            imageLogout = studentImageLogout!!,
+//                                                            inProgressSession = riderSessionViewModel.inProgressSession!!,
+//                                                    ) { confirm, notSendTC ->
+//                                                        if (confirm) {
+//                                                            FinishSessionDialog.dismiss()
+//                                                            handleCallFinishRiderSession(isNotSendTC || notSendTC)
+//                                                        }
+//                                                    }
+//                                                } else {
+//                                                    // Có thiếu dữ liệu
+//                                                    val missingData = data as Triple<
+//                                                            String,
+//                                                            List<DateMissing>,
+//                                                            List<DateMissing>
+//                                                            >
+//
+//                                                    val missAuthen = missingData.second
+//                                                    val missGps = missingData.third
+//
+//                                                    Logger.d("Thiếu authen: $missAuthen | thiếu gps: $missGps")
+//
+//                                                    BaseNotification.showWarning(
+//                                                            "Phiên học đang thiếu dữ liệu. Không thể xác nhận kết thúc phiên."
+//                                                    )
+//                                                }
+//                                            }
+//
+//                                            RiderSessionAction.CHECK_MISSING_DATA_FAIL -> {
+//                                                BaseNotification.showError(
+//                                                        data?.toString() ?: "Không kiểm tra được dữ liệu thiếu"
+//                                                )
+//                                            }
+//
+//                                            else -> {}
+//                                        }
+//                                    }
+//                            )
+//                        }
+//                    }
+                    else {
+                        riderSessionViewModel.inProgressSession?.id?.let { riderSessionViewModel.checkMissingDataSession(sessionId = it, callback = riderSessionCallback) }
                         BaseNotification.showWarning(getString(R.string.confirm_logout_info_message))
                         ConFirmLogoutDialog.showDialog(
                             activity = requireActivity(),
