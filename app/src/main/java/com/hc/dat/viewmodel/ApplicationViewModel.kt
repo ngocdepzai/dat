@@ -515,12 +515,28 @@ class ApplicationViewModel @Inject constructor(
                     val serviceDateTime: Long? =
                         Utils.convertServerTimeToMilliSecond(resResult.data?.currentDate)
                     if (serviceDateTime != null) {
+                        // Check timezone device phải là Việt Nam GMT+7
+                        val timezone = TimeZone.getDefault()
+                        val timezoneOffsetHours = timezone.rawOffset / (1000 * 60 * 60)
+
+                        // Có thể check theo offset hoặc timezone id
+                        val isVietnamTimezone =
+                                timezoneOffsetHours == 7 &&
+                                        (timezone.id == "Asia/Ho_Chi_Minh" || timezone.id == "Asia/Saigon")
+
                         val deviceDateTime = Calendar.getInstance().timeInMillis
                         // check difference between server time and device time not more than 5 minutes
                         val checkChange: Boolean =
                             abs(deviceDateTime - serviceDateTime) <= (5 * 60 * 1000)
-                        Logger.i("getObjectsLinkedDat serviceDateTime: $serviceDateTime | deviceDateTime: $deviceDateTime | checkChange: $checkChange")
-                        if (checkChange) {
+                        Logger.i(
+                                "getObjectsLinkedDat: serviceDateTime: $serviceDateTime | " +
+                                        "deviceDateTime: $deviceDateTime | " +
+                                        "timezoneId: ${timezone.id} | " +
+                                        "timezoneOffsetHours: $timezoneOffsetHours | " +
+                                        "isVietnamTimezone: $isVietnamTimezone | " +
+                                        "checkChange: $checkChange"
+                        )
+                        if (isVietnamTimezone && checkChange) {
                             datDevice = resResult.data?.datDevice
                             trainingCenter = resResult.data?.trainingCenter
                             vehicleInfo = resResult.data?.carVehicle
