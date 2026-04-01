@@ -1002,10 +1002,15 @@ data class RiderSessionViewModel @Inject constructor(
                             isSendTC = !notSendTC,
                             state = sessionState
                         )
-                        repository.exportSessionReport(it,null)
-                        LogRecorder.i("Kết thúc phiên thành công - OFFLINE", localRiderSession.toString())
-                        LogRecorder.saveLog(false)
-                        pushLogFile()
+                        try {
+                            repository.exportSessionReport(it,null)
+                            LogRecorder.i("Kết thúc phiên thành công - OFFLINE", localRiderSession.toString())
+                            LogRecorder.saveLog(false)
+                        } catch (e: Exception) {
+                            LogRecorder.e("finish session error: ", e.message)
+                        } finally {
+                            pushLogFile()
+                        }
                         resetDataSession()
                         CoroutineScope(Dispatchers.Main).launch {
                             callback(RiderSessionAction.FINISH_RIDER_SESSION_SUCCESS_OFFLINE, null)
@@ -1084,13 +1089,18 @@ data class RiderSessionViewModel @Inject constructor(
                                     totalTimeStudied = inProgressSession!!.totalTime,
                                     totalDistanceRode = inProgressSession!!.totalDis
                                 )
-                                val channel = Channel<Any>()
-                                repository.exportSessionReport(it,channel)
-                                channel.receive()
-                                pushReportFile(riderSessionEntity = it)
-                                LogRecorder.i("Kết thúc phiên thành công - ONLINE", localRiderSession.toString())
-                                LogRecorder.saveLog(false)
-                                pushLogFile()
+                                try {
+                                    val channel = Channel<Any>()
+                                    repository.exportSessionReport(it, channel)
+                                    channel.receive()
+                                    pushReportFile(riderSessionEntity = it)
+                                    LogRecorder.i("Kết thúc phiên thành công - ONLINE", localRiderSession.toString())
+                                    LogRecorder.saveLog(false)
+                                } catch (e: Exception) {
+                                    LogRecorder.e("finish session error: ", e.message)
+                                } finally {
+                                    pushLogFile()
+                                }
                                 resetDataSession()
                                 CoroutineScope(Dispatchers.Main).launch {
                                     if (resResult.errorCode == SUCCESS_WITH_ERROR) {
