@@ -1155,13 +1155,18 @@ data class RiderSessionViewModel @Inject constructor(
                 totalTimeStudied = inProgressSession!!.totalTime,
                 totalDistanceRode = inProgressSession!!.totalDis
             )
-            val channel = Channel<Any>()
-            repository.exportSessionReport(it, channel)
-            channel.receive()
-            pushReportFile(riderSessionEntity = it)
-            LogRecorder.i("Phiên học được đăng xuất bởi quản trị viên", localRiderSession.toString())
-            LogRecorder.saveLog(false)
-            pushLogFile()
+            try {
+                val channel = Channel<Any>()
+                repository.exportSessionReport(it, channel)
+                channel.receive()
+                pushReportFile(riderSessionEntity = it)
+                LogRecorder.i("Phiên học được đăng xuất bởi quản trị viên", localRiderSession.toString())
+                LogRecorder.saveLog(false)
+            } catch (e: Exception) {
+                LogRecorder.e("finish session error:", e.message)
+            } finally {
+                pushLogFile()
+            }
             resetDataSession()
         }
     }
