@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -42,6 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.apache.poi.sl.draw.geom.Context
 import java.io.File
 
 class TeacherLoginScreen : DatBaseScreen() {
@@ -73,7 +76,12 @@ class TeacherLoginScreen : DatBaseScreen() {
             requestPermissions(arrayOf(Manifest.permission.READ_PHONE_STATE), REQUEST_CODE_READ_PHONE_STATE)
         } else {
             appViewModel.getDeviceConfig()
-            appViewModel.getAPIPathUploadImage()
+            if (!isInternetAvailable()) {
+                ServiceDefinition.UPLOAD_IMAGE_AUTHEN_PROGRESS_URL =
+                        "http://api.hcsky.vn/api/Resource/v2024/upload_auth"
+            } else {
+                appViewModel.getAPIPathUploadImage(callback = appCallback)
+            }
             viewBinding.tvSerialNumber.text = getString(R.string.serial_number_info, riderSessionViewModel.getImeiDevice(requireContext()))
         }
     }
@@ -84,7 +92,12 @@ class TeacherLoginScreen : DatBaseScreen() {
         if (requestCode == REQUEST_CODE_READ_PHONE_STATE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 appViewModel.getDeviceConfig()
-                appViewModel.getAPIPathUploadImage()
+                if (!isInternetAvailable()) {
+                    ServiceDefinition.UPLOAD_IMAGE_AUTHEN_PROGRESS_URL =
+                            "http://api.hcsky.vn/api/Resource/v2024/upload_auth"
+                } else {
+                    appViewModel.getAPIPathUploadImage(callback = appCallback)
+                }
                 viewBinding.tvSerialNumber.text = getString(
                         R.string.serial_number_info,
                         riderSessionViewModel.getImeiDevice(requireContext())
@@ -123,8 +136,13 @@ class TeacherLoginScreen : DatBaseScreen() {
                     listener = object : DialogButtonClickListener {
                         override fun onDialogButtonClick(position: Int) {
                             dismissDialog()
-                            showProgressDialog()
-                            appViewModel.getAPIPathUploadImage(callback = appCallback)
+                            if (!isInternetAvailable()) {
+                                ServiceDefinition.UPLOAD_IMAGE_AUTHEN_PROGRESS_URL =
+                                        "http://api.hcsky.vn/api/Resource/v2024/upload_auth"
+                            } else {
+                                showProgressDialog()
+                                appViewModel.getAPIPathUploadImage(callback = appCallback)
+                            }
                         }
                     }
                 )
@@ -134,6 +152,18 @@ class TeacherLoginScreen : DatBaseScreen() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+    }
+
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager = requireContext().getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork ?: return false
+            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        } else {
+            @Suppress("DEPRECATION")
+            connectivityManager.activeNetworkInfo?.isConnected == true
+        }
     }
 
     private fun loadDatDeviceConfig() {

@@ -2008,6 +2008,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     val riderSessionCallback: (action: RiderSessionAction, data: Any?)
     -> Unit = { action: RiderSessionAction, data: Any? ->
         Logger.d("riderSessionCallback action: $action | data: $data")
+        LogRecorder.i("RiderSessionCallback: ","action: $action | data: $data")
         when (action) {
             RiderSessionAction.CHECK_STUDENT_AVAILABLE_SUCCESS -> {
                 // check teach has in session
@@ -2031,6 +2032,7 @@ class TrainingSessionScreen : DatBaseScreen() {
             RiderSessionAction.CONNECT_SERVICE_ERROR -> {
 //                / Check đoạn này xem đã trả về error code tương ứng chưa
                 Logger.w("CONNECT_SERVICE_ERROR")
+                LogRecorder.i("CONNECT_SERVICE_ERROR: ","action: $action | data: $data")
                 dismissProgress()
                 ++connectServiceFailCounter
                 if (connectServiceFailCounter >= CONNECT_SERVICE_FAIL_WARNING) {

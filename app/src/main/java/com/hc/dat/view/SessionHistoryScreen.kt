@@ -285,6 +285,7 @@ class SessionHistoryScreen : DatBaseScreen() {
     private val riderSessionCallback: (action: RiderSessionAction, data: Any?)
     -> Unit = { action: RiderSessionAction, data: Any? ->
         Logger.d("callback action: $action | data: $data")
+        LogRecorder.i("RiderSessionCallback: ","callback action: $action | data: $data")
         dismissProgress()
         when (action) {
             RiderSessionAction.GET_SESSION_HISTORY_SUCCESS -> {

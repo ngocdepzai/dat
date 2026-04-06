@@ -1005,11 +1005,15 @@ data class RiderSessionViewModel @Inject constructor(
                         try {
                             repository.exportSessionReport(it,null)
                             LogRecorder.i("Kết thúc phiên thành công - OFFLINE", localRiderSession.toString())
-                            LogRecorder.saveLog(false)
                         } catch (e: Exception) {
                             LogRecorder.e("finish session error: ", e.message)
                         } finally {
-                            pushLogFile()
+                            try {
+                                LogRecorder.saveLog(false)
+                                pushLogFile()
+                            } catch (e: Exception) {
+                                LogRecorder.e("push log file error: ", e.message)
+                            }
                         }
                         resetDataSession()
                         CoroutineScope(Dispatchers.Main).launch {
@@ -1095,11 +1099,15 @@ data class RiderSessionViewModel @Inject constructor(
                                     channel.receive()
                                     pushReportFile(riderSessionEntity = it)
                                     LogRecorder.i("Kết thúc phiên thành công - ONLINE", localRiderSession.toString())
-                                    LogRecorder.saveLog(false)
                                 } catch (e: Exception) {
                                     LogRecorder.e("finish session error: ", e.message)
                                 } finally {
-                                    pushLogFile()
+                                    try {
+                                        LogRecorder.saveLog(false)
+                                        pushLogFile()
+                                    } catch (e: Exception) {
+                                        LogRecorder.e("push log file error: ", e.message)
+                                    }
                                 }
                                 resetDataSession()
                                 CoroutineScope(Dispatchers.Main).launch {
@@ -1161,11 +1169,15 @@ data class RiderSessionViewModel @Inject constructor(
                 channel.receive()
                 pushReportFile(riderSessionEntity = it)
                 LogRecorder.i("Phiên học được đăng xuất bởi quản trị viên", localRiderSession.toString())
-                LogRecorder.saveLog(false)
             } catch (e: Exception) {
                 LogRecorder.e("finish session error:", e.message)
             } finally {
-                pushLogFile()
+                try {
+                    LogRecorder.saveLog(false)
+                    pushLogFile()
+                } catch (e: Exception) {
+                    LogRecorder.e("push log file error: ", e.message)
+                }
             }
             resetDataSession()
         }
