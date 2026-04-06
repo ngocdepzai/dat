@@ -3,8 +3,10 @@ package com.hc.dat.view
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.*
 import android.hardware.usb.UsbDevice
 import android.location.Location
@@ -13,6 +15,7 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
 import android.telephony.PhoneStateListener
@@ -64,6 +67,8 @@ class TrainingSessionScreen : DatBaseScreen() {
     private lateinit var viewBinding: ScreenTrainingSessionBinding
     private lateinit var riderSessionViewModel: RiderSessionViewModel
     private lateinit var faceRecognitionViewModel: FaceRecognitionViewModel
+    private var powerSaveReceiver: BroadcastReceiver? = null
+    private lateinit var powerManager: PowerManager
     private var nfcAvailable: Boolean = true // default true because must login teacher first
     private var studentImageLogin: File? = null
     private var studentImageLogout: File? = null
@@ -696,6 +701,29 @@ class TrainingSessionScreen : DatBaseScreen() {
         cameraPreviewDataQueue.offer(nv21ImageData)
     }
 
+    private fun updatePinStatusIcon() {
+        val iconRes = if (powerManager.isPowerSaveMode) {
+            R.drawable.iconunpin  // icon khi bật tiết kiệm pin
+        } else {
+            R.drawable.iconpin          // icon bình thường
+        }
+        viewBinding.ivPinStatus.setImageResource(iconRes)
+    }
+
+    private fun registerPowerSaveReceiver() {
+        Logger.i("PIN_DEBUG registerPowerSaveReceiver called")
+        powerSaveReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                Logger.i("PIN_DEBUG Power save broadcast received!")
+                if (intent.action == PowerManager.ACTION_POWER_SAVE_MODE_CHANGED) {
+                    updatePinStatusIcon()
+                }
+            }
+        }
+        val filter = IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+        requireContext().registerReceiver(powerSaveReceiver, filter)
+    }
+
     private fun checkLearningOver10HoursBlock() {
         CoroutineScope(Dispatchers.Main).launch {
             val additionalTime = 15 * 60
@@ -854,6 +882,12 @@ class TrainingSessionScreen : DatBaseScreen() {
                     BaseNotification.showWarning(messageError, showToast = false)
                     LogRecorder.e("Thông báo: ","$messageError")
                 }
+                updatePinStatusIcon()
+                if (powerManager.isPowerSaveMode) {
+                    LogRecorder.i("Trạng thái pin", "Chế độ tiết kiệm pin: bật")
+                } else {
+                    LogRecorder.i("Trạng thái pin", "Chế độ tiết kiệm pin: tắt")
+                }
             }
         }
     }
@@ -908,6 +942,9 @@ class TrainingSessionScreen : DatBaseScreen() {
             ?: also { viewBinding.ivTeacherAvatar.setImageDrawable(requireContext().getDrawable(R.drawable.nonavatar)) }
         nfcAvailable = appViewModel.checkNFCAvailable()
         initView()
+        powerManager = requireContext().getSystemService(Context.POWER_SERVICE) as PowerManager
+        registerPowerSaveReceiver()
+        updatePinStatusIcon() // kiểm tra trạng thái ban đầu
         checkStudentContinueSession()
         LogRecorder.d("", "Màn hình phiên học")
         return viewBinding.root
@@ -3086,6 +3123,9 @@ class TrainingSessionScreen : DatBaseScreen() {
         faceRecognitionViewModel.stopRecognition()
         // fix issue show error dialog after session finish success
         dismissDialog()
+        // Thêm dòng này
+        powerSaveReceiver?.let { requireContext().unregisterReceiver(it) }
+        powerSaveReceiver = null
     }
 }
 
