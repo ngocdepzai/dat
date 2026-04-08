@@ -308,6 +308,8 @@ data class RiderSessionViewModel @Inject constructor(
         return lastAuthTime
     }
     fun pushReportFile(riderSessionEntity: RiderSessionEntity) {
+        Logger.i("push report file START")
+        LogRecorder.i("pushReportFile", "START")
         CoroutineScope(Dispatchers.IO).launch(
             CoroutineExceptionHandler { _, ex ->
                 Logger.e("RecoverSendLogFilesFail: Found an exception exception: ${ex.message}")
@@ -334,13 +336,18 @@ data class RiderSessionViewModel @Inject constructor(
             )
             if(result.isError){
                 Logger.e("push report file fail: ${result.errorMessage}")
+                LogRecorder.e("pushReportFile","push report file fail: ${result.errorMessage}")
             }else{
                 Logger.i("push report file success")
+                LogRecorder.i("pushReportFile", "push report file success")
             }
         }
+        Logger.i("push report file END")
+        LogRecorder.i("pushReportFile", "push report file END")
     }
     fun pushLogFile(callback: ((action: AppAction, data: Any?) -> Unit)? = null) {
-        Logger.d("pushLogFile")
+        Logger.d("pushLogFile START")
+        LogRecorder.i("pushLogFile","START")
         CoroutineScope(Dispatchers.IO).launch(
             CoroutineExceptionHandler { _, ex ->
                 callback?.let {
@@ -371,6 +378,8 @@ data class RiderSessionViewModel @Inject constructor(
                     callback?.let {
                         withContext(Dispatchers.Main) {
                             callback(AppAction.UPLOAD_FILE_FAIL, "gửi file thất bại")
+                            Logger.d("pushLogFile gửi file thất bại")
+                            LogRecorder.i("pushLogFile","gửi file thất bại")
                         }
                     }
                 }else{
@@ -381,6 +390,8 @@ data class RiderSessionViewModel @Inject constructor(
                     callback?.let {
                         withContext(Dispatchers.Main) {
                             callback(AppAction.UPLOAD_FILE_SUCCESS, "gửi file thành công")
+                            Logger.d("pushLogFile gửi file thành công")
+                            LogRecorder.i("pushLogFile","gửi file thành công")
                         }
                     }
                 }
@@ -400,6 +411,8 @@ data class RiderSessionViewModel @Inject constructor(
             // handle delete old log files
             handleDeleteOldLogs()
         }
+        Logger.d("pushLogFile END")
+        LogRecorder.i("pushLogFile","END")
     }
 
     fun recoverSendLogFilesFail() {
