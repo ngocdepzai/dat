@@ -90,4 +90,5 @@ object LogRecorder {
                 "[$tag], $content\n")
     }
 
+    fun getLogFile() = recordLogFile
 }

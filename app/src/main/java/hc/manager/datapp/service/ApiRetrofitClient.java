@@ -17,6 +17,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import com.hc.dat.utils.SentryLogUploader;
+import java.util.Collections;
 
 public class ApiRetrofitClient {
     private static Retrofit retrofit;
@@ -48,7 +50,31 @@ public class ApiRetrofitClient {
 //                                .header("Authorization", "Bearer "+ SharedPreferencesUtil.getValue(context,SharedPreferencesUtil.TOKEN))
 //                                .method(original.method(), original.body())
 //                                .build();
-                        return chain.proceed(request);
+                        try {
+                            // 2. Thực thi request
+                            Response response = chain.proceed(request);
+
+                            // 3. Nếu API trả về lỗi (4xx, 5xx), push lên Sentry
+                            if (!response.isSuccessful()) {
+                                SentryLogUploader.INSTANCE.captureInfo(
+                                        "API_SERVER_ERROR",
+                                        "API Error: " + request.url().toString() + " | Code: " + response.code(),
+                                        Collections.singletonMap("url", request.url().toString()),
+                                        null
+                                );
+                            }
+                            return response;
+
+                        } catch (IOException e) {
+                            // 4. Nếu lỗi kết nối (Timeout, No Internet, DNS...), push lên Sentry
+                            SentryLogUploader.INSTANCE.captureException(
+                                    e,
+                                    "API_CONNECTION_ERROR",
+                                    Collections.singletonMap("url", request.url().toString()),
+                                    null
+                            );
+                            throw e; // Phải throw e để Retrofit/Repository biết là có lỗi kết nối
+                        }
                     }
                 })
                 .build();

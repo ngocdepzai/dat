@@ -15,6 +15,7 @@ import com.hc.dat.service.api.DatService
 import com.hc.dat.service.api.generateBodyRequest
 import com.hc.dat.service.model.*
 import com.hc.dat.utils.ExportExcelReport
+import com.hc.dat.utils.SentryLogUploader
 import com.lws.type.LogRecorder
 import com.lws.type.Logger
 import com.omi.service.ResponseStatus
@@ -119,10 +120,20 @@ class RepositoryImpl @Inject constructor(
             return when (response.code()) {
                 ResponseStatus.SUCCESS -> {
                     if (responseData?.status == 1 && responseData.sessionId.isNotEmpty()) {
+                        SentryLogUploader.captureInfo(
+                                tag = "SESSION_START_SUCCESS",
+                                message = "Student ${studentCode} started session",
+                                extras = mapOf("sessionId" to (responseData.sessionId ?: ""), "imei" to (imei))
+                        )
                         ResponseResult(
                             data = responseData
                         )
                     } else {
+                        SentryLogUploader.captureInfo(
+                                tag = "SESSION_START_FAIL",
+                                message = "Start session failed: ${responseData?.message ?: "Unknown"}",
+                                extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                        )
                         ResponseResult(
                             isError = true,
                             errorCode = responseData?.status ?: -1,
@@ -131,6 +142,11 @@ class RepositoryImpl @Inject constructor(
                     }
                 }
                 else -> {
+                    SentryLogUploader.captureInfo(
+                            tag = "SESSION_START_FAIL",
+                            message = "Start session failed: ${responseData?.message ?: "Unknown"}",
+                            extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                    )
                     ResponseResult(
                         isError = true,
                         errorCode = responseData?.status ?: -1
@@ -139,6 +155,7 @@ class RepositoryImpl @Inject constructor(
             }
         } catch (ex: UnknownHostException) {
             Logger.i("Error ${ex.message}")
+            SentryLogUploader.captureException(ex, "SESSION_START_EXCEPTION", mapOf("studentCode" to studentCode))
             return ResponseResult(
                 isError = true
             )
@@ -187,16 +204,31 @@ class RepositoryImpl @Inject constructor(
                     // Refer ticket: https://ducbui1890.atlassian.net/jira/software/projects/HCDAT/boards/3?selectedIssue=HCDAT-43
                     when (responseData?.status) {
                         0 -> {
+                            SentryLogUploader.captureInfo(
+                                    tag = "SESSION_START_FAIL",
+                                    message = "Start session failed: ${responseData?.message ?: "Unknown"}",
+                                    extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                            )
                             ResponseResult(
                                 errorCode = SUCCESS_WITH_ERROR,
                                 errorMessage =  responseData?.message ?: ""
                             )
                         }
                         1 -> {
+                            SentryLogUploader.captureInfo(
+                                    tag = "SESSION_START_SUCCESS",
+                                    message = "Student ${studentCode} started session",
+                                    extras = mapOf("message" to (responseData.message ?: ""), "imei" to (imei))
+                            )
                             // success with empty data response
                             ResponseResult()
                         }
                         2 -> {
+                            SentryLogUploader.captureInfo(
+                                    tag = "SESSION_START_FAIL",
+                                    message = "Start session failed: ${responseData?.message ?: "Unknown"}",
+                                    extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                            )
                             ResponseResult(
                                 isError = true,
                                 errorCode = PUSH_SESSION_TO_TC_FAIL,
@@ -209,6 +241,11 @@ class RepositoryImpl @Inject constructor(
 //                            ResponseResult()
 //                        }
                         else -> {
+                            SentryLogUploader.captureInfo(
+                                    tag = "SESSION_START_FAIL",
+                                    message = "Start session failed: ${responseData?.message ?: "Unknown"}",
+                                    extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                            )
                             ResponseResult(
                                 isError = true,
                                 errorCode = responseData?.status ?: -1,
@@ -218,6 +255,11 @@ class RepositoryImpl @Inject constructor(
                     }
                 }
                 else -> {
+                    SentryLogUploader.captureInfo(
+                            tag = "SESSION_START_FAIL",
+                            message = "Start session failed: ${responseData?.message ?: "Unknown"}",
+                            extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                    )
                     ResponseResult(
                         isError = true,
                         errorCode = responseData?.status ?: -1,
@@ -227,6 +269,7 @@ class RepositoryImpl @Inject constructor(
             }
         } catch (ex: UnknownHostException) {
             Logger.i("Error ${ex.message}")
+            SentryLogUploader.captureException(ex, "SESSION_START_EXCEPTION", mapOf("studentCode" to studentCode))
             return ResponseResult(
                 isError = true
             )
@@ -361,9 +404,31 @@ class RepositoryImpl @Inject constructor(
                 ResponseStatus.SUCCESS -> {
                     if (responseData?.status == 1) {
                         Logger.d("✅ Upload SUCCESS")
+
+                        SentryLogUploader.captureLogFileResult(
+                                success = true,
+                                file = files.firstOrNull(),
+                                tag = "UPLOAD_LOGS",
+                                imei = imei,
+                                sessionId = sharedPreferences.getString(SESSION_ID, ""),
+                                studentCode = sharedPreferences.getString(STUDENT_CODE, ""),
+                                message = "Upload logs success"
+                        )
+
                         ResponseResult()
                     } else {
                         Logger.e("❌ Server trả lỗi logic: ${responseData?.message}")
+
+                        SentryLogUploader.captureLogFileResult(
+                                success = false,
+                                file = files.firstOrNull(),
+                                tag = "UPLOAD_LOGS",
+                                imei = imei,
+                                sessionId = sharedPreferences.getString(SESSION_ID, ""),
+                                studentCode = sharedPreferences.getString(STUDENT_CODE, ""),
+                                message = "Server Error: ${responseData?.message ?: "Unknown"}"
+                        )
+
                         ResponseResult(
                                 isError = true,
                                 errorCode = responseData?.status ?: -1,
@@ -381,55 +446,25 @@ class RepositoryImpl @Inject constructor(
 
         } catch (ex: UnknownHostException) {
             Logger.e("❌ UnknownHostException (NO INTERNET): ${ex.message}")
+            SentryLogUploader.captureException(
+                    throwable = ex,
+                    tag = "UPLOAD_LOGS_EXCEPTION",
+                    extras = mapOf("imei" to imei),
+                    file = files.firstOrNull()
+            )
             return ResponseResult(isError = true)
         } catch (ex: Exception) {
             Logger.e("❌ Exception: ${ex.message}")
             ex.printStackTrace()
+            SentryLogUploader.captureException(
+                    throwable = ex,
+                    tag = "UPLOAD_LOGS_EXCEPTION",
+                    extras = mapOf("imei" to imei),
+                    file = files.firstOrNull()
+            )
             return ResponseResult(isError = true)
         }
     }
-
-//    override suspend fun uploadLogs(files: List<File>, imei: String): ResponseResult<Any?> {
-//        Logger.d("uploadLogs userCode: imei: $imei | files: ${files.size}")
-//        try {
-//            val files: List<MultipartBody.Part>? = files.generateBodyRequest()
-//            if (files != null && files.isNotEmpty()) {
-//                val response = datService.uploadLogs(
-//                    files = files,
-//                    imei = imei.generateBodyRequest()
-//                )
-//                val responseData = response.body()
-//                Logger.i("uploadLogs responseData: $responseData")
-//                return when (response.code()) {
-//                    ResponseStatus.SUCCESS -> {
-//                        if (responseData?.status == 1) {
-//                            ResponseResult()
-//                        } else {
-//                            ResponseResult(
-//                                isError = true,
-//                                errorCode = responseData?.status ?: -1,
-//                                errorMessage = responseData?.message ?: ""
-//                            )
-//                        }
-//                    }
-//                    else -> {
-//                        ResponseResult(
-//                            isError = true
-//                        )
-//                    }
-//                }
-//            } else {
-//                return ResponseResult(
-//                    isError = true
-//                )
-//            }
-//        } catch (ex: UnknownHostException) {
-//            Logger.i("Error ${ex.message}")
-//            return ResponseResult(
-//                isError = true
-//            )
-//        }
-//    }
 
     override suspend fun uploadDeviceInfo(
         deviceInfo: UploadDeviceInfoRequest

@@ -3,17 +3,6 @@ package com.lws.type
 import java.lang.StringBuilder
 import java.math.BigInteger
 
-/**
- * Created by Duc Bui on 2021/03.
- * Author: Duc Bui
- * Email: ducbui1890@gmail.com
- * Hanoi, VN.
- */
-/**
- * Convert a string to a ByteArray.
- *
- * @result decoded bytes, ignoring non-hex characters and trailing single hex digit if any.
- */
 fun String.convertHexToByteArray(): ByteArray {
     val filtered = filterHex()
     return ByteArray(filtered.length / 2) { index ->

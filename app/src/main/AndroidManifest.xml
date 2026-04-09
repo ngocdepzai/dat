@@ -136,6 +136,22 @@
 <!--                <action android:name="android.intent.action.SCREEN_ON" />-->
 <!--            </intent-filter>-->
 <!--        </receiver>-->
+
+        <meta-data
+            android:name="io.sentry.dsn"
+            android:value="https://0bd5eefffa4561335366f5cc8fe63b70@o4511182184644608.ingest.us.sentry.io/4511182227767296" />
+
+        <!-- Crash & ANR -->
+        <meta-data android:name="io.sentry.anr.enable" android:value="true" />
+        <meta-data android:name="io.sentry.anr.timeout-interval-millis" android:value="5000" />
+        <meta-data android:name="io.sentry.tombstone.enable" android:value="true" />
+
+        <!-- Performance - 20% cho 1500 thiết bị -->
+        <meta-data android:name="io.sentry.traces.sample-rate" android:value="0.2" />
+        <meta-data android:name="io.sentry.traces.user-interaction.enable" android:value="true" />
+
+        <!-- Logs -->
+        <meta-data android:name="io.sentry.logs.enabled" android:value="true" />
     </application>
 
 </manifest>

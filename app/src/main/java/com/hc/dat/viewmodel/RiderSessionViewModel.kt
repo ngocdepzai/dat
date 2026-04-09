@@ -34,6 +34,7 @@ import hc.manager.datapp.models.AuthModel
 import hc.manager.datapp.models.GpsModel
 import com.hc.dat.service.Sender
 import com.hc.dat.service.SenderAuth
+import com.hc.dat.utils.SentryLogUploader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.io.File
@@ -334,12 +335,38 @@ data class RiderSessionViewModel @Inject constructor(
                 files = listOf(reportFile),
                 imei = imei
             )
+
             if(result.isError){
                 Logger.e("push report file fail: ${result.errorMessage}")
                 LogRecorder.e("pushReportFile","push report file fail: ${result.errorMessage}")
-            }else{
+
+                if (reportFile.exists()) {
+                    SentryLogUploader.attachLogToEvent(reportFile)
+                }
+
+                SentryLogUploader.captureException(
+                        throwable = Exception(result.errorMessage ?: "Upload report file failed"),
+                        tag = "push_report_file",
+                        extras = mapOf(
+                                "student_code" to (riderSessionEntity.studentCode ?: ""),
+                                "session_id" to (riderSessionEntity.sessionId ?: ""),
+                                "report_file_path" to reportFile.absolutePath
+                        )
+                )
+
+                SentryLogUploader.clearAttachments()
+            } else {
                 Logger.i("push report file success")
                 LogRecorder.i("pushReportFile", "push report file success")
+
+                SentryLogUploader.captureLogFileResult(
+                        success = !result.isError,
+                        file = reportFile,
+                        tag = "push_report_file",
+                        sessionId = riderSessionEntity.sessionId,
+                        studentCode = riderSessionEntity.studentCode,
+                        message = result.errorMessage ?: "Upload report file success"
+                )
             }
         }
         Logger.i("push report file END")
@@ -371,6 +398,24 @@ data class RiderSessionViewModel @Inject constructor(
 
                 if (result.isError) {
                     Logger.e("PushLogFile error: ${result.errorMessage}, path: ${LogRecorder.recordLogFile!!.path}")
+
+                    LogRecorder.recordLogFile?.let {
+                        if (it.exists()) {
+                            SentryLogUploader.attachLogToEvent(it)
+                        }
+                    }
+
+                    SentryLogUploader.captureLogFileResult(
+                            success = false,
+                            file = LogRecorder.recordLogFile,
+                            tag = "push_log_file",
+                            sessionId = localRiderSession?.sessionId,
+                            studentCode = localRiderSession?.studentCode,
+                            message = result.errorMessage
+                    )
+
+                    SentryLogUploader.clearAttachments()
+
                     repository.updateLogState(
                         id = localRiderSession!!.id,
                         sentLogState = false,
@@ -382,11 +427,22 @@ data class RiderSessionViewModel @Inject constructor(
                             LogRecorder.i("pushLogFile","gửi file thất bại")
                         }
                     }
-                }else{
+                } else {
+                    Logger.e("PushLogFile success: ${result.errorMessage}, path: ${LogRecorder.recordLogFile!!.path}")
                     repository.updateLogState(
                         id = localRiderSession!!.id,
                         sentLogState = true,
                     )
+
+                    SentryLogUploader.captureLogFileResult(
+                            success = true,
+                            file = LogRecorder.recordLogFile,
+                            tag = "push_log_file",
+                            sessionId = localRiderSession?.sessionId,
+                            studentCode = localRiderSession?.studentCode,
+                            message = "Upload thành công"
+                    )
+
                     callback?.let {
                         withContext(Dispatchers.Main) {
                             callback(AppAction.UPLOAD_FILE_SUCCESS, "gửi file thành công")
@@ -397,6 +453,7 @@ data class RiderSessionViewModel @Inject constructor(
                 }
             } else {
                 Logger.e("PushLogFile error path: ${LogRecorder.recordLogFile!!.path}")
+
                 repository.updateLogState(
                     id = localRiderSession!!.id,
                     sentLogState = false,
