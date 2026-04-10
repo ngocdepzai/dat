@@ -122,8 +122,24 @@ class RepositoryImpl @Inject constructor(
                     if (responseData?.status == 1 && responseData.sessionId.isNotEmpty()) {
                         SentryLogUploader.captureInfo(
                                 tag = "SESSION_START_SUCCESS",
-                                message = "Student ${studentCode} started session",
-                                extras = mapOf("sessionId" to (responseData.sessionId ?: ""), "imei" to (imei))
+                                message = "Student $studentCode started session successfully",
+                                extras = mapOf(
+                                        "seri" to seri,
+                                        "studentCode" to studentCode,
+                                        "gpsLat" to gpsLat,
+                                        "gpsLong" to gpsLong,
+                                        "loginType" to loginType,
+                                        "loginTime" to loginTime,
+                                        "loginImageUrl" to loginImageUrl,
+                                        "teacherCode" to teacherCode,
+                                        "appVersion" to appVersion,
+                                        "imei" to imei,
+                                        "simSerialNumber" to simSerialNumber,
+                                        "networkStatus" to (networkStatus ?: -1),
+                                        "sessionId" to (responseData.sessionId ?: ""),
+                                        "responseStatus" to responseData.status,
+                                        "responseMessage" to (responseData.message ?: "")
+                                )
                         )
                         ResponseResult(
                             data = responseData
@@ -132,7 +148,23 @@ class RepositoryImpl @Inject constructor(
                         SentryLogUploader.captureInfo(
                                 tag = "SESSION_START_FAIL",
                                 message = "Start session failed: ${responseData?.message ?: "Unknown"}",
-                                extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                                extras = mapOf(
+                                        "seri" to seri,
+                                        "studentCode" to studentCode,
+                                        "gpsLat" to gpsLat,
+                                        "gpsLong" to gpsLong,
+                                        "loginType" to loginType,
+                                        "loginTime" to loginTime,
+                                        "loginImageUrl" to loginImageUrl,
+                                        "teacherCode" to teacherCode,
+                                        "appVersion" to appVersion,
+                                        "imei" to imei,
+                                        "simSerialNumber" to simSerialNumber,
+                                        "networkStatus" to (networkStatus ?: -1),
+                                        "responseStatus" to (responseData?.status ?: -1),
+                                        "responseMessage" to (responseData?.message ?: "Unknown"),
+                                        "httpCode" to response.code()
+                                )
                         )
                         ResponseResult(
                             isError = true,
@@ -145,7 +177,23 @@ class RepositoryImpl @Inject constructor(
                     SentryLogUploader.captureInfo(
                             tag = "SESSION_START_FAIL",
                             message = "Start session failed: ${responseData?.message ?: "Unknown"}",
-                            extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                            extras = mapOf(
+                                    "seri" to seri,
+                                    "studentCode" to studentCode,
+                                    "gpsLat" to gpsLat,
+                                    "gpsLong" to gpsLong,
+                                    "loginType" to loginType,
+                                    "loginTime" to loginTime,
+                                    "loginImageUrl" to loginImageUrl,
+                                    "teacherCode" to teacherCode,
+                                    "appVersion" to appVersion,
+                                    "imei" to imei,
+                                    "simSerialNumber" to simSerialNumber,
+                                    "networkStatus" to (networkStatus ?: -1),
+                                    "responseStatus" to (responseData?.status ?: -1),
+                                    "responseMessage" to (responseData?.message ?: "Unknown"),
+                                    "httpCode" to response.code()
+                            )
                     )
                     ResponseResult(
                         isError = true,
@@ -155,7 +203,26 @@ class RepositoryImpl @Inject constructor(
             }
         } catch (ex: UnknownHostException) {
             Logger.i("Error ${ex.message}")
-            SentryLogUploader.captureException(ex, "SESSION_START_EXCEPTION", mapOf("studentCode" to studentCode))
+            SentryLogUploader.captureException(
+                    ex,
+                    "SESSION_START_EXCEPTION",
+                    mapOf(
+                            "seri" to seri.toString(),
+                            "studentCode" to studentCode.toString(),
+                            "gpsLat" to gpsLat.toString(),
+                            "gpsLong" to gpsLong.toString(),
+                            "loginType" to loginType.toString(),
+                            "loginTime" to loginTime.toString(),
+                            "loginImageUrl" to loginImageUrl.toString(),
+                            "teacherCode" to teacherCode.toString(),
+                            "appVersion" to appVersion.toString(),
+                            "imei" to imei.toString(),
+                            "simSerialNumber" to simSerialNumber.toString(),
+                            "networkStatus" to (networkStatus?.toString() ?: ""),
+                            "exceptionMessage" to (ex.message ?: ""),
+                            "exceptionType" to ex.javaClass.simpleName
+                    )
+            )
             return ResponseResult(
                 isError = true
             )
@@ -205,9 +272,22 @@ class RepositoryImpl @Inject constructor(
                     when (responseData?.status) {
                         0 -> {
                             SentryLogUploader.captureInfo(
-                                    tag = "SESSION_START_FAIL",
-                                    message = "Start session failed: ${responseData?.message ?: "Unknown"}",
-                                    extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                                    tag = "SESSION_FINISH_FAIL",
+                                    message = "Finish session failed: ${responseData?.message ?: "Unknown"}",
+                                    extras = mapOf(
+                                            "imei" to imei,
+                                            "studentCode" to studentCode,
+                                            "gpsLat" to gpsLat.toString(),
+                                            "gpsLong" to gpsLong.toString(),
+                                            "sessionId" to sessionId,
+                                            "logoutTime" to logoutTime.toString(),
+                                            "logoutImageUrl" to logoutImageUrl,
+                                            "isSendTC" to isSendTC.toString(),
+                                            "coverReSend" to coverReSend.toString(),
+                                            "responseStatus" to (responseData.status ?: -1).toString(),
+                                            "responseMessage" to (responseData.message ?: ""),
+                                            "httpCode" to response.code().toString()
+                                    )
                             )
                             ResponseResult(
                                 errorCode = SUCCESS_WITH_ERROR,
@@ -216,18 +296,44 @@ class RepositoryImpl @Inject constructor(
                         }
                         1 -> {
                             SentryLogUploader.captureInfo(
-                                    tag = "SESSION_START_SUCCESS",
-                                    message = "Student ${studentCode} started session",
-                                    extras = mapOf("message" to (responseData.message ?: ""), "imei" to (imei))
+                                    tag = "SESSION_FINISH_SUCCESS",
+                                    message = "Student $studentCode finished session successfully",
+                                    extras = mapOf(
+                                            "imei" to imei,
+                                            "studentCode" to studentCode,
+                                            "gpsLat" to gpsLat.toString(),
+                                            "gpsLong" to gpsLong.toString(),
+                                            "sessionId" to sessionId,
+                                            "logoutTime" to logoutTime.toString(),
+                                            "logoutImageUrl" to logoutImageUrl,
+                                            "isSendTC" to isSendTC.toString(),
+                                            "coverReSend" to coverReSend.toString(),
+                                            "responseStatus" to (responseData.status ?: -1).toString(),
+                                            "responseMessage" to (responseData.message ?: ""),
+                                            "httpCode" to response.code().toString()
+                                    )
                             )
                             // success with empty data response
                             ResponseResult()
                         }
                         2 -> {
                             SentryLogUploader.captureInfo(
-                                    tag = "SESSION_START_FAIL",
-                                    message = "Start session failed: ${responseData?.message ?: "Unknown"}",
-                                    extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                                    tag = "SESSION_FINISH_FAIL",
+                                    message = "Push session to TC failed: ${responseData?.message ?: "Unknown"}",
+                                    extras = mapOf(
+                                            "imei" to imei,
+                                            "studentCode" to studentCode,
+                                            "gpsLat" to gpsLat.toString(),
+                                            "gpsLong" to gpsLong.toString(),
+                                            "sessionId" to sessionId,
+                                            "logoutTime" to logoutTime.toString(),
+                                            "logoutImageUrl" to logoutImageUrl,
+                                            "isSendTC" to isSendTC.toString(),
+                                            "coverReSend" to coverReSend.toString(),
+                                            "responseStatus" to (responseData.status ?: -1).toString(),
+                                            "responseMessage" to (responseData.message ?: ""),
+                                            "httpCode" to response.code().toString()
+                                    )
                             )
                             ResponseResult(
                                 isError = true,
@@ -242,9 +348,22 @@ class RepositoryImpl @Inject constructor(
 //                        }
                         else -> {
                             SentryLogUploader.captureInfo(
-                                    tag = "SESSION_START_FAIL",
-                                    message = "Start session failed: ${responseData?.message ?: "Unknown"}",
-                                    extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                                    tag = "SESSION_FINISH_FAIL",
+                                    message = "Finish session failed: ${responseData?.message ?: "Unknown"}",
+                                    extras = mapOf(
+                                            "imei" to imei,
+                                            "studentCode" to studentCode,
+                                            "gpsLat" to gpsLat.toString(),
+                                            "gpsLong" to gpsLong.toString(),
+                                            "sessionId" to sessionId,
+                                            "logoutTime" to logoutTime.toString(),
+                                            "logoutImageUrl" to logoutImageUrl,
+                                            "isSendTC" to isSendTC.toString(),
+                                            "coverReSend" to coverReSend.toString(),
+                                            "responseStatus" to (responseData?.status ?: -1).toString(),
+                                            "responseMessage" to (responseData?.message ?: ""),
+                                            "httpCode" to response.code().toString()
+                                    )
                             )
                             ResponseResult(
                                 isError = true,
@@ -256,9 +375,22 @@ class RepositoryImpl @Inject constructor(
                 }
                 else -> {
                     SentryLogUploader.captureInfo(
-                            tag = "SESSION_START_FAIL",
-                            message = "Start session failed: ${responseData?.message ?: "Unknown"}",
-                            extras = mapOf("studentCode" to studentCode, "errorCode" to (responseData?.status ?: -1), "imei" to (imei))
+                            tag = "SESSION_FINISH_FAIL",
+                            message = "Finish session failed: ${responseData?.message ?: "Unknown"}",
+                            extras = mapOf(
+                                    "imei" to imei,
+                                    "studentCode" to studentCode,
+                                    "gpsLat" to gpsLat.toString(),
+                                    "gpsLong" to gpsLong.toString(),
+                                    "sessionId" to sessionId,
+                                    "logoutTime" to logoutTime.toString(),
+                                    "logoutImageUrl" to logoutImageUrl,
+                                    "isSendTC" to isSendTC.toString(),
+                                    "coverReSend" to coverReSend.toString(),
+                                    "responseStatus" to (responseData?.status ?: -1).toString(),
+                                    "responseMessage" to (responseData?.message ?: ""),
+                                    "httpCode" to response.code().toString()
+                            )
                     )
                     ResponseResult(
                         isError = true,
@@ -269,7 +401,23 @@ class RepositoryImpl @Inject constructor(
             }
         } catch (ex: UnknownHostException) {
             Logger.i("Error ${ex.message}")
-            SentryLogUploader.captureException(ex, "SESSION_START_EXCEPTION", mapOf("studentCode" to studentCode))
+            SentryLogUploader.captureException(
+                    ex,
+                    "SESSION_FINISH_EXCEPTION",
+                    mapOf(
+                            "imei" to imei,
+                            "studentCode" to studentCode,
+                            "gpsLat" to gpsLat.toString(),
+                            "gpsLong" to gpsLong.toString(),
+                            "sessionId" to sessionId,
+                            "logoutTime" to logoutTime.toString(),
+                            "logoutImageUrl" to logoutImageUrl,
+                            "isSendTC" to isSendTC.toString(),
+                            "coverReSend" to coverReSend.toString(),
+                            "exceptionMessage" to (ex.message ?: ""),
+                            "exceptionType" to ex.javaClass.simpleName
+                    )
+            )
             return ResponseResult(
                 isError = true
             )
