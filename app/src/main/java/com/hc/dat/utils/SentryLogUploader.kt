@@ -28,6 +28,8 @@ object SentryLogUploader {
         try {
             val sentryMessage = buildString {
                 append(if (success) "Upload log success" else "Upload log fail")
+                append(" | imei=")
+                append(imei ?: "")
                 append(" | sessionId=")
                 append(sessionId ?: "")
                 append(" | studentCode=")
