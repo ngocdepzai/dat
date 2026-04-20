@@ -46,6 +46,8 @@ internal object FinishSessionDialog {
     private lateinit var riderSessionViewModel: RiderSessionViewModel
     private var autoLogoutJob: Job? = null
     private const val autoLogoutTime = 1 * 60
+    private var currentSearchScore: Int = 0
+    private var searchThreshold: Int = 40 // Ngưỡng pass
 
     init {
         if (!hcImageFolder.exists()) {
@@ -77,6 +79,11 @@ internal object FinishSessionDialog {
         val view = LayoutInflater.from(activity)
             .inflate(R.layout.dat_finish_session_login_dialog, null, false)
         viewBinding = DatFinishSessionLoginDialogBinding.bind(view)
+
+        currentSearchScore = 0 // Reset score
+        faceRecognitionViewModel.startRecognition(userEntity.userCode) { score, _, _, _, _ ->
+            currentSearchScore = score
+        }
 
         viewBinding.tvName.text = userEntity.fullName
         viewBinding.tvPhoneNumber.text = userEntity.phoneNumber
@@ -127,7 +134,7 @@ internal object FinishSessionDialog {
         }
         if(!sessionContinues){
             viewBinding.btContinues.visibility = View.GONE
-            faceRecognitionViewModel.stopRecognition()
+//            faceRecognitionViewModel.stopRecognition()
         }
         viewBinding.btContinues.setOnClickListener {
             dismiss()
@@ -140,7 +147,20 @@ internal object FinishSessionDialog {
             }
         }
         viewBinding.btSaveInfo.setOnClickListener {
-            handleSaveImageFile()
+//            handleSaveImageFile()
+            if (lastPreviewData == null) {
+                BaseNotification.showWarning(activity.getString(R.string.student_not_in_camera))
+                return@setOnClickListener
+            }
+
+            // Kiểm tra điểm số nhận diện
+            if (currentSearchScore >= searchThreshold) {
+                Logger.i("Xác nhận kết thúc: Khớp khuôn mặt ($currentSearchScore điểm)")
+                handleSaveImageFile()
+            } else {
+                Logger.w("Không thể kết thúc: Khuôn mặt không khớp ($currentSearchScore điểm)")
+                BaseNotification.showWarning("Khuôn mặt không khớp, vui lòng nhìn thẳng vào camera")
+            }
         }
 
         if (autoLogout) {
@@ -263,7 +283,7 @@ internal object FinishSessionDialog {
 
     fun dismiss() {
         Logger.d("dismiss")
-
+        faceRecognitionViewModel.stopRecognition() // Dừng nhận diện
         autoLogoutJob?.cancel()
         dialog?.dismiss()
     }
@@ -366,6 +386,12 @@ internal object FinishSessionDialog {
                              showFacePassFace(rect = rect)
                              if (rect != null) {
                                  lastPreviewData = previewData
+
+                                 // 2. Chuyển frame thành Bitmap và gọi AI phân tích điểm số
+                                 val frameBitmap = faceRecognitionViewModel.cameraPreviewDataToBitmap(previewData)
+                                 faceRecognitionViewModel.facialAnalysis(frameBitmap, userEntity.userCode)
+                                 // Log để kiểm tra điểm thực tế từ Processor trả về
+                                  android.util.Log.d("FinishDialog", "Score: $currentSearchScore")
                              } else {
                                  withContext(Dispatchers.Main) {
                                      viewBinding.faceView.clear()
@@ -393,6 +419,7 @@ internal object FinishSessionDialog {
             val faceBlurString = StringBuilder()
             val smileString = StringBuilder()
             val faceRecognitionRate = StringBuilder()
+            faceRecognitionRate.append(FinishSessionDialog.currentSearchScore).append("/").append(FinishSessionDialog.searchThreshold)
             val mat = Matrix()
             val w = cameraPreviewDevice.getPreviewSize().first
             val h = cameraPreviewDevice.getPreviewSize().second
@@ -452,6 +479,7 @@ internal object FinishSessionDialog {
                     bottom = rect.right.toFloat()
                 }
             }
+
             val drect = RectF()
             val srect = RectF(left, top, right, bottom)
             mat.mapRect(drect, srect)

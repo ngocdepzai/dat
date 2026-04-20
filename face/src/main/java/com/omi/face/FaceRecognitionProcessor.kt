@@ -127,6 +127,10 @@ class FaceRecognitionProcessor constructor(
         }
 
     suspend fun analyze(image: Bitmap, userId: String?) {
+        // LOG 1: Kiểm tra hàm có được gọi không
+        Log.d("FACE_DEBUG", "--- Bắt đầu analyze ---")
+        Log.d("FACE_DEBUG", "detectionInProgress: $detectionInProgress, detected: $detected, mutex locked: ${mutex.isLocked}")
+
         if (detectionInProgress && !mutex.isLocked) {
             resetDetectResult()
             var notFace = true
@@ -195,20 +199,70 @@ class FaceRecognitionProcessor constructor(
                                             }
                                         notMask =
                                             maskDetectionModel.detectMask(imageCropped)
+//                                        if (it.headEulerAngleY < FACE_ROTATION_Y) {
+//                                            sampleFaceRecognition?.let { sampleFaceRecognition ->
+//
+//                                                sampleFaceRecognition.listVectorEmbedding.forEach { sample ->
+//                                                    val distanceScore: Float = cosineDistance(sample, subject)
+//
+//                                                    // --- CHÈN LOG TẠI ĐÂY ---
+//                                                    Log.d("FACE_DEBUG", "--------------------------------------")
+//                                                    Log.d("FACE_DEBUG", "Đang kiểm tra User: $userId")
+//                                                    Log.d("FACE_DEBUG", "Khoảng cách đo được (Distance): $distanceScore")
+//                                                    Log.d("FACE_DEBUG", "Ngưỡng thiết lập (Threshold): ${modelConfig.cosineThreshold}")
+//                                                    // -----------------------
+//
+//                                                    var scoreByPercent: Int = if (distanceScore <= modelConfig.cosineThreshold) 100
+//                                                        else (((2 * modelConfig.cosineThreshold - distanceScore) / modelConfig.cosineThreshold) * 100).roundToInt()
+//                                                    if (scoreByPercent < 40) scoreByPercent = 0 // Chỉ chấp nhận trên 40% mới tính điểm, dưới đó coi như không khớp
+//
+//                                                    // --- LOG ĐIỂM SAU KHI TÍNH ---
+//                                                    Log.d("FACE_DEBUG", "Điểm % tính được: $scoreByPercent")
+//                                                    // ----------------------------
+//
+//                                                    if (highScoreRecognition < scoreByPercent) {
+//                                                        highScoreRecognition =
+//                                                            scoreByPercent
+//                                                    }
+//                                                    if (bestDistanceScore == null || bestDistanceScore!! > distanceScore) {
+//                                                        bestDistanceScore = distanceScore
+//                                                    }
+//                                                }
+//                                            }
+//                                        }
                                         if (it.headEulerAngleY < FACE_ROTATION_Y) {
-                                            sampleFaceRecognition?.let { sampleFaceRecognition ->
+                                            // Xác định danh sách mẫu cần so sánh:
+                                            // Nếu userId == null (Teacher) thì lấy tất cả mẫu trong listSampleFaceGroupData
+                                            // Nếu userId != null (Student) thì chỉ lấy đúng mẫu của User đó
+                                            val samplesToCheck = if (userId == null) {
+                                                listSampleFaceGroupData
+                                            } else {
+                                                listSampleFaceGroupData.filter { it.name == userId }
+                                            }
 
+                                            // Duyệt qua danh sách mẫu đã xác định (Hỗ trợ cả 1:1 và 1:N)
+                                            samplesToCheck.forEach { sampleFaceRecognition ->
                                                 sampleFaceRecognition.listVectorEmbedding.forEach { sample ->
-                                                    val distanceScore: Float =
-                                                        cosineDistance(sample, subject)
-                                                    var scoreByPercent: Int =
-                                                        if (distanceScore <= modelConfig.cosineThreshold) 100
-                                                        else (((2 * modelConfig.cosineThreshold - distanceScore) / modelConfig.cosineThreshold) * 100).roundToInt()
-                                                    if (scoreByPercent < 0) scoreByPercent =
-                                                        0
+                                                    val distanceScore: Float = cosineDistance(sample, subject)
+
+                                                    // --- CHÈN LOG TẠI ĐÂY ---
+                                                    Log.d("FACE_DEBUG", "--------------------------------------")
+                                                    Log.d("FACE_DEBUG", "Đang kiểm tra User: ${sampleFaceRecognition.name}")
+                                                    Log.d("FACE_DEBUG", "Khoảng cách đo được (Distance): $distanceScore")
+                                                    Log.d("FACE_DEBUG", "Ngưỡng thiết lập (Threshold): ${modelConfig.cosineThreshold}")
+                                                    // -----------------------
+
+                                                    var scoreByPercent: Int = if (distanceScore <= modelConfig.cosineThreshold) 100
+                                                    else (((2 * modelConfig.cosineThreshold - distanceScore) / modelConfig.cosineThreshold) * 100).roundToInt()
+
+                                                    if (scoreByPercent < 40) scoreByPercent = 0 // Chỉ chấp nhận trên 40% mới tính điểm, dưới đó coi như không khớp
+
+                                                    // --- LOG ĐIỂM SAU KHI TÍNH ---
+                                                    Log.d("FACE_DEBUG", "Điểm % tính được: $scoreByPercent")
+                                                    // ----------------------------
+
                                                     if (highScoreRecognition < scoreByPercent) {
-                                                        highScoreRecognition =
-                                                            scoreByPercent
+                                                        highScoreRecognition = scoreByPercent
                                                     }
                                                     if (bestDistanceScore == null || bestDistanceScore!! > distanceScore) {
                                                         bestDistanceScore = distanceScore
@@ -216,9 +270,12 @@ class FaceRecognitionProcessor constructor(
                                                 }
                                             }
                                         }
-
                                     }
                                 }
+
+                                // Log kết quả cuối cùng trước khi trả về callback
+                                Log.i("FACE_DEBUG", "==> KẾT QUẢ CUỐI CÙNG: $highScoreRecognition điểm")
+
                                 resultRecognitionCallback(
                                     highScoreRecognition,
                                     imageCropped,
@@ -321,6 +378,46 @@ class FaceRecognitionProcessor constructor(
         database.sampleFaceRecognitionDao().deleteSampleFaceByGroupName(name)
     }
 
+    // Thêm vào FaceRecognitionProcessor.kt
+    suspend fun compareTwoBitmaps(bitmap1: Bitmap, bitmap2: Bitmap): Int {
+        return withContext(Dispatchers.Default) {
+            // 1. Trích xuất vector (embedding) cho ảnh 1
+            val emb1 = getEmbeddingFromSingleBitmap(bitmap1)
+            // 2. Trích xuất vector (embedding) cho ảnh 2
+            val emb2 = getEmbeddingFromSingleBitmap(bitmap2)
+
+            if (emb1 == null || emb2 == null) return@withContext 0
+
+            // 3. Tính khoảng cách Cosine
+            val distance = cosineDistance(emb1, emb2)
+
+            // 4. Chuyển đổi khoảng cách thành điểm số % (Sử dụng ngưỡng thắt chặt 0.11f)
+            if (distance <= modelConfig.cosineThreshold) {
+                // Khớp tốt (Điểm từ 90-100)
+                (((modelConfig.cosineThreshold - distance) / modelConfig.cosineThreshold) * 10 + 40).toInt()
+            } else {
+                // Không khớp (Người lạ) -> Trả về 0 điểm
+                0
+            }
+        }
+    }
+
+    // Hàm hỗ trợ trích xuất embedding từ 1 Bitmap duy nhất
+    private suspend fun getEmbeddingFromSingleBitmap(bitmap: Bitmap): FloatArray? = suspendCoroutine { cont ->
+        mlKitFaceDetection.process(bitmap, 0)
+                .addOnSuccessListener { faces ->
+                    val face = faces.lastOrNull()
+                    if (face != null) {
+                        val cropped = Utils.cropRectFromBitmap(activity, bitmap, face.boundingBox)
+                        if (cropped != null) {
+                            val buffer = convertBitmapToBuffer(cropped)
+                            cont.resume(runFaceNet(buffer))
+                        } else cont.resume(null)
+                    } else cont.resume(null)
+                }
+                .addOnFailureListener { cont.resume(null) }
+    }
+
     @SuppressLint("SuspiciousIndentation")
     override fun startRecognition(
         faceGroupName: String?,
@@ -333,17 +430,40 @@ class FaceRecognitionProcessor constructor(
         ) -> Unit
     ) {
         listSampleFaceGroupData.clear()
-        detected = false
-        faceGroupName?.let {
-            detected = true
-            CoroutineScope(Dispatchers.Default).launch {
+
+        // LUÔN đặt detected = true khi bắt đầu nhận diện để hàm analyze thực hiện tính điểm
+        detected = true
+
+        CoroutineScope(Dispatchers.Default).launch {
+            if (faceGroupName != null) {
+                // Logic cũ cho Student (1:1): Tìm mẫu theo ID
                 database.sampleFaceRecognitionDao().findSampleFaceByGroupName(faceGroupName)
-                    ?.let { listSampleFaceGroupData.add(it) }
+                        ?.let { listSampleFaceGroupData.add(it) }
+
+                // Nếu chưa tìm thấy mẫu trong DB, thử lại (giữ nguyên logic của bạn)
                 if (listSampleFaceGroupData.size < 1) {
+                    delay(500) // Thêm delay nhỏ để tránh loop quá nhanh
                     startRecognition(faceGroupName = faceGroupName, resultCallback = resultCallback)
                 }
+            } else {
+                // Logic bổ sung cho Teacher (1:N): Tải TẤT CẢ mẫu khuôn mặt có trong DB local
+                val allSamples = database.sampleFaceRecognitionDao().getAll()
+                listSampleFaceGroupData.addAll(allSamples)
+                android.util.Log.d("FaceRecog", "Teacher Login: Đã tải ${allSamples.size} mẫu khuôn mặt từ DB")
             }
         }
+
+//        detected = false
+//        faceGroupName?.let {
+//            detected = true
+//            CoroutineScope(Dispatchers.Default).launch {
+//                database.sampleFaceRecognitionDao().findSampleFaceByGroupName(faceGroupName)
+//                    ?.let { listSampleFaceGroupData.add(it) }
+//                if (listSampleFaceGroupData.size < 1) {
+//                    startRecognition(faceGroupName = faceGroupName, resultCallback = resultCallback)
+//                }
+//            }
+//        }
         detectionInProgress = true
         this.resultRecognitionCallback = resultCallback
     }

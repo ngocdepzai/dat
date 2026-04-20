@@ -101,6 +101,10 @@ data class FaceRecognitionViewModel @Inject constructor(
         }
     }
 
+    suspend fun compareTwoBitmaps(bitmap1: Bitmap, bitmap2: Bitmap): Int {
+        return faceRecognitionProcessor.compareTwoBitmaps(bitmap1, bitmap2)
+    }
+
     fun getCameraPreviewDevice(): CameraPreviewDevice? = device.getCameraPreview()
 
     fun getListUserAssignInDevice(

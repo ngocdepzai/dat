@@ -3,12 +3,15 @@ package com.hc.dat.view.dialog
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.*
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.hc.dat.model.InProgressSession
 import com.hc.dat.view.TrainingSessionScreen
+import com.hc.dat.viewmodel.FaceRecognitionViewModel
 import com.lws.device.camerapreview.*
 import com.lws.type.Logger
 import hc.manager.datapp.R
@@ -27,12 +30,14 @@ internal object ConFirmLogoutDialog {
 
     private lateinit var activity: Activity
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun showDialog(
-        activity: Activity,
-        imageLogin: File?,
-        imageLogout: File?,
-        inProgressSession: InProgressSession,
-        callback: ((confirmLogout: Boolean, notSendTC: Boolean) -> Any?)
+            activity: Activity,
+            imageLogin: File?,
+            imageLogout: File?,
+            inProgressSession: InProgressSession,
+            faceRecognitionViewModel: FaceRecognitionViewModel,
+            callback: ((confirmLogout: Boolean, notSendTC: Boolean) -> Any?)
     ) {
         Logger.d("showDialog")
         this.activity = activity
@@ -82,18 +87,52 @@ internal object ConFirmLogoutDialog {
             )
         }
         dialog?.show()
-        initView(imageLogin = imageLogin, imageLogout = imageLogout, callback = callback)
+        initView(imageLogin = imageLogin, imageLogout = imageLogout, faceRecognitionViewModel = faceRecognitionViewModel, callback = callback)
     }
 
 
     private fun initView(
         imageLogin: File?,
         imageLogout: File?,
+        faceRecognitionViewModel: FaceRecognitionViewModel,
         callback: ((confirmLogout: Boolean, notSendTC: Boolean) -> Any?)
     ) {
         viewBinding.ivImageLogin.setImageBitmap(BitmapFactory.decodeFile(imageLogin?.absolutePath))
         viewBinding.ivImageLogout.setImageBitmap(BitmapFactory.decodeFile(imageLogout?.absolutePath))
 
+//        viewBinding.btConfirm.setOnClickListener {
+//            if (imageLogin == null || imageLogout == null) return@setOnClickListener
+//
+//            // Hiện loading
+//            com.hc.dat.view.BaseDialog.showProgressDialog(activity, "Đang đối soát ảnh đăng nhập/đăng xuất...")
+//
+//            CoroutineScope(Dispatchers.Main).launch {
+//                val bmpLogin = BitmapFactory.decodeFile(imageLogin.absolutePath)
+//                val bmpLogout = BitmapFactory.decodeFile(imageLogout.absolutePath)
+//
+//                if (bmpLogin != null && bmpLogout != null) {
+//                    // GỌI HÀM SO SÁNH 2 ẢNH
+//                    val score = faceRecognitionViewModel.compareTwoBitmaps(bmpLogin, bmpLogout)
+//
+//                    com.hc.dat.view.BaseDialog.dismissProgress()
+//
+//                    if (score >= 40) { // Ngưỡng an toàn là 40 điểm
+//                        Logger.i("Đối soát thành công: $score điểm")
+//                        dismiss()
+//                        callback(true, viewBinding.cbNotSendTC.isChecked)
+//                    } else {
+//                        Logger.e("Đối soát thất bại: $score điểm")
+//                        MaterialAlertDialogBuilder(activity)
+//                                .setTitle("Xác thực không khớp")
+//                                .setMessage("Ảnh đăng xuất không khớp với ảnh lúc đăng nhập (Độ khớp: $score%). Vui lòng kiểm tra lại người thực hiện đăng xuất!")
+//                                .setPositiveButton("Thử lại", null)
+//                                .show()
+//                    }
+//                } else {
+//                    com.hc.dat.view.BaseDialog.dismissProgress()
+//                }
+//            }
+//        }
         viewBinding.btConfirm.setOnClickListener {
             dismiss()
             callback(true, viewBinding.cbNotSendTC.isChecked)

@@ -184,6 +184,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
         return secondCounter + 1
     }
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun startTimeCounter() {
         Logger.d("startTimeCounter")
         timeCounterThread?.interrupt()
@@ -1471,6 +1472,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         cameraPreviewDevice.stopCameraPreview()
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private val finishSessionConfirmCallback: (action: ActionFinishSession, isNotSendTC: Boolean, imageFile: File?)
     -> Unit = { action: ActionFinishSession, isNotSendTC: Boolean, imageFile: File? ->
         Logger.i("finishSessionConfirmCallback action: $action | isNotSendTC: $isNotSendTC")
@@ -1563,6 +1565,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                             imageLogin = studentImageLogin ?: riderSessionViewModel.getImageLogin(),
                             imageLogout = studentImageLogout!!,
                             inProgressSession = riderSessionViewModel.inProgressSession!!,
+                            faceRecognitionViewModel = faceRecognitionViewModel,
                             ) { confirm, notSendTC ->
                             if (confirm) {
                                 FinishSessionDialog.dismiss()

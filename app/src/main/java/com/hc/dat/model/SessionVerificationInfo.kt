@@ -31,10 +31,10 @@ data class SessionVerificationInfo(
         if (location.latitude > 8 && location.latitude < 23 && location.longitude > 102 && location.longitude < 110
         ) {
             // Loại bỏ các điểm có độ chính xác quá kém (nhảy GPS) ---
-            if (location.hasAccuracy() && location.accuracy > 200f) {
-                Logger.e("GPS ignored - low accuracy: ${location.accuracy}")
-                return
-            }
+//            if (location.hasAccuracy() && location.accuracy > 200f) {
+//                Logger.e("GPS ignored - low accuracy: ${location.accuracy}")
+//                return
+//            }
 
             val calculateDistance: Float = latestLocation?.distanceTo(location) ?: 0.0f
             val durationCalculate: Float = if (latestLocation != null) ((location.time - latestLocation!!.time) / 1000f) else 0f
@@ -46,8 +46,8 @@ data class SessionVerificationInfo(
 
             // Nếu 1 điểm GPS mới cách điểm cũ hơn 1km thì hệ thống sẽ không cập nhật tọa độ đó vào dữ liệu gửi lên server
             // (tránh vẽ đường kẻ xuyên thành phố).
-            if (latestLocation == null || speedCalculate <= 28f && calculateDistance < 3000f) {
-
+//            if (latestLocation == null || speedCalculate <= 28f && calculateDistance < 3000f) {
+            if (latestLocation == null || speedCalculate <= 28f) {
                 // Cập nhật khoảng cách và thời gian cho đoạn di chuyển này
                 latestLocation?.apply {
                     distance = this.distanceTo(location)

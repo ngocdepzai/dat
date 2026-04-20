@@ -63,6 +63,8 @@ internal object FaceRecognizeDialog {
     private var isTeacherLogin = true
     private lateinit var activity: Activity
     private var isResearchInProgress = false
+    private var currentSearchScore: Int = 0
+    private var searchThreshold: Int = 40 // Ngưỡng chấp nhận (40 điểm)
     init {
         if (!hcImageFolder.exists()) {
             hcImageFolder.mkdirs()
@@ -304,11 +306,25 @@ internal object FaceRecognizeDialog {
     private fun startResearchFaceRecognition() {
         // start research face recognition
         if (!isResearchInProgress) {
+            isResearchInProgress = true
             CoroutineScope(Dispatchers.Default).launch {
                 delay(1000)
+
+                // Khởi động nhận diện:
+                // Nếu là Teacher login 1:N thì truyền null, nếu Student 1:1 thì truyền userEntity.userCode
+                val targetUserId = if (isTeacherLogin) null else userEntity?.userCode
+
+                faceRecognitionViewModel.startRecognition(targetUserId) { score, _, _, _, _ ->
+                    currentSearchScore = score
+
+                    val passStatus = if (score >= 40) "PASS" else "FAIL"
+                    // Lưu ý: Nếu thư viện trả về thang điểm 100 thì sửa 0.4 thành 40
+                    android.util.Log.d("FaceRecog", "Điểm nhận diện: $score | Trạng thái (40%): $passStatus")
+                }
+
                 handleCollectFaceDetected()
                 handleRecognizeFaceDetected2()
-                isResearchInProgress = true
+
             }
         }
     }
@@ -380,6 +396,7 @@ internal object FaceRecognizeDialog {
     }
 
     private fun initFaceRecognizeView(userEntity: UserEntity) {
+        android.util.Log.d("FaceRecog", "1. Đã vào initFaceRecognizeView cho user: ${userEntity.userCode}")
         viewBinding.userEntity = userEntity
         userEntity.avatarId?.also {
             val request = ImageRequest.Builder(activity)
@@ -390,10 +407,10 @@ internal object FaceRecognizeDialog {
                 .allowHardware(false)
                 .target(
                     onStart = { placeholder ->
-                        Logger.d("onStart: ${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it")
+                        Logger.d("FaceRecog onStart: ${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it")
                     },
                     onSuccess = { result ->
-                        Logger.d("onSuccess: ${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it")
+                        Logger.d("FaceRecog onSuccess: ${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it")
                         val bitmap: Bitmap? = result.toBitmapOrNull()
                         if (bitmap != null) {
                             viewBinding.ivFaceSampleRecog.setImageBitmap(bitmap)
@@ -404,7 +421,7 @@ internal object FaceRecognizeDialog {
                         }
                     },
                     onError = { error ->
-                        Logger.e("onError studentAuthInfo?.authenImages ${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it Error!!")
+                        Logger.e("FaceRecog onError studentAuthInfo?.authenImages ${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it Error!!")
 //                        dataCallback(FaceRecognizeLoginAction.FACE_LOGIN_FAIL, null, null)
                     }
                 )
@@ -424,7 +441,7 @@ internal object FaceRecognizeDialog {
     }
 
     private fun handleRecognizeFaceDetected2() {
-        Logger.d("handleRecognizeFaceDetected2")
+        Logger.d("handleRecognizeFaceDetected2 - Bắt đầu vòng lặp so sánh")
         CoroutineScope(Dispatchers.IO).launch(
             CoroutineExceptionHandler { _, _ ->
                 Logger.w("Error in progress -> handleRecognizeFaceDetected")
@@ -441,23 +458,34 @@ internal object FaceRecognizeDialog {
                             faceDetectedMessageQueue.take()
                         }
 
-                    // if point out userSpecific -> userEntity != null
-                    // bỏ xác thực đúng khuôn mặt mới bắt đầu phiên
-//                var userFound: UserEntity? = faceRecognitionViewModel.recognizeFaceResearch(
-//                    faceDetected = faceDetectedData.second,
-//                    isTeacher = isTeacherLogin,
-//                    userSpecific = userEntity
-//                )
-//                Logger.i("handleRecognizeFaceDetected userFound: $userFound")
-//                if (userFound != null) {
-//                    Logger.i("Verify face success")
-//                    userEntity = userFound
-                    handleSaveImageFile(userEntity!!.userCode, imageData = faceDetectedData.first)
-                    LogRecorder.i("Phát hiện khuôn mặt", userEntity?.fullName)
-                    break
-                }
+                    if (!isTeacherLogin){
+                        val previewData = faceDetectedData.first
+                        // 1. Chuyển frame thành Bitmap và phân tích
+                        val frameBitmap = faceRecognitionViewModel.cameraPreviewDataToBitmap(previewData)
+                        val targetUserId = if (isTeacherLogin) null else userEntity?.userCode
+                        // Gọi AI phân tích
+                        faceRecognitionViewModel.facialAnalysis(frameBitmap, targetUserId)
+                        // 2. CHẶN Ở ĐÂY: Kiểm tra điểm số
+                        Logger.i("Đang phân tích... Score hiện tại: $currentSearchScore")
+                        if (currentSearchScore >= searchThreshold) {
+                            // CHỈ KHI ĐIỂM >= 40 MỚI CHO PASS
+                            Logger.i("NHẬN DIỆN THÀNH CÔNG! Score: $currentSearchScore")
 
-//                }
+                            withContext(Dispatchers.Main) {
+                                faceRecognitionViewModel.stopRecognition()
+                                handleSaveImageFile(userEntity?.userCode ?: "unknown", imageData = previewData)
+                            }
+                            break // Thoát vòng lặp khi thành công
+                        } else {
+                            // Nếu không phải người này hoặc điểm thấp, tiếp tục quét frame tiếp theo
+                            Logger.w("Không khớp hoặc người lạ (Score: $currentSearchScore). Tiếp tục quét...")
+                        }
+                    } else{
+                        handleSaveImageFile(userEntity!!.userCode, imageData = faceDetectedData.first)
+                        LogRecorder.i("Phát hiện khuôn mặt", userEntity?.fullName)
+                        break // Thoát vòng lặp khi thành công
+                    }
+                }
             }
         }
     }
@@ -514,6 +542,7 @@ internal object FaceRecognizeDialog {
             val faceBlurString = StringBuilder()
             val smileString = StringBuilder()
             val faceRecognitionRate = StringBuilder()
+            faceRecognitionRate.append(currentSearchScore).append("/").append(searchThreshold)
             val mat = Matrix()
             val w = cameraPreviewDevice.getPreviewSize().first
             val h = cameraPreviewDevice.getPreviewSize().second
@@ -583,7 +612,9 @@ internal object FaceRecognizeDialog {
             viewBinding.faceView.addYaw(faceYawString.toString())
             viewBinding.faceView.addBlur(faceBlurString.toString())
             viewBinding.faceView.addSmile(smileString.toString())
-            viewBinding.faceView.addRate(faceRecognitionRate.toString())
+            if(!isTeacherLogin){
+                viewBinding.faceView.addRate(faceRecognitionRate.toString())
+            }
             withContext(Dispatchers.Main){
                 viewBinding.faceView.invalidate()
             }
