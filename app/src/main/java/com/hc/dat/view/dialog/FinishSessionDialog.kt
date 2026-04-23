@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.*
 import android.hardware.usb.UsbDevice
+import android.os.Build
 import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.hc.dat.model.InProgressSession
@@ -55,6 +57,7 @@ internal object FinishSessionDialog {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     @SuppressLint("SetTextI18n")
     fun showDialog(
         activity: Activity,

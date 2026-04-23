@@ -35,7 +35,6 @@ import com.hc.dat.model.database.entity.UserEntity
 import com.hc.dat.model.database.entity.UserType
 import com.hc.dat.model.database.entity.convertToModelEntity
 import com.hc.dat.service.ServiceDefinition
-import com.hc.dat.service.model.DateMissing
 import com.hc.dat.utils.ImageLoader
 import com.hc.dat.utils.Utils
 import com.hc.dat.view.adapter.DialogButtonClickListener
@@ -1771,6 +1770,14 @@ class TrainingSessionScreen : DatBaseScreen() {
                     Logger.i("location speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
                     LogRecorder.i("Lấy GPS thành công", "speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
                     LogRecorder.i("Số lượng vệ tinh GPS được sử dụng: ", quantityGPSSatellite)
+
+                    // KIỂM TRA FAKE GPS TẠI ĐÂY
+                    if (SecurityUtils.isLocationMock(location)) {
+                        SecurityUtils.logFakeGpsToSentry("Vị trí giả lập", "isFromMockProvider = true", studentAuthInfo?.userCode)
+                        showFakeGpsBlockDialog("Tọa độ giả lập", "")
+                        return
+                    }
+
                     riderSessionViewModel.sessionVerificationInfo.apply {
                         setLastLocation(location)
                     }
@@ -2988,72 +2995,50 @@ class TrainingSessionScreen : DatBaseScreen() {
     override fun onResume() {
         Logger.d("onResume")
         super.onResume()
-        if(timeCounterThread?.isAlive == false || timeCounterThread == null || timeCounterThread?.isInterrupted == true){
-            startTimeCounter()
-        }
-        if(isThreadRunningJob?.isActive == false || isThreadRunningJob == null){
-            checkTimeCounterThread()
-        }
-        riderSessionViewModel.startGPSEventListener(gpsEventListener)
-//        fakeJob = CoroutineScope(Dispatchers.Main).launch {
-//
-//            var realSpeed = 0f
-//            var state = "ACCEL"   // ACCEL, CRUISE, STOP
-//
-//            while (isActive) {
-//
-//                when (state) {
-//
-//                    "ACCEL" -> {
-//                        realSpeed += 5f
-//                        if (realSpeed >= 50f) {
-//                            realSpeed = 50f
-//                            state = "CRUISE"
-//                        }
-//                    }
-//
-//                    "CRUISE" -> {
-//                        // 10% xác suất dừng đèn đỏ
-//                        if (Random.nextFloat() < 0.1f) {
-//                            state = "STOP"
-//                        }
-//                    }
-//
-//                    "STOP" -> {
-//                        realSpeed = 0f
-//                        // dừng 5–10s
-//                        delay((5000..10000).random().toLong())
-//                        state = "ACCEL"
-//                    }
-//                }
-//
-//                fakeLocation(realSpeed)
-//
-//                delay(1000)
-//            }
-//        }
-//        fakeJob = CoroutineScope(Dispatchers.Main).launch {
-//            var speed = 0f
-//            while (isActive) {
-//                speed += 5f
-//                if (speed > 80) speed = 0f
-//                fakeLocation(speed)
-//                delay(1000)
-//            }
-//        }
-        if (riderSessionViewModel.teacherAuthInfo != null &&
-            studentAuthInfo != null &&
-            riderSessionViewModel.getSessionInProgress() != null
-        ) {
-            openCamera()
-            CoroutineScope(Dispatchers.Default).launch{
-                resetTimeCounter()
-                sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
-                    timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
-                )
+
+        // --- KHỐI KIỂM TRA BẢO MẬT ---
+        val mockAppPackage = SecurityUtils.getActiveMockApp(requireContext())
+        val unauthorizedApps = SecurityUtils.checkNonWhitelistApps(requireContext())
+
+        // Nếu ĐÃ SẠCH (Không có app mock và không có app lạ)
+        if (mockAppPackage.isNullOrEmpty() && unauthorizedApps.isEmpty()) {
+            // Đóng dialog cảnh báo nếu nó đang hiển thị
+            dismissDialog()
+
+            // TIẾP TỤC CHẠY LOGIC BÌNH THƯỜNG CỦA APP
+            if(timeCounterThread?.isAlive == false || timeCounterThread == null || timeCounterThread?.isInterrupted == true){
+                startTimeCounter()
             }
+            if(isThreadRunningJob?.isActive == false || isThreadRunningJob == null){
+                checkTimeCounterThread()
+            }
+            riderSessionViewModel.startGPSEventListener(gpsEventListener)
+
+            if (riderSessionViewModel.teacherAuthInfo != null &&
+                    studentAuthInfo != null &&
+                    riderSessionViewModel.getSessionInProgress() != null
+            ) {
+                openCamera()
+                CoroutineScope(Dispatchers.Default).launch{
+                    resetTimeCounter()
+                    sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
+                            timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                    )
+                }
+            }
+            checkSessionInterrupt()
+        } else {
+            // NẾU VẪN CÒN VI PHẠM
+            if (!mockAppPackage.isNullOrEmpty()) {
+                val appLabel = getAppLabel(mockAppPackage)
+                showFakeGpsBlockDialog(appLabel, mockAppPackage)
+            } else {
+                val firstApp = unauthorizedApps[0]
+                val appLabel = firstApp.loadLabel(requireContext().packageManager).toString()
+                showFakeGpsBlockDialog(appLabel, firstApp.packageName)
+            }
+            return // THOÁT KHÔNG CHO CHẠY TIẾP CÁC LOGIC DƯỚI
         }
-        checkSessionInterrupt()
     }
 
     private fun checkSessionInterrupt(): Boolean {
@@ -3131,6 +3116,47 @@ class TrainingSessionScreen : DatBaseScreen() {
         // Thêm dòng này
         powerSaveReceiver?.let { requireContext().unregisterReceiver(it) }
         powerSaveReceiver = null
+    }
+
+    // Hàm hỗ trợ lấy tên App từ Package Name
+    private fun getAppLabel(packageName: String): String {
+        return try {
+            val pm = requireContext().packageManager
+            pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+        } catch (e: Exception) {
+            packageName
+        }
+    }
+
+    private fun showFakeGpsBlockDialog(appLabel: String, packageName: String) {
+        CoroutineScope(Dispatchers.Main).launch {
+            pauseHandleProcess()
+
+            showDialog(
+                    title = "PHÁT HIỆN VI PHẠM",
+                    message = "Ứng dụng không hợp lệ: $appLabel\n\nBạn phải gỡ bỏ ứng dụng này để tiếp tục phiên học DAT theo quy định.",
+                    cancelable = false,
+                    buttonList = listOf("Gỡ cài đặt", "Thoát ứng dụng"),
+                    listener = object : DialogButtonClickListener {
+                        override fun onDialogButtonClick(position: Int) {
+                            if (position == 0) {
+                                // MỞ THẲNG TRANG QUẢN LÝ (APP INFO) ĐỂ GỠ CÀI ĐẶT
+                                try {
+                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                    val uri = android.net.Uri.fromParts("package", packageName, null)
+                                    intent.data = uri
+                                    startActivity(intent)
+                                } catch (e: Exception) {
+                                    // Nếu lỗi thì mở danh sách app chung
+                                    startActivity(Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS))
+                                }
+                            } else {
+                                requireActivity().finishAffinity()
+                            }
+                        }
+                    }
+            )
+        }
     }
 }
 

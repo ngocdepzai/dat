@@ -42,6 +42,13 @@ data class SessionVerificationInfo(
             Logger.i("HoangSpeed so sánh speed & speedCalculate: " + "calculateDistance: $calculateDistance |  durationCalculate: $durationCalculate | speedCalculate: $speedCalculate | speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
             LogRecorder.i("Lấy GPS thành công so sánh speed & speedCalculate", "calculateDistance: $calculateDistance |  durationCalculate: $durationCalculate | speedCalculate: $speedCalculate | speed: ${location.speed} | latitude: ${location.latitude} | longitude: ${location.longitude}  | time: ${location.time}")
 
+            // Trong SessionVerificationInfo.kt
+            if (speedCalculate > 42f) { // Khoảng 150km/h
+                LogRecorder.e("Warning: Speed too high, suspect Fake GPS", "$speedCalculate m/s")
+                // Gửi log về Sentry
+                SecurityUtils.logFakeGpsToSentry("Tốc độ bất thường", "Speed: ${speedCalculate*3.6} km/h", studentImageAuthPath)
+            }
+
             val durationTooLong = durationCalculate > 30f
 
             // Nếu 1 điểm GPS mới cách điểm cũ hơn 1km thì hệ thống sẽ không cập nhật tọa độ đó vào dữ liệu gửi lên server
