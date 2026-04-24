@@ -71,7 +71,9 @@ object SecurityUtils {
                 "com.google.android.apps.maps",         // Google Maps
                 "com.zing.zalo",                        // Zalo
                 "com.facebook.orca",                    // Facebook Messenger (Bản chuẩn)
-                "com.facebook.mlite"                    // Facebook Messenger Lite (Dành cho máy cấu hình yếu)
+                "com.facebook.mlite",                    // Facebook Messenger Lite (Dành cho máy cấu hình yếu)
+                "com.wakdev.nfctools.pro",
+                "com.wakdev.wdnfc",
         )
         return safeApps.contains(pkgName)
     }
