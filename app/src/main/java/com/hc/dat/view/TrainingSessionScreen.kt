@@ -2782,8 +2782,11 @@ class TrainingSessionScreen : DatBaseScreen() {
             viewBinding.tvFailCounter.text = failCounter
 
             val authCountByTime: Int = (1 + floor(inProgressSession.totalTime).toInt() / 300)
+
+            // Thêm .coerceAtMost(100) vào cuối kết quả tính toán
             val successPercentage: Int =
-            ((inProgressSession.successVerifyCounter.toDouble() / authCountByTime) * 100).roundToInt()
+            ((inProgressSession.successVerifyCounter.toDouble() / authCountByTime) * 100).roundToInt().coerceAtMost(100)
+            Logger.i("| Tỷ lệ thực tế: $successPercentage")
 
             Logger.i("|${appViewModel.getSearchThreshold()} |${(inProgressSession.successVerifyCounter / authCountByTime).toDouble() * 100} | totalVerifyCounter: ${inProgressSession.totalVerifyCounter} | successVerifyCounter: ${inProgressSession.successVerifyCounter} | successPercentage: $successPercentage")
             if (inProgressSession.totalVerifyCounter == 0) {
