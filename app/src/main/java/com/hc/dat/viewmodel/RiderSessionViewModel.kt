@@ -937,11 +937,6 @@ data class RiderSessionViewModel @Inject constructor(
                     "studentImageAuthPath: ${sessionVerificationInfo.studentImageAuthPath}"
         )
 
-//        Logger.i(
-//            "inProgressSession: $inProgressSession | " +
-//                    "sessionVerificationInfo.lat: ${sessionVerificationInfo.lat} | " +
-//                    "sessionVerificationInfo.long: ${sessionVerificationInfo.long}"
-//        )
         CoroutineScope(Dispatchers.IO).launch(
             CoroutineExceptionHandler { _, ex ->
                 Logger.e("pushGPSData: Found an exception exception: ${ex.message}")
@@ -957,14 +952,29 @@ data class RiderSessionViewModel @Inject constructor(
             ) {
                 val gpsModel = GpsModel()
                 val timeGps = Calendar.getInstance().timeInMillis
-                gpsModel.apply {
-                    sessionId = inProgressSession?.id ?: ""
-                    seri = getImeiDevice(context) ?: ""
-                    lat = sessionVerificationInfo.lat
-                    lng = sessionVerificationInfo.long
-                    userCode = studentAuthInfo?.userCode ?: "UNKNOWN_STUDENT"
-                    dis = inProgressSession?.totalDis ?: 0f
-                    teacherCode = teacherAuthInfo?.userCode ?: "UNKNOWN_TEACHER"
+
+                // Bọc riêng đoạn gán dữ liệu vì đây là nơi dễ crash nhất (do getImei hoặc null)
+                try {
+                    gpsModel.apply {
+                        sessionId = inProgressSession?.id ?: ""
+                        // Cố gắng lấy IMEI, nếu lỗi thì gán rỗng chứ không để crash
+                        seri = try { getImeiDevice(context) ?: "" } catch (e: Exception) { "" }
+                        lat = sessionVerificationInfo.lat
+                        lng = sessionVerificationInfo.long
+                        userCode = studentAuthInfo?.userCode ?: "UNKNOWN_STUDENT"
+                        // Đảm bảo không lỗi kiểu dữ liệu (Double/Float)
+                        dis = inProgressSession?.totalDis ?: 0f
+                        teacherCode = teacherAuthInfo?.userCode ?: "UNKNOWN_TEACHER"
+                        this.gsmStatus = gsmStatus
+                        // Bọc speed để tránh lỗi nếu hàm getSpeed() bên trong bị null
+                        vel = try { sessionVerificationInfo.getSpeed() } catch (e: Exception) { 0.0 }
+                        time = timeGps / 1000
+                        this.gpsStatus = 1
+                    }
+                } catch (e: Exception) {
+                    LogRecorder.e("pushGPSData", "Lỗi khi gán dữ liệu vào gpsModel: ${e.message}")
+                }
+//                gpsModel.apply {
 //                    sessionId = inProgressSession!!.id
 //                    seri = getImeiDevice(context)
 //                    lat = sessionVerificationInfo.lat
@@ -972,11 +982,11 @@ data class RiderSessionViewModel @Inject constructor(
 //                    userCode = studentAuthInfo!!.userCode
 //                    dis = inProgressSession!!.totalDis
 //                    teacherCode = teacherAuthInfo!!.userCode
-                    this.gsmStatus = gsmStatus
-                    vel = sessionVerificationInfo.getSpeed()
-                    time = timeGps / 1000
-                    this.gpsStatus = 1
-                }
+//                    this.gsmStatus = gsmStatus
+//                    vel = sessionVerificationInfo.getSpeed()
+//                    time = timeGps / 1000
+//                    this.gpsStatus = 1
+//                }
                 LogRecorder.i("Thông tin GPS đẩy rabbit: ", gpsModel.toString())
 
                 // Todo refactor code send to rabbit
