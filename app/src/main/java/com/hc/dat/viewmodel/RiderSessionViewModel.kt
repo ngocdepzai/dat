@@ -1112,7 +1112,7 @@ data class RiderSessionViewModel @Inject constructor(
                             gpsLat = sessionVerificationInfo.lat,
                             gpsLong = sessionVerificationInfo.long,
                             sessionId = inProgressSession!!.id,
-                            logoutTime = (logoutTime / 1000L) + 25200, // Todo keep old logic + 25200
+                            logoutTime = (logoutTime / 1000L) + 25200,
                             logoutImageUrl = sessionVerificationInfo.studentImageLogoutUrl!!,
                             isSendTC = !notSendTC
                         )
@@ -1150,7 +1150,7 @@ data class RiderSessionViewModel @Inject constructor(
                                     id = it.id,
                                     gpsLatEnd = it.gpsLatEnd!!,
                                     gpsLongEnd = it.gpsLongEnd!!,
-                                    logoutTime = (logoutTime / 1000L) + 25200, // Todo keep old logic + 25200,
+                                    logoutTime = (logoutTime / 1000L) + 25200,
                                     logoutImagePath = studentLogoutImage.path,
                                     totalTime = inProgressSession!!.totalTime,
                                     totalDistance = inProgressSession!!.totalDis,
@@ -1220,7 +1220,7 @@ data class RiderSessionViewModel @Inject constructor(
                 id = it.id,
                 gpsLatEnd = it.gpsLatEnd!!,
                 gpsLongEnd = it.gpsLongEnd!!,
-                logoutTime = (logoutTime / 1000L) + 25200, // Todo keep old logic + 25200,
+                logoutTime = (logoutTime / 1000L) + 25200,
                 logoutImagePath = studentLogoutImage.path,
                 totalTime = inProgressSession!!.totalTime,
                 totalDistance = inProgressSession!!.totalDis,

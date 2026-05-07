@@ -268,7 +268,6 @@ class RepositoryImpl @Inject constructor(
             Logger.i("finishRiderSession responseData: $responseData")
             return when (response.code()) {
                 ResponseStatus.SUCCESS -> {
-                    // Refer ticket: https://ducbui1890.atlassian.net/jira/software/projects/HCDAT/boards/3?selectedIssue=HCDAT-43
                     when (responseData?.status) {
                         0 -> {
                             SentryLogUploader.captureInfo(
