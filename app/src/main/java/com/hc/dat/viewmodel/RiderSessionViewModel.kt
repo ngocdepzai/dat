@@ -766,7 +766,6 @@ data class RiderSessionViewModel @Inject constructor(
                         gpsLat = riderSessionEntity.gpsLatStart,
                         gpsLong = riderSessionEntity.gpsLongStart,
                         loginType = riderSessionEntity.loginType,
-                        // Todo keep old logic + 25200
                         loginTime = riderSessionEntity.loginTime + 25200,
                         loginImageUrl = imageUploadUrl,
                         teacherCode = riderSessionEntity.teacherCode,
@@ -934,7 +933,7 @@ data class RiderSessionViewModel @Inject constructor(
         LogRecorder.i("pushGPSData:  ",
             "inProgressSession: $inProgressSession | " +
                     "sessionVerificationInfo.lat: ${sessionVerificationInfo.lat} | " +
-                    "sessionVerificationInfo.long: ${sessionVerificationInfo.long}" +
+                    "sessionVerificationInfo.long: ${sessionVerificationInfo.long} | " +
                     "studentImageAuthPath: ${sessionVerificationInfo.studentImageAuthPath}"
         )
 
@@ -946,8 +945,12 @@ data class RiderSessionViewModel @Inject constructor(
         CoroutineScope(Dispatchers.IO).launch(
             CoroutineExceptionHandler { _, ex ->
                 Logger.e("pushGPSData: Found an exception exception: ${ex.message}")
+                LogRecorder.i("pushGPSData: Found an exception:", "${ex.message}")
+                LogRecorder.i("pushGPSData", "${ex.stackTraceToString()}")
             }
         ) {
+            // Thêm log ngay đầu để biết đã vào Coroutine chưa
+            LogRecorder.i("pushGPSData", "Đã vào Coroutine")
             if (inProgressSession != null &&
                 sessionVerificationInfo.lat != 0.0 &&
                 sessionVerificationInfo.long != 0.0
@@ -955,13 +958,20 @@ data class RiderSessionViewModel @Inject constructor(
                 val gpsModel = GpsModel()
                 val timeGps = Calendar.getInstance().timeInMillis
                 gpsModel.apply {
-                    sessionId = inProgressSession!!.id
-                    seri = getImeiDevice(context)
+                    sessionId = inProgressSession?.id ?: ""
+                    seri = getImeiDevice(context) ?: ""
                     lat = sessionVerificationInfo.lat
                     lng = sessionVerificationInfo.long
-                    userCode = studentAuthInfo!!.userCode
-                    dis = inProgressSession!!.totalDis
-                    teacherCode = teacherAuthInfo!!.userCode
+                    userCode = studentAuthInfo?.userCode ?: "UNKNOWN_STUDENT"
+                    dis = inProgressSession?.totalDis ?: 0f
+                    teacherCode = teacherAuthInfo?.userCode ?: "UNKNOWN_TEACHER"
+//                    sessionId = inProgressSession!!.id
+//                    seri = getImeiDevice(context)
+//                    lat = sessionVerificationInfo.lat
+//                    lng = sessionVerificationInfo.long
+//                    userCode = studentAuthInfo!!.userCode
+//                    dis = inProgressSession!!.totalDis
+//                    teacherCode = teacherAuthInfo!!.userCode
                     this.gsmStatus = gsmStatus
                     vel = sessionVerificationInfo.getSpeed()
                     time = timeGps / 1000
@@ -993,6 +1003,7 @@ data class RiderSessionViewModel @Inject constructor(
                         else GPSUploadState.SAVE_LOCAL.code
                     )
                     Logger.i("pushGPSData gpsSignalEntity: $gpsSignalEntity")
+                    LogRecorder.i("pushGPSData gpsSignalEntity:", gpsSignalEntity.toString())
                     repository.insertNewGPSSignal(gpsSignalEntity)
                     countGPSDataUpload()
                     countAuthDataUpload()
