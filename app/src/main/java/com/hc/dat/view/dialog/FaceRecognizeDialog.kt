@@ -278,8 +278,7 @@ internal object FaceRecognizeDialog {
                 studentFolder.mkdirs()
             }
             val prefix = if (isTeacherLogin) "t" else "s"
-            val fileTemp =
-                File(studentFolder, "${prefix}_face_login_${Utils.getRealTimeStamp()}.png")
+            val fileTemp = File(studentFolder, "${prefix}_face_login_${Utils.getRealTimeStamp()}.png")
             fileTemp.apply {
                 if (exists()) delete()
                 createNewFile()

@@ -989,7 +989,6 @@ data class RiderSessionViewModel @Inject constructor(
 //                }
                 LogRecorder.i("Thông tin GPS đẩy rabbit: ", gpsModel.toString())
 
-                // Todo refactor code send to rabbit
                 val rabbitMq = Sender(gpsModel).sendData()
                 LogRecorder.i("pushGPSData Rabbit sendStatus:"," $rabbitMq")
                 Logger.i("pushGPSData Rabbit sendStatus: $rabbitMq")

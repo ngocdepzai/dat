@@ -13,6 +13,7 @@ import com.hc.dat.model.InProgressSession
 import com.hc.dat.view.TrainingSessionScreen
 import com.hc.dat.viewmodel.FaceRecognitionViewModel
 import com.lws.device.camerapreview.*
+import com.lws.type.LogRecorder
 import com.lws.type.Logger
 import hc.manager.datapp.R
 import hc.manager.datapp.databinding.ConfirmLogoutDialogBinding
@@ -97,7 +98,11 @@ internal object ConFirmLogoutDialog {
         faceRecognitionViewModel: FaceRecognitionViewModel,
         callback: ((confirmLogout: Boolean, notSendTC: Boolean) -> Any?)
     ) {
+        // --- KIỂM TRA ẢNH ĐĂNG NHẬP ---
+        val bmpLogin = processAndLogImage(imageLogin, "ẢNH ĐĂNG NHẬP")
         viewBinding.ivImageLogin.setImageBitmap(BitmapFactory.decodeFile(imageLogin?.absolutePath))
+        // --- KIỂM TRA ẢNH ĐĂNG XUẤT ---
+        val bmpLogout = processAndLogImage(imageLogout, "ẢNH ĐĂNG XUẤT")
         viewBinding.ivImageLogout.setImageBitmap(BitmapFactory.decodeFile(imageLogout?.absolutePath))
 
 //        viewBinding.btConfirm.setOnClickListener {
@@ -165,5 +170,45 @@ internal object ConFirmLogoutDialog {
     fun dismiss() {
         Logger.d("dismiss")
         dialog?.dismiss()
+    }
+
+    /**
+     * Hàm hỗ trợ Log chi tiết tình trạng file và decode bitmap
+     */
+    private fun processAndLogImage(file: File?, tag: String): Bitmap? {
+        if (file == null) {
+            LogRecorder.i("CHECK_IMAGE", "$tag: File bị NULL (không có đối tượng file)")
+            return null
+        }
+
+        if (!file.exists()) {
+            LogRecorder.i("CHECK_IMAGE", "$tag: File KHÔNG tồn tại trên bộ nhớ. Path: ${file.absolutePath}")
+            return null
+        }
+
+        val fileSize = file.length() // tính bằng byte
+        val fileSizeKB = fileSize / 1024.0
+
+        LogRecorder.i("CHECK_IMAGE", "$tag: Đường dẫn: ${file.absolutePath}")
+        LogRecorder.i("CHECK_IMAGE", "$tag: Dung lượng file: $fileSizeKB KB")
+
+        if (fileSize <= 0) {
+            LogRecorder.i("CHECK_IMAGE", "$tag: CẢNH BÁO: File có dung lượng 0 byte (Ảnh bị rỗng/đen)!")
+            return null
+        }
+
+        // Thử decode file thành bitmap
+        return try {
+            val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+            if (bitmap == null) {
+                LogRecorder.i("CHECK_IMAGE", "$tag: LỖI: Không thể decode file thành Bitmap (File có thể bị lỗi định dạng hoặc hỏng)!")
+            } else {
+                LogRecorder.i("CHECK_IMAGE", "$tag: Decode thành công. Kích thước: ${bitmap.width}x${bitmap.height}")
+            }
+            bitmap
+        } catch (e: Exception) {
+            LogRecorder.i("CHECK_IMAGE", "$tag: LỖI CRASH khi decode: ${e.message}")
+            null
+        }
     }
 }

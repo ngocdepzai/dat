@@ -1558,6 +1558,10 @@ class TrainingSessionScreen : DatBaseScreen() {
 //                    }
                     else {
                         riderSessionViewModel.inProgressSession?.id?.let { riderSessionViewModel.checkMissingDataSession(sessionId = it, callback = riderSessionCallback) }
+                        LogRecorder.i("LOGIN_IMAGE", "--- Kiểm tra ảnh đăng nhập ---")
+                        LogRecorder.i("LOGIN_IMAGE", "studentImageLogin (biến tạm thời): ${studentImageLogin?.absolutePath ?: "NULL"}")
+                        LogRecorder.i("LOGIN_IMAGE", "getImageLogin (từ ViewModel/DB): ${riderSessionViewModel.getImageLogin()?.absolutePath ?: "NULL"}")
+
                         BaseNotification.showWarning(getString(R.string.confirm_logout_info_message))
                         ConFirmLogoutDialog.showDialog(
                             activity = requireActivity(),
