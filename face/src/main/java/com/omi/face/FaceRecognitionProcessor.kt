@@ -38,7 +38,8 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.system.measureTimeMillis
-
+import android.media.AudioManager
+import android.media.ToneGenerator
 
 class FaceRecognitionProcessor constructor(
         private val activity: Context,
@@ -66,6 +67,8 @@ class FaceRecognitionProcessor constructor(
     private var detected = false
     private var highScoreRecognition = 0
     private val mutex = Mutex()
+    private val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 1000)
+    private var lastToastTime = 0L
 
     private lateinit var resultRecognitionCallback: (
             searchScore: Int,
@@ -275,7 +278,39 @@ class FaceRecognitionProcessor constructor(
 
                                 // Log kết quả cuối cùng trước khi trả về callback
                                 Log.i("FACE_DEBUG", "==> KẾT QUẢ CUỐI CÙNG: $highScoreRecognition điểm")
+                                // --- THÊM LOGIC PHÁT ÂM THANH TẠI ĐÂY ---
+                                // Giả sử ngưỡng đạt là 40 điểm (bạn có thể thay đổi số này)
+                                if (highScoreRecognition < 40) {
+                                    val currentTime = System.currentTimeMillis()
+                                    // Chỉ hiện Toast và phát âm thanh nếu đã qua ít nhất 2 giây kể từ lần trước
+                                    if (currentTime - lastToastTime > 2000) {
+                                        lastToastTime = currentTime
 
+                                        playFailSound()
+
+                                        withContext(Dispatchers.Main) {
+                                            val message = "Khuôn mặt không khớp ($highScoreRecognition%)"
+
+                                            // Tạo SpannableString để định dạng chữ
+                                            val spannableString = android.text.SpannableString(message)
+
+                                            // Phóng to chữ lên gấp 1.5 lần (bạn có thể chỉnh 2.0f nếu muốn to nữa)
+                                            spannableString.setSpan(
+                                                    android.text.style.RelativeSizeSpan(1.5f),
+                                                    0,
+                                                    message.length,
+                                                    0
+                                            )
+
+                                            android.widget.Toast.makeText(
+                                                    activity,
+                                                    spannableString, // Truyền spannableString thay vì String thuần
+                                                    android.widget.Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                    Log.d("FACE_DEBUG", "Phát âm thanh cảnh báo: Điểm thấp ($highScoreRecognition)")
+                                }
                                 resultRecognitionCallback(
                                     highScoreRecognition,
                                     imageCropped,
@@ -489,12 +524,30 @@ class FaceRecognitionProcessor constructor(
         // Todo check why get only one element -> Check in native of Tensorflow
         return faceNetModelOutputs.first()
     }
+    private fun playFailSound() {
+        try {
+            // TONE_SUP_ERROR thường kéo dài khoảng 2-3 giây mặc định hoặc theo tham số duration
+            // 1000 ở đây là thời gian phát (miliseconds)
+            toneGen.startTone(ToneGenerator.TONE_CDMA_ABBR_ALERT, 1000)
 
+            Log.d("FACE_DEBUG", "Đang phát âm thanh lỗi...")
+        } catch (e: Exception) {
+            Log.e("FACE_DEBUG", "Không thể phát âm thanh: ${e.message}")
+        }
+        // KHÔNG gọi toneGen.release() ở đây!
+    }
 
-    /**
-     * By ChatGPT Cosine Similarity usually use for face recognition which present
-     * by vector embedding make by FaceNet, OpenFace or other
-     */
+    fun releaseResources() {
+        try {
+            toneGen.release() // Giải phóng âm thanh
+            interpreter.close() // Giải phóng TFLite (Rất quan trọng để tránh crash)
+            mlKitFaceDetection.close() // Giải phóng ML Kit
+            Log.d("FACE_DEBUG", "Đã giải phóng toàn bộ tài nguyên")
+        } catch (e: Exception) {
+            Log.e("FACE_DEBUG", "Lỗi khi giải phóng: ${e.message}")
+        }
+    }
+
     private fun cosineSimilarity(vector1: FloatArray, vector2: FloatArray): Float {
         var dotProduct = 0.0f
         var normA = 0.0f

@@ -15,6 +15,8 @@ public class GpsModel {
     public int Sent;
     public String TeacherCode;
     public String SessionId;
+    public float vol1;
+    public float vol2;
 
     public GpsModel() {
         Time = (System.currentTimeMillis() / 1000) + 25200;
@@ -134,6 +136,22 @@ public class GpsModel {
         GsmStatus = gsmStatus;
     }
 
+    public float getVol1() {
+        return vol1;
+    }
+
+    public void setVol1(float vol1) {
+        this.vol1 = vol1;
+    }
+
+    public float getVol2() {
+        return vol2;
+    }
+
+    public void setVol2(float vol2) {
+        this.vol2 = vol2;
+    }
+
     @Override
     public String toString() {
         return "GpsModel{" +
@@ -151,6 +169,8 @@ public class GpsModel {
                 ", Sent=" + Sent +
                 ", TeacherCode='" + TeacherCode + '\'' +
                 ", SessionId='" + SessionId + '\'' +
+                ", vol1=" + vol1 +
+                ", vol2=" + vol2 +
                 '}';
     }
 }

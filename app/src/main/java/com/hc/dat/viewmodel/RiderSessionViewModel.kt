@@ -662,6 +662,7 @@ data class RiderSessionViewModel @Inject constructor(
                 lng = gpsSignalEntity.gpsLong
                 userCode = riderSessionEntity.studentCode
                 dis = gpsSignalEntity.gpsDistance
+                vol1 = gpsSignalEntity.gpsDistance
                 teacherCode = riderSessionEntity.teacherCode
                 this.gsmStatus = gpsSignalEntity.gsmStatus
                 vel = gpsSignalEntity.gpsSpeed
@@ -964,6 +965,7 @@ data class RiderSessionViewModel @Inject constructor(
                         userCode = studentAuthInfo?.userCode ?: "UNKNOWN_STUDENT"
                         // Đảm bảo không lỗi kiểu dữ liệu (Double/Float)
                         dis = inProgressSession?.totalDis ?: 0f
+                        vol1 = inProgressSession?.totalDis ?: 0f
                         teacherCode = teacherAuthInfo?.userCode ?: "UNKNOWN_TEACHER"
                         this.gsmStatus = gsmStatus
                         // Bọc speed để tránh lỗi nếu hàm getSpeed() bên trong bị null

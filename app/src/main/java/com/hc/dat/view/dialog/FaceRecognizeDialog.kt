@@ -347,6 +347,14 @@ internal object FaceRecognizeDialog {
             val userValue: String = viewBinding.edtUserCode.editText?.text.toString()
             Logger.i("userValue: $userValue")
             if (userValue.isNotBlank()) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        faceRecognitionViewModel.deleteSampleFace(userValue)
+                        Logger.d("Đã xóa dữ liệu khuôn mặt cũ cho ID: $userValue")
+                    } catch (e: Exception) {
+                        Logger.e("Lỗi khi xóa khuôn mặt: ${e.message}")
+                    }
+                }
                 showProgressDialog(activity)
                 applicationViewModel.getUserInfoByUserCode(userValue, false, appCallback)
             }

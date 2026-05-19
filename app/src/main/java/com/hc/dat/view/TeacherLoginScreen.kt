@@ -333,7 +333,7 @@ class TeacherLoginScreen : DatBaseScreen() {
                             if (ServiceDefinition.UPLOAD_IMAGE_AUTHEN_PROGRESS_URL.isEmpty()) {
                                 checkURLUploadImageAvailable()
                             } else {
-                                if (appViewModel.isAppVersionActive) {
+//                                if (appViewModel.isAppVersionActive) {
                                     // Set teacher info and next to Rider Session screen
                                     teacherAuthInfo = data
                                     // check has car linked device existed in Training Center or not
@@ -362,9 +362,9 @@ class TeacherLoginScreen : DatBaseScreen() {
                                             }
                                         )
                                     }
-                                } else {
-                                    showAppVersionLockedMessage()
-                                }
+//                                } else {
+//                                    showAppVersionLockedMessage()
+//                                }
                             }
 
                         } else {
@@ -534,7 +534,7 @@ class TeacherLoginScreen : DatBaseScreen() {
                             if (ServiceDefinition.UPLOAD_IMAGE_AUTHEN_PROGRESS_URL.isEmpty()) {
                                 checkURLUploadImageAvailable()
                             } else {
-                                if (appViewModel.isAppVersionActive) {
+//                                if (appViewModel.isAppVersionActive) {
                                     if (riderSessionViewModel.checkGPSAvailable(requireActivity())) {
                                         UserInfoDialog.dismiss()
                                         // Set teacher info and next to Rider Session screen
@@ -579,10 +579,10 @@ class TeacherLoginScreen : DatBaseScreen() {
                                             }
                                         )
                                     }
-                                } else {
-                                    UserInfoDialog.dismiss()
-                                    showAppVersionLockedMessage()
-                                }
+//                                } else {
+//                                    UserInfoDialog.dismiss()
+//                                    showAppVersionLockedMessage()
+//                                }
                             }
                         } else {
                             riderSessionViewModel.dropTeachOutWorking()

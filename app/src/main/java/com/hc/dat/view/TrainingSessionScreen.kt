@@ -1018,7 +1018,8 @@ class TrainingSessionScreen : DatBaseScreen() {
         viewBinding.btLoginFace.setOnClickListener {
             LogRecorder.d("", "Đăng nhập học viên bằng khuôn mặt")
             loginRfid = false
-            if(appViewModel.allowOfflineStartSession || riderSessionViewModel.isConnectionAvailable()){
+            if(!appViewModel.allowOfflineStartSession){
+//                if(appViewModel.allowOfflineStartSession || riderSessionViewModel.isConnectionAvailable()){
                 if (byPassCheckSpeed || riderSessionViewModel.checkCarPause()) {
                     if (faceRecognitionViewModel.getCameraPreviewDevice() != null) {
                         // Goto login by face recognize
@@ -1048,7 +1049,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         }
                     )
                 }
-            }else{
+            } else{
                 showDialog(
                     title = getString(R.string.title_notification),
                     message = getString(R.string.start_session_method_not_ready),
@@ -2908,97 +2909,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
-    fun fakeLocation(realSpeedKmh: Float) {
-        val random = Random.nextFloat()
-
-        val timeOffset = (800..1500).random().toLong()   // GPS yếu -> update không đều
-        fakeTime += timeOffset
-
-        val speedMps = realSpeedKmh / 3.6f
-        val realDistance = speedMps * (timeOffset / 1000f)
-
-        var distance = realDistance
-
-        var reportedSpeed = speedMps
-        var accuracyValue = 5f
-
-        when {
-            // 30% GPS đứng yên dù đang chạy
-            random < 0.3f -> {
-                distance = 0.5f   // gần như không di chuyển
-                reportedSpeed = 0f
-                accuracyValue = 80f
-            }
-
-            // 20% GPS jump loạn
-            random < 0.5f -> {
-                distance = (100..400).random().toFloat()
-                reportedSpeed = 0f
-                accuracyValue = 150f
-            }
-
-            // 30% rung nhẹ (jitter)
-            random < 0.8f -> {
-                distance += (-5..5).random()
-                reportedSpeed *= Random.nextFloat()
-                accuracyValue = 30f
-            }
-
-            // 20% bình thường
-            else -> {
-                accuracyValue = 5f
-            }
-        }
-
-        val deltaLat = distance / METERS_PER_DEGREE_LAT
-        val deltaLng = distance / METERS_PER_DEGREE_LNG
-
-        // thêm nhiễu ngẫu nhiên nhỏ
-        fakeLat += deltaLat + Random.nextDouble(-0.00001, 0.00001)
-        fakeLng += deltaLng + Random.nextDouble(-0.00001, 0.00001)
-
-        val location = Location("mock").apply {
-            latitude = fakeLat
-            longitude = fakeLng
-            speed = reportedSpeed
-            accuracy = accuracyValue
-            time = fakeTime
-            elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-        }
-        gpsEventListener.onGPSUpdate(GPSAction.LOCATION_UPDATED, location)
-    }
-
-//    fun fakeLocation(speedKmh: Float) {
-//
-//        val speedMps = speedKmh / 3.6f
-//
-//        // 30% frame tạo GPS jump lớn
-//        val isJump = Random.nextFloat() < 0.3f
-//
-//        val timeOffset = (100..300).random().toLong()
-//        fakeTime += timeOffset
-//
-//        val distance = if (isJump) {
-//            300f  // nhảy 300 mét trong <300ms
-//        } else {
-//            speedMps * (timeOffset / 1000f)
-//        }
-//
-//        val deltaLat = distance / METERS_PER_DEGREE_LAT
-//        fakeLat += deltaLat
-//
-//        val location = Location("mock").apply {
-//            latitude = fakeLat
-//            longitude = fakeLng
-//            this.speed = speedMps
-//            accuracy = 3f
-//            time = fakeTime
-//            elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-//        }
-//
-//        gpsEventListener.onGPSUpdate(GPSAction.LOCATION_UPDATED, location)
-//    }
-
     override fun onResume() {
         Logger.d("onResume")
         super.onResume()
@@ -3034,6 +2944,22 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
             }
             checkSessionInterrupt()
+            if (!appViewModel.isAppVersionActive && !checkSessionInterrupt()) {
+                showAppVersionLockedMessage()
+            }
+
+            if (checkSessionInterrupt()) {
+                BaseNotification.showMessage(
+                        getString(
+                                R.string.continue_session_success,
+                                riderSessionViewModel.teacherAuthInfo?.fullName,
+                                appViewModel.getPlateSlug(),
+                                studentAuthInfo?.fullName,
+                                studentAuthInfo?.courseLicense
+                        ),
+                        showToast = false
+                )
+            }
         } else {
             // NẾU VẪN CÒN VI PHẠM
             if (!mockAppPackage.isNullOrEmpty()) {
@@ -3133,6 +3059,17 @@ class TrainingSessionScreen : DatBaseScreen() {
         } catch (e: Exception) {
             packageName
         }
+    }
+
+    private fun showAppVersionLockedMessage(){
+        showDialog(title = getString(R.string.title_notification),
+                message = getString(R.string.version_locked_message),
+                buttonList = listOf(getString(R.string.ok)),
+                listener = object : DialogButtonClickListener {
+                    override fun onDialogButtonClick(position: Int) {
+                        dismissDialog()
+                    }
+                })
     }
 
     private fun showFakeGpsBlockDialog(appLabel: String, packageName: String) {

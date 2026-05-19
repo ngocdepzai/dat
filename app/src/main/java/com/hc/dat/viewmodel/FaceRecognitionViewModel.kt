@@ -254,7 +254,8 @@ data class FaceRecognitionViewModel @Inject constructor(
         handleLoadFaceRecognitionImage(null)
     }
 
-    private suspend fun deleteSampleFace(userId: String) {
+    suspend fun deleteSampleFace(userId: String) {
+        Logger.i("userValue: $userId")
         val listFaceRecogImageFilter = listFaceRecogImageEntity.filter { it.userId == userId }
 
         listFaceRecogImageFilter.forEach {
