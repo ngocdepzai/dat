@@ -313,7 +313,7 @@ internal object FaceRecognizeDialog {
                 // Nếu là Teacher login 1:N thì truyền null, nếu Student 1:1 thì truyền userEntity.userCode
                 val targetUserId = if (isTeacherLogin) null else userEntity?.userCode
 
-                faceRecognitionViewModel.startRecognition(targetUserId) { score, _, _, _, _ ->
+                faceRecognitionViewModel.startRecognition(targetUserId, isFromDialog = true) { score, _, _, _, _ ->
                     currentSearchScore = score
 
                     val passStatus = if (score >= 40) "PASS" else "FAIL"

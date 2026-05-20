@@ -184,60 +184,68 @@ class TeacherLoginScreen : DatBaseScreen() {
 
         viewBinding.btLoginRfid.setOnClickListener {
             LogRecorder.d("", "Đăng nhập giảng viên bằng thẻ")
+            if (appViewModel.isAppVersionActive) {
                 if (byPassCheckSpeed || riderSessionViewModel.checkCarPause()) {
                     // Goto login by rfid
                     startNFCReading()
                     NFCLoginDialog.showDialog(
-                        requireActivity(),
-                        true,
-                        cameraRotation = cameraRotation,
-                        faceRecognitionViewModel = faceRecognitionViewModel
+                            requireActivity(),
+                            true,
+                            cameraRotation = cameraRotation,
+                            faceRecognitionViewModel = faceRecognitionViewModel
                     )
                 } else {
                     LogRecorder.e("", getString(R.string.login_method_not_ready))
                     Logger.w("Warning: Login progress is not ready!")
                     showDialog(
-                        title = getString(R.string.title_notification),
-                        message = getString(R.string.login_method_not_ready),
-                        buttonList = listOf(getString(R.string.ok)),
-                        listener = object : DialogButtonClickListener {
-                            override fun onDialogButtonClick(position: Int) {
-                                dismissDialog()
+                            title = getString(R.string.title_notification),
+                            message = getString(R.string.login_method_not_ready),
+                            buttonList = listOf(getString(R.string.ok)),
+                            listener = object : DialogButtonClickListener {
+                                override fun onDialogButtonClick(position: Int) {
+                                    dismissDialog()
+                                }
                             }
-                        }
                     )
                 }
+            } else {
+                showAppVersionLockedMessage()
+            }
         }
 
         viewBinding.btLoginFace.setOnClickListener {
             LogRecorder.d("", "Đăng nhập giảng viên bằng khuôn mặt")
-            if (byPassCheckSpeed || riderSessionViewModel.checkCarPause()) {
-                if (faceRecognitionViewModel.getCameraPreviewDevice() != null) {
-                    // Goto login by face recognize
-                    FaceRecognizeDialog.showDialog(
-                        requireActivity(),
-                        isTeacherLogin = true,
-                        cameraRotation,
-                        appViewModel,
-                        faceRecognitionViewModel.getCameraPreviewDevice()!!,
-                        faceRecognitionViewModel,
-                        faceRecognizeLoginCallback
-                    )
+            if (appViewModel.isAppVersionActive) {
+                if (byPassCheckSpeed || riderSessionViewModel.checkCarPause()) {
+                    if (faceRecognitionViewModel.getCameraPreviewDevice() != null) {
+                        // Goto login by face recognize
+                        FaceRecognizeDialog.showDialog(
+                                requireActivity(),
+                                isTeacherLogin = true,
+                                cameraRotation,
+                                appViewModel,
+                                faceRecognitionViewModel.getCameraPreviewDevice()!!,
+                                faceRecognitionViewModel,
+                                faceRecognizeLoginCallback
+                        )
+                    } else {
+                        Logger.e("Can not get camera preview!!!")
+                    }
                 } else {
-                    Logger.e("Can not get camera preview!!!")
+                    Logger.w("Warning: Login progress is not ready!")
+                    LogRecorder.e("", getString(R.string.login_method_not_ready))
+                    showDialog(
+                            title = getString(R.string.title_notification),
+                            message = getString(R.string.login_method_not_ready),
+                            buttonList = listOf(getString(R.string.ok)),
+                            listener = object : DialogButtonClickListener {
+                                override fun onDialogButtonClick(position: Int) {
+                                    dismissDialog()
+                                }
+                            })
                 }
             } else {
-                Logger.w("Warning: Login progress is not ready!")
-                LogRecorder.e("", getString(R.string.login_method_not_ready))
-                showDialog(
-                    title = getString(R.string.title_notification),
-                    message = getString(R.string.login_method_not_ready),
-                    buttonList = listOf(getString(R.string.ok)),
-                    listener = object : DialogButtonClickListener {
-                        override fun onDialogButtonClick(position: Int) {
-                            dismissDialog()
-                        }
-                    })
+                showAppVersionLockedMessage()
             }
         }
         viewBinding.tvSerialNumber.setOnClickListener{

@@ -15,6 +15,7 @@ interface FaceRecognition {
 
     fun startRecognition(
             faceGroupName: String?,
+            isFromDialog: Boolean = false,
             resultCallback: (
             searchScore: Int,
             faceBitmap: Bitmap?,

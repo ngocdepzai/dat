@@ -2944,9 +2944,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
             }
             checkSessionInterrupt()
-            if (!appViewModel.isAppVersionActive && !checkSessionInterrupt()) {
-                showAppVersionLockedMessage()
-            }
 
             if (checkSessionInterrupt()) {
                 BaseNotification.showMessage(
@@ -3059,17 +3056,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         } catch (e: Exception) {
             packageName
         }
-    }
-
-    private fun showAppVersionLockedMessage(){
-        showDialog(title = getString(R.string.title_notification),
-                message = getString(R.string.version_locked_message),
-                buttonList = listOf(getString(R.string.ok)),
-                listener = object : DialogButtonClickListener {
-                    override fun onDialogButtonClick(position: Int) {
-                        dismissDialog()
-                    }
-                })
     }
 
     private fun showFakeGpsBlockDialog(appLabel: String, packageName: String) {

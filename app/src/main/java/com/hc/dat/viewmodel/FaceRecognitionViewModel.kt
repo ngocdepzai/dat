@@ -359,6 +359,7 @@ data class FaceRecognitionViewModel @Inject constructor(
 
     fun startRecognition(
         faceGroupName: String?,
+        isFromDialog: Boolean = false,
         resultCallback: (
         searchScore: Int,
         faceBitmap: Bitmap?,
@@ -366,7 +367,7 @@ data class FaceRecognitionViewModel @Inject constructor(
         notFace: Boolean,
         notMask: Boolean
     ) -> Unit){
-        faceRecognitionProcessor.startRecognition(faceGroupName = faceGroupName, resultCallback = resultCallback)
+        faceRecognitionProcessor.startRecognition(faceGroupName = faceGroupName, isFromDialog = isFromDialog, resultCallback = resultCallback)
     }
     fun stopRecognition(){
         faceRecognitionProcessor.stopRecognition()

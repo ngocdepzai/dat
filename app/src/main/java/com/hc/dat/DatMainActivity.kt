@@ -218,8 +218,14 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
                         override fun onDialogButtonClick(position: Int) {
                             BaseDialog.dismiss()
                             if (position == 1) {
-                                handleDeleteImageFolder()
-                                BaseNotification.showMessage("xóa bộ nhớ thành công", muteSpeak = true)
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    handleDeleteImageFolder()
+                                    withContext(Dispatchers.Main) {
+                                        BaseNotification.showMessage("xóa bộ nhớ thành công", muteSpeak = true)
+                                    }
+                                }
+//                                handleDeleteImageFolder()
+//                                BaseNotification.showMessage("xóa bộ nhớ thành công", muteSpeak = true)
                             }
                         }
                     }
@@ -339,7 +345,7 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
     }
 
     private fun handleStartGPS() {
-        CoroutineScope(Dispatchers.Default).launch(
+        CoroutineScope(Dispatchers.Main).launch(
             CoroutineExceptionHandler { _, _ ->
                 Logger.w("Error in gps service listener --->> recall handleStartGPS")
                 handleStartGPS()
@@ -363,9 +369,10 @@ class DatMainActivity : BaseActivity(), CommonAppUI {
     }
 
     override fun onPause() {
-        LogRecorder.saveLog(false)
         super.onPause()
+        nfcAdapter?.disableForegroundDispatch(this)
         device.getCurrentGPS()?.stopGPSService()
+        LogRecorder.saveLog(false)
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {

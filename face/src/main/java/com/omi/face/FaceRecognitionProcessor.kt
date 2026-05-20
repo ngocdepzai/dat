@@ -69,6 +69,7 @@ class FaceRecognitionProcessor constructor(
     private val mutex = Mutex()
     private val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 1000)
     private var lastToastTime = 0L
+    private var isDialogCaller: Boolean = false
 
     private lateinit var resultRecognitionCallback: (
             searchScore: Int,
@@ -277,10 +278,11 @@ class FaceRecognitionProcessor constructor(
                                 }
 
                                 // Log kết quả cuối cùng trước khi trả về callback
-                                Log.i("FACE_DEBUG", "==> KẾT QUẢ CUỐI CÙNG: $highScoreRecognition điểm")
+                                Log.i("FACE_DEBUG", "==> KẾT QUẢ CUỐI CÙNG: $highScoreRecognition điểm $isDialogCaller")
+
                                 // --- THÊM LOGIC PHÁT ÂM THANH TẠI ĐÂY ---
                                 // Giả sử ngưỡng đạt là 40 điểm (bạn có thể thay đổi số này)
-                                if (highScoreRecognition < 40) {
+                                if (isDialogCaller && highScoreRecognition < 40) {
                                     val currentTime = System.currentTimeMillis()
                                     // Chỉ hiện Toast và phát âm thanh nếu đã qua ít nhất 2 giây kể từ lần trước
                                     if (currentTime - lastToastTime > 2000) {
@@ -456,6 +458,7 @@ class FaceRecognitionProcessor constructor(
     @SuppressLint("SuspiciousIndentation")
     override fun startRecognition(
         faceGroupName: String?,
+        isFromDialog: Boolean,
         resultCallback: (
             searchScore: Int,
             faceBitmap: Bitmap?,
@@ -464,6 +467,7 @@ class FaceRecognitionProcessor constructor(
             notMask: Boolean
         ) -> Unit
     ) {
+        this.isDialogCaller = isFromDialog
         listSampleFaceGroupData.clear()
 
         // LUÔN đặt detected = true khi bắt đầu nhận diện để hàm analyze thực hiện tính điểm
@@ -478,7 +482,7 @@ class FaceRecognitionProcessor constructor(
                 // Nếu chưa tìm thấy mẫu trong DB, thử lại (giữ nguyên logic của bạn)
                 if (listSampleFaceGroupData.size < 1) {
                     delay(500) // Thêm delay nhỏ để tránh loop quá nhanh
-                    startRecognition(faceGroupName = faceGroupName, resultCallback = resultCallback)
+                    startRecognition(faceGroupName = faceGroupName, isFromDialog = isFromDialog, resultCallback = resultCallback)
                 }
             } else {
                 // Logic bổ sung cho Teacher (1:N): Tải TẤT CẢ mẫu khuôn mặt có trong DB local
@@ -505,6 +509,7 @@ class FaceRecognitionProcessor constructor(
 
     override fun stopRecognition() {
         detectionInProgress = false
+        isDialogCaller = false
         listSampleFaceGroupData.clear()
         CoroutineScope(Dispatchers.Main).launch {
             // Clear the BoundingBoxOverlay and set the new results ( boxes ) to be displayed.
