@@ -1837,7 +1837,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
     private fun startRecognize(){
         CoroutineScope(Dispatchers.IO).launch {
-            riderSessionViewModel.inProgressSession?.studentCode?.let { faceRecognitionViewModel.startRecognition(it, startRecognition) }
+            riderSessionViewModel.inProgressSession?.studentCode?.let { faceRecognitionViewModel.startRecognition(faceGroupName = it, resultCallback = startRecognition) }
         }
     }
     private val updateFaceSampleCallback: (action: AppAction, data: Any?)
@@ -2453,6 +2453,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
     private fun handleSessionCompletionEvent(){
+        if (!isAdded) return
         dismissProgress()
         // handle cancel all job running
         clearSessionHandler()
