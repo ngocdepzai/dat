@@ -11,6 +11,7 @@ import android.graphics.*
 import android.hardware.usb.UsbDevice
 import android.location.Location
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
@@ -25,6 +26,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import coil.request.ImageRequest
 import com.hc.dat.model.CarInfo
@@ -117,12 +119,30 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var timeStartRecognition: Long = 0
     private var timeSendAuthData: Long = 0
     private var adminLogoutRequestCount: Int = 0
-    private var fakeJob: Job? = null
-    private var fakeLat = 21.0285
-    private var fakeLng = 105.8542
-    private var fakeTime = System.currentTimeMillis()
-    private var METERS_PER_DEGREE_LAT = 111_111f
-    private var METERS_PER_DEGREE_LNG = 111_111f
+    // 1. Khai báo Callback ở cấp class
+    private var connectivityManager: ConnectivityManager? = null
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+            isWifiConnected = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+            isMobileConnected = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+            // Cách sửa: Sử dụng runOnUiThread của activity
+            activity?.runOnUiThread {
+                updateNetworkIconsUI()
+            }
+        }
+
+        override fun onLost(network: Network) {
+            // Khi mất kết nối hoàn toàn
+            isWifiConnected = false
+            isMobileConnected = false
+            // Cách sửa: Sử dụng runOnUiThread của activity
+            activity?.runOnUiThread {
+                updateNetworkIconsUI()
+            }
+        }
+    }
+    private var isWifiConnected: Boolean = false
+    private var isMobileConnected: Boolean = false
 
     var timeSecondCounter = 0L
     var deviceStatusSecondCounter = 0L
@@ -174,6 +194,13 @@ class TrainingSessionScreen : DatBaseScreen() {
         if (!hcImageFolder.exists()) {
             hcImageFolder.mkdirs()
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // 2. Đăng ký trong onCreate
+        connectivityManager = context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        connectivityManager!!.registerDefaultNetworkCallback(networkCallback)
     }
 
     private fun logicBlockChecking(secondCounter: Long, secondDuration: Long, block: () -> Unit): Long {
@@ -366,6 +393,22 @@ class TrainingSessionScreen : DatBaseScreen() {
                     LogRecorder.w("Thông báo: ",getString(R.string.distance_not_change))
                 }
             }
+        }
+    }
+
+    private fun updateNetworkIconsUI() {
+        // Icon Wifi
+        if (isWifiConnected) {
+            viewBinding.ivWifiStatus.setImageResource(R.drawable.iconwifi)
+        } else {
+            viewBinding.ivWifiStatus.setImageResource(R.drawable.iconnonwifi)
+        }
+
+        // Icon 4G
+        if (isMobileConnected) {
+            viewBinding.ivWirelessStatus.setImageResource(R.drawable.iconwireless)
+        } else {
+            viewBinding.ivWirelessStatus.setImageResource(R.drawable.iconnonwireless)
         }
     }
     private fun trackingImageDetectedTimeBlock() {
@@ -831,42 +874,52 @@ class TrainingSessionScreen : DatBaseScreen() {
                 deviceStatusCheckingBlock()
             }
         ) {
-            val connManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-            var mMobile = false
-            val networks = connManager.allNetworks
-            for (network in networks) {
-                // > android M
-                val capabilities = connManager.getNetworkCapabilities(network)
-                if (capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                    mMobile = true
-                }
-            }
+//            val connManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+//            val mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
+//            var mMobile = false
+//            val networks = connManager.allNetworks
+//            for (network in networks) {
+//                // > android M
+//                val capabilities = connManager.getNetworkCapabilities(network)
+//                if (capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+//                    mMobile = true
+//                }
+//            }
             var messageError: String = ""
             withContext(Dispatchers.Main) {
-                if (mWifi?.isConnected == true) {
-                    // Do whatever
-                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconwifi)
-                    viewBinding.ivWifiStatus.setImageBitmap(bImage)
-                    LogRecorder.i("Trạng thái kết nối wifi: bật","")
-                } else {
-                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconnonwifi)
-                    viewBinding.ivWifiStatus.setImageBitmap(bImage)
-                    LogRecorder.i("Trạng thái kết nối wifi: tắt","")
-                }
-                if (mMobile) {
-                    // Do whatever
-                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconwireless)
-                    viewBinding.ivWirelessStatus.setImageBitmap(bImage)
-                    LogRecorder.i("Trạng thái kết nối 4G: bật","")
-                } else {
-                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconnonwireless)
-                    viewBinding.ivWirelessStatus.setImageBitmap(bImage)
-                    LogRecorder.i("Trạng thái kết nối 4G: tắt","")
-                }
-                if (mWifi?.isConnected != true && mMobile != true) {
+//                if (mWifi?.isConnected == true) {
+//                    // Do whatever
+//                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconwifi)
+//                    viewBinding.ivWifiStatus.setImageBitmap(bImage)
+//                    LogRecorder.i("Trạng thái kết nối wifi: bật","")
+//                } else {
+//                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconnonwifi)
+//                    viewBinding.ivWifiStatus.setImageBitmap(bImage)
+//                    LogRecorder.i("Trạng thái kết nối wifi: tắt","")
+//                }
+//                if (mMobile) {
+//                    // Do whatever
+//                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconwireless)
+//                    viewBinding.ivWirelessStatus.setImageBitmap(bImage)
+//                    LogRecorder.i("Trạng thái kết nối 4G: bật","")
+//                } else {
+//                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconnonwireless)
+//                    viewBinding.ivWirelessStatus.setImageBitmap(bImage)
+//                    LogRecorder.i("Trạng thái kết nối 4G: tắt","")
+//                }
+//                if (mWifi?.isConnected != true && mMobile != true) {
+//                    LogRecorder.e("Hệ thống", "Không có kết nối network")
+//                    messageError += " ${getString(R.string.network_not_available)}"
+//                }
+                // 1. Cập nhật icon (lấy từ biến đã có, không gọi API hệ thống nên KHÔNG CRASH)
+                updateNetworkIconsUI()
+                // 2. Ghi Log theo đúng nghiệp vụ của bạn
+                LogRecorder.i("Trạng thái kết nối wifi: ", if(isWifiConnected) "bật" else "tắt")
+                LogRecorder.i("Trạng thái kết nối 4G: ", if(isMobileConnected) "bật" else "tắt")
+
+                if (!isWifiConnected && !isMobileConnected) {
                     LogRecorder.e("Hệ thống", "Không có kết nối network")
-                    messageError += " ${getString(R.string.network_not_available)}"
+                    BaseNotification.showWarning(getString(R.string.network_not_available), showToast = false)
                 }
                 if (Environment.MEDIA_MOUNTED == Environment.getExternalStorageState()) {
                     // Do whatever
@@ -920,6 +973,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
         viewBinding = ScreenTrainingSessionBinding.inflate(inflater, container, false)
@@ -1158,6 +1212,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         requireActivity().onBackPressed()
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun handleFinishRiderSession(sessionContinues: Boolean = true, autoLogout: Boolean = false) {
         pauseHandleProcess()
         FinishSessionDialog.showDialog(
@@ -1837,7 +1892,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
     private fun startRecognize(){
         CoroutineScope(Dispatchers.IO).launch {
-            riderSessionViewModel.inProgressSession?.studentCode?.let { faceRecognitionViewModel.startRecognition(faceGroupName = it, resultCallback = startRecognition) }
+            riderSessionViewModel.inProgressSession?.studentCode?.let { faceRecognitionViewModel.startRecognition(faceGroupName = it, isFromDialog = false, resultCallback = startRecognition) }
         }
     }
     private val updateFaceSampleCallback: (action: AppAction, data: Any?)
@@ -3018,7 +3073,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         LogRecorder.i("Trạng thái","onPause" )
         super.onPause()
         riderSessionViewModel.stopGPSEventListener(gpsEventListener)
-//        fakeJob?.cancel()
         pauseHandleProcess()
         riderSessionViewModel.saveInProgressSessionInterruptTime()
     }
@@ -3027,6 +3081,8 @@ class TrainingSessionScreen : DatBaseScreen() {
         Logger.d("onDestroy")
         super.onDestroy()
         clearSessionHandler()
+        // 3. Hủy đăng ký trong onDestroy
+        connectivityManager?.unregisterNetworkCallback(networkCallback)
     }
 
     override fun onBackPressed(): Boolean {

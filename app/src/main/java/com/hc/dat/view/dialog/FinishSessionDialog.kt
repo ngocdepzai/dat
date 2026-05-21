@@ -84,7 +84,7 @@ internal object FinishSessionDialog {
         viewBinding = DatFinishSessionLoginDialogBinding.bind(view)
 
         currentSearchScore = 0 // Reset score
-        faceRecognitionViewModel.startRecognition(userEntity.userCode) { score, _, _, _, _ ->
+        faceRecognitionViewModel.startRecognition(userEntity.userCode, isFromDialog = false) { score, _, _, _, _ ->
             currentSearchScore = score
         }
 

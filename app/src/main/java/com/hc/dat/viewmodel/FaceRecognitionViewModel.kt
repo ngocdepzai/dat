@@ -356,7 +356,7 @@ data class FaceRecognitionViewModel @Inject constructor(
     suspend fun faceDetect(frameBitmap: Nv21ImageData,onFaceDetected: (Rect?) -> Unit){
         faceRecognitionProcessor.faceDetect(image = frameBitmap,onFaceDetected = onFaceDetected)
     }
-
+    @JvmOverloads
     fun startRecognition(
         faceGroupName: String?,
         isFromDialog: Boolean = false,
