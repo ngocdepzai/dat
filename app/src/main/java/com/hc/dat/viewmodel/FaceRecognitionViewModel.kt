@@ -407,7 +407,8 @@ data class FaceRecognitionViewModel @Inject constructor(
         Logger.d("uploadImageInRecognition files: ${files.size}")
         CoroutineScope(Dispatchers.Default).launch(
             CoroutineExceptionHandler { _, ex ->
-                Logger.e("uploadImageInRecognition: Found an exception exception: ${ex.message}")
+                Logger.e("uploadImageInRecognition: Found an exception: ${ex.message}")
+                LogRecorder.i("uploadImageInRecognition: ", "Found an exception: ${ex.message}")
                 CoroutineScope(Dispatchers.Main).launch {
                     callback(
                         FaceRecognitionAction.UPLOAD_IMAGES_RECOGNITION_FAIL,
@@ -423,6 +424,7 @@ data class FaceRecognitionViewModel @Inject constructor(
             )
             if (resResult.isError) {
                 Logger.e("uploadImageInRecognition Response Error: ${resResult.errorMessage}")
+                LogRecorder.i("uploadImageInRecognition Response Error: ", "resResult error: ${resResult.errorMessage}")
                 CoroutineScope(Dispatchers.Main).launch {
                     callback(
                         FaceRecognitionAction.UPLOAD_IMAGES_RECOGNITION_FAIL,
