@@ -69,15 +69,56 @@ class GPSHandler: GPSDevice {
             }
         }
 
+//    override fun checkGPSAvailable(activity: Activity): Boolean {
+//        locationManager = activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+//        return if (locationManager != null) {
+//            val locationGpsEnable = locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)
+//            val locationNetworkEnable = locationManager!!.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+//            DeviceLogger.i("locationGpsEnable: $locationGpsEnable | locationNetworkEnable: $locationNetworkEnable")
+////            return locationGpsEnable || locationNetworkEnable
+//            return locationGpsEnable
+//        } else false
+//    }
+
     override fun checkGPSAvailable(activity: Activity): Boolean {
-        locationManager = activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return if (locationManager != null) {
-            val locationGpsEnable = locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            val locationNetworkEnable = locationManager!!.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-            DeviceLogger.i("locationGpsEnable: $locationGpsEnable | locationNetworkEnable: $locationNetworkEnable")
-//            return locationGpsEnable || locationNetworkEnable
-            return locationGpsEnable
-        } else false
+        val locationManager = activity.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        if (locationManager == null) return false
+
+        // 1. Kiểm tra xem Provider có được bật trong cài đặt hay không
+        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+        if (!isGpsEnabled && !isNetworkEnabled) {
+            DeviceLogger.i("GPS và Network đều đang tắt")
+            return false
+        }
+
+        try {
+            // 2. Lấy vị trí gần nhất từ GPS hoặc Network
+            val lastGpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            val lastNetworkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+            // 3. Kiểm tra tính hợp lệ của tọa độ (khác null và khác 0.0)
+            val isGpsValid = lastGpsLocation != null &&
+                    lastGpsLocation.latitude != 0.0 &&
+                    lastGpsLocation.longitude != 0.0
+
+            val isNetworkValid = lastNetworkLocation != null &&
+                    lastNetworkLocation.latitude != 0.0 &&
+                    lastNetworkLocation.longitude != 0.0
+
+            DeviceLogger.i("GPS Enable: $isGpsEnabled (Valid: $isGpsValid) | Network Enable: $isNetworkEnabled (Valid: $isNetworkValid)")
+
+            // Trả về true nếu bất kỳ provider nào đang bật VÀ có dữ liệu tọa độ thật
+            return (isGpsEnabled && isGpsValid) || (isNetworkEnabled && isNetworkValid)
+
+        } catch (e: SecurityException) {
+            DeviceLogger.e("Thiếu quyền truy cập vị trí: ${e.message}")
+            return false
+        } catch (e: Exception) {
+            DeviceLogger.e("Lỗi kiểm tra GPS: ${e.message}")
+            return false
+        }
     }
 
     override fun addGPSEventListener(gpsEvent: GPSEvent) {

@@ -18,6 +18,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.hc.dat.model.CarInfo
 import com.hc.dat.model.UserInfo
@@ -176,6 +177,7 @@ class TeacherLoginScreen : DatBaseScreen() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private fun initView() {
         viewBinding.tvVehiclePlate.text = getString(R.string.vehicle_plate_info, appViewModel.getPlateSlug() ?: "-/-")
         viewBinding.navigationBt.setOnClickListener {
@@ -184,68 +186,86 @@ class TeacherLoginScreen : DatBaseScreen() {
 
         viewBinding.btLoginRfid.setOnClickListener {
             LogRecorder.d("", "Đăng nhập giảng viên bằng thẻ")
-            if (appViewModel.isAppVersionActive) {
-                if (byPassCheckSpeed || riderSessionViewModel.checkCarPause()) {
-                    // Goto login by rfid
-                    startNFCReading()
-                    NFCLoginDialog.showDialog(
-                            requireActivity(),
-                            true,
-                            cameraRotation = cameraRotation,
-                            faceRecognitionViewModel = faceRecognitionViewModel
-                    )
-                } else {
-                    LogRecorder.e("", getString(R.string.login_method_not_ready))
-                    Logger.w("Warning: Login progress is not ready!")
-                    showDialog(
-                            title = getString(R.string.title_notification),
-                            message = getString(R.string.login_method_not_ready),
-                            buttonList = listOf(getString(R.string.ok)),
-                            listener = object : DialogButtonClickListener {
-                                override fun onDialogButtonClick(position: Int) {
-                                    dismissDialog()
+            viewLifecycleOwner.lifecycleScope.launch {
+                // 1. Vô hiệu hóa nút bấm để tránh user nhấn nhiều lần khi đang đợi API
+                viewBinding.btLoginRfid.isEnabled = false
+                // 2. Gọi API và ĐỢI cho đến khi nó chạy xong
+                appViewModel.getDeviceConfig()
+                // 3. Kích hoạt lại nút bấm
+                viewBinding.btLoginRfid.isEnabled = true
+
+                if (appViewModel.isAppVersionActive) {
+                    if (byPassCheckSpeed || riderSessionViewModel.checkCarPause()) {
+                        // Goto login by rfid
+                        startNFCReading()
+                        NFCLoginDialog.showDialog(
+                                requireActivity(),
+                                true,
+                                cameraRotation = cameraRotation,
+                                faceRecognitionViewModel = faceRecognitionViewModel
+                        )
+                    } else {
+                        LogRecorder.e("", getString(R.string.login_method_not_ready))
+                        Logger.w("Warning: Login progress is not ready!")
+                        showDialog(
+                                title = getString(R.string.title_notification),
+                                message = getString(R.string.login_method_not_ready),
+                                buttonList = listOf(getString(R.string.ok)),
+                                listener = object : DialogButtonClickListener {
+                                    override fun onDialogButtonClick(position: Int) {
+                                        dismissDialog()
+                                    }
                                 }
-                            }
-                    )
+                        )
+                    }
+                } else {
+                    showAppVersionLockedMessage()
                 }
-            } else {
-                showAppVersionLockedMessage()
             }
         }
 
         viewBinding.btLoginFace.setOnClickListener {
             LogRecorder.d("", "Đăng nhập giảng viên bằng khuôn mặt")
-            if (appViewModel.isAppVersionActive) {
-                if (byPassCheckSpeed || riderSessionViewModel.checkCarPause()) {
-                    if (faceRecognitionViewModel.getCameraPreviewDevice() != null) {
-                        // Goto login by face recognize
-                        FaceRecognizeDialog.showDialog(
-                                requireActivity(),
-                                isTeacherLogin = true,
-                                cameraRotation,
-                                appViewModel,
-                                faceRecognitionViewModel.getCameraPreviewDevice()!!,
-                                faceRecognitionViewModel,
-                                faceRecognizeLoginCallback
-                        )
+            viewLifecycleOwner.lifecycleScope.launch {
+                // 1. Vô hiệu hóa nút bấm để tránh user nhấn nhiều lần khi đang đợi API
+                viewBinding.btLoginRfid.isEnabled = false
+                // 2. Gọi API và ĐỢI cho đến khi nó chạy xong
+                appViewModel.getDeviceConfig()
+                // 3. Kích hoạt lại nút bấm
+                viewBinding.btLoginRfid.isEnabled = true
+
+                if (appViewModel.isAppVersionActive) {
+                    if (byPassCheckSpeed || riderSessionViewModel.checkCarPause()) {
+                        if (faceRecognitionViewModel.getCameraPreviewDevice() != null) {
+                            // Goto login by face recognize
+                            FaceRecognizeDialog.showDialog(
+                                    requireActivity(),
+                                    isTeacherLogin = true,
+                                    cameraRotation,
+                                    appViewModel,
+                                    faceRecognitionViewModel.getCameraPreviewDevice()!!,
+                                    faceRecognitionViewModel,
+                                    faceRecognizeLoginCallback
+                            )
+                        } else {
+                            Logger.e("Can not get camera preview!!!")
+                        }
                     } else {
-                        Logger.e("Can not get camera preview!!!")
+                        Logger.w("Warning: Login progress is not ready!")
+                        LogRecorder.e("", getString(R.string.login_method_not_ready))
+                        showDialog(
+                                title = getString(R.string.title_notification),
+                                message = getString(R.string.login_method_not_ready),
+                                buttonList = listOf(getString(R.string.ok)),
+                                listener = object : DialogButtonClickListener {
+                                    override fun onDialogButtonClick(position: Int) {
+                                        dismissDialog()
+                                    }
+                                })
                     }
                 } else {
-                    Logger.w("Warning: Login progress is not ready!")
-                    LogRecorder.e("", getString(R.string.login_method_not_ready))
-                    showDialog(
-                            title = getString(R.string.title_notification),
-                            message = getString(R.string.login_method_not_ready),
-                            buttonList = listOf(getString(R.string.ok)),
-                            listener = object : DialogButtonClickListener {
-                                override fun onDialogButtonClick(position: Int) {
-                                    dismissDialog()
-                                }
-                            })
+                    showAppVersionLockedMessage()
                 }
-            } else {
-                showAppVersionLockedMessage()
             }
         }
         viewBinding.tvSerialNumber.setOnClickListener{

@@ -1845,6 +1845,20 @@ class TrainingSessionScreen : DatBaseScreen() {
                         setLastLocation(location)
                     }
                     val info = riderSessionViewModel.sessionVerificationInfo
+
+                    // --- ĐOẠN CODE THAY ĐỔI MÀU SẮC TẠI ĐÂY ---
+                    val lat = info.lat
+                    val lng = info.long
+
+                    if (lat == 0.0 && lng == 0.0) {
+                        viewBinding.tvLastLocation.setTextColor(Color.RED)
+                        viewBinding.imgLastLocation.setColorFilter(Color.RED)
+                    } else {
+                        val normalColor = if (viewBinding.nightMode == true) Color.BLACK else Color.WHITE
+                        viewBinding.tvLastLocation.setTextColor(normalColor)
+                        viewBinding.imgLastLocation.setColorFilter(normalColor)
+                    }
+
                     viewBinding.tvLastLocation.text = "${info.lat}, ${info.long}"
                     animateSpeedChange(
                         startValue = viewBinding.tvCurrentSpeed.text.trim().toString().toIntOrNull() ?: 0,
