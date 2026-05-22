@@ -428,7 +428,10 @@ class RepositoryImpl @Inject constructor(
         userCode: String,
         imei: String
     ): ResponseResult<Any?> {
-        Logger.d("uploadImageInRecognition userCode: $userCode | imei: $imei | files: ${files.size}")
+        // 1. LOG REQUEST
+        val requestLog = "userCode: $userCode | imei: $imei | filesCount: ${files.size} | fileNames: ${files.map { it.name }}"
+        Logger.d("uploadImageInRecognition START: $requestLog")
+        LogRecorder.i("uploadImageInRecognition", "START: $requestLog")
         try {
             val files: List<MultipartBody.Part>? = files.generateBodyRequest()
             if (files != null && files.isNotEmpty()) {
@@ -437,13 +440,22 @@ class RepositoryImpl @Inject constructor(
                     userCode = userCode.generateBodyRequest(),
                     imei = imei.generateBodyRequest()
                 )
+                // 2. LOG RESPONSE RAW (Code, Message)
+                val responseCode = response.code()
                 val responseData = response.body()
-                Logger.i("uploadImageInRecognition: $responseData")
+                Logger.i("uploadImageInRecognition RESPONSE: code=$responseCode | status=${responseData?.status} | message=${responseData?.message}")
+                LogRecorder.i("API_UPLOAD", "RESPONSE: code=$responseCode | dataStatus=${responseData?.status} | msg=${responseData?.message}")
+
                 return when (response.code()) {
                     ResponseStatus.SUCCESS -> {
                         if (responseData?.status == 1) {
+                            Logger.d("uploadImageInRecognition SUCCESS")
                             ResponseResult()
                         } else {
+                            val errorInfo = "Status logic fail: ${responseData?.status} - ${responseData?.message}"
+                            Logger.w("uploadImageInRecognition ERROR_LOGIC: $errorInfo")
+                            LogRecorder.e("API_UPLOAD", "ERROR_LOGIC: $errorInfo")
+
                             ResponseResult(
                                 isError = true,
                                 errorCode = responseData?.status ?: -1,
@@ -452,18 +464,29 @@ class RepositoryImpl @Inject constructor(
                         }
                     }
                     else -> {
+                        val errorBody = response.errorBody()?.string()
+                        Logger.e("uploadImageInRecognition HTTP_ERROR: $responseCode | errorBody: $errorBody")
+                        LogRecorder.e("API_UPLOAD", "HTTP_ERROR: $responseCode")
+
                         ResponseResult(
                             isError = true
                         )
                     }
                 }
             } else {
+                Logger.e("uploadImageInRecognition: Files list is null or empty after conversion")
+                LogRecorder.e("API_UPLOAD", "FAILED: Files empty")
+
                 return ResponseResult(
                     isError = true
                 )
             }
-        } catch (ex: UnknownHostException) {
-            Logger.i("Error ${ex.message}")
+        } catch (ex: Exception) {
+            // 3. LOG EXCEPTION (Bắt tất cả các loại lỗi: Network, Timeout, NullPointer...)
+            val errorMsg = ex.javaClass.simpleName + ": " + ex.message
+            Logger.e("uploadImageInRecognition EXCEPTION: $errorMsg")
+            LogRecorder.e("API_UPLOAD", "EXCEPTION: $errorMsg")
+
             return ResponseResult(
                 isError = true
             )
