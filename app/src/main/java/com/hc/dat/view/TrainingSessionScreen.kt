@@ -65,6 +65,7 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 class TrainingSessionScreen : DatBaseScreen() {
+    private lateinit var applicationViewModel: ApplicationViewModel
     private lateinit var viewBinding: ScreenTrainingSessionBinding
     private lateinit var riderSessionViewModel: RiderSessionViewModel
     private lateinit var faceRecognitionViewModel: FaceRecognitionViewModel
@@ -977,6 +978,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
         viewBinding = ScreenTrainingSessionBinding.inflate(inflater, container, false)
+        applicationViewModel = ViewModelProviders.of(requireActivity(), viewModelFactory)[ApplicationViewModel::class.java]
         riderSessionViewModel = ViewModelProviders.of(requireActivity(), viewModelFactory)[RiderSessionViewModel::class.java]
         faceRecognitionViewModel = ViewModelProviders.of(requireActivity(), viewModelFactory)[FaceRecognitionViewModel::class.java]
         cameraPreviewDevice = faceRecognitionViewModel.getCameraPreviewDevice()!!
@@ -1222,6 +1224,7 @@ class TrainingSessionScreen : DatBaseScreen() {
             inProgressSession = riderSessionViewModel.inProgressSession!!,
             faceRecognitionViewModel = faceRecognitionViewModel,
             riderSessionViewModel = riderSessionViewModel,
+            applicationViewModel = applicationViewModel,
             callback = finishSessionConfirmCallback,
             sessionContinues = sessionContinues,
             autoLogout = autoLogout

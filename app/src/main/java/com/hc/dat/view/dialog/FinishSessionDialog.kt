@@ -17,6 +17,7 @@ import com.hc.dat.model.database.entity.UserEntity
 import com.hc.dat.utils.Utils
 import com.hc.dat.view.BaseNotification
 import com.hc.dat.view.TrainingSessionScreen
+import com.hc.dat.viewmodel.ApplicationViewModel
 import com.hc.dat.viewmodel.FaceRecognitionViewModel
 import com.hc.dat.viewmodel.RiderSessionViewModel
 import com.lws.device.camerapreview.*
@@ -30,6 +31,7 @@ import java.io.FileOutputStream
 import java.util.concurrent.ArrayBlockingQueue
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import java.util.Calendar
 
 internal object FinishSessionDialog {
     private var dialog: AlertDialog? = null
@@ -49,7 +51,8 @@ internal object FinishSessionDialog {
     private var autoLogoutJob: Job? = null
     private const val autoLogoutTime = 1 * 60
     private var currentSearchScore: Int = 0
-    private var searchThreshold: Int = 40 // Ngưỡng pass
+    private var searchThreshold: Float = 65F // Ngưỡng pass
+    private lateinit var applicationViewModel: ApplicationViewModel
 
     init {
         if (!hcImageFolder.exists()) {
@@ -66,6 +69,7 @@ internal object FinishSessionDialog {
         inProgressSession: InProgressSession,
         faceRecognitionViewModel: FaceRecognitionViewModel,
         riderSessionViewModel: RiderSessionViewModel,
+        applicationViewModel: ApplicationViewModel,
         sessionContinues: Boolean,
         autoLogout: Boolean,
         callback: ((action: ActionFinishSession, isNotSendTC: Boolean, imageFile: File?) -> Unit?)? = null
@@ -76,9 +80,11 @@ internal object FinishSessionDialog {
         this.cameraRotation = cameraRotation
         this.faceRecognitionViewModel = faceRecognitionViewModel
         this.riderSessionViewModel = riderSessionViewModel
+        this.applicationViewModel = applicationViewModel
         this.userEntity = userEntity
         dataCallback = callback
         clearData()
+        updateSearchThresholdBlock() // Cập nhật threshold từ config
         val view = LayoutInflater.from(activity)
             .inflate(R.layout.dat_finish_session_login_dialog, null, false)
         viewBinding = DatFinishSessionLoginDialogBinding.bind(view)
@@ -237,6 +243,7 @@ internal object FinishSessionDialog {
     private fun clearData(){
         cameraPreviewDataQueue.clear()
         lastPreviewData = null
+        currentSearchScore = 0
     }
 
     private val cameraPreviewEvent = object : CameraPreviewEvent {
@@ -369,6 +376,26 @@ internal object FinishSessionDialog {
             }
         }
     }
+
+    private fun updateSearchThresholdBlock() {
+        CoroutineScope(Dispatchers.IO).launch(
+                CoroutineExceptionHandler { _, _ -> Logger.w("Error in updateSearchThresholdBlock!")}
+        ) {
+            val calendar = Calendar.getInstance()
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+
+            if (hour == 17 && minute in 4..6) {
+                applicationViewModel.updateSearchThreshold {
+                    searchThreshold = applicationViewModel.searchThreshold
+                }
+            } else {
+                searchThreshold = applicationViewModel.searchThreshold
+            }
+            Logger.i("FinishSession Threshold: $searchThreshold")
+        }
+    }
+
     private fun handleCollectFaceDetected() {
         CoroutineScope(Dispatchers.Default).launch(
             CoroutineExceptionHandler { _, ex ->
@@ -422,7 +449,7 @@ internal object FinishSessionDialog {
             val faceBlurString = StringBuilder()
             val smileString = StringBuilder()
             val faceRecognitionRate = StringBuilder()
-            faceRecognitionRate.append(FinishSessionDialog.currentSearchScore).append("/").append(FinishSessionDialog.searchThreshold)
+            faceRecognitionRate.append(FinishSessionDialog.currentSearchScore).append("/").append(FinishSessionDialog.searchThreshold.toInt())
             val mat = Matrix()
             val w = cameraPreviewDevice.getPreviewSize().first
             val h = cameraPreviewDevice.getPreviewSize().second

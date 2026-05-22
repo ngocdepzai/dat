@@ -39,6 +39,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.Calendar
 
 @SuppressLint("StaticFieldLeak")
 internal object FaceRecognizeDialog {
@@ -64,7 +65,8 @@ internal object FaceRecognizeDialog {
     private lateinit var activity: Activity
     private var isResearchInProgress = false
     private var currentSearchScore: Int = 0
-    private var searchThreshold: Int = 40 // Ngưỡng chấp nhận (40 điểm)
+    private var searchThreshold: Float = 65F
+
     init {
         if (!hcImageFolder.exists()) {
             hcImageFolder.mkdirs()
@@ -81,6 +83,7 @@ internal object FaceRecognizeDialog {
     ) {
         Logger.d("showDialog")
         // reset old data
+        currentSearchScore = 0
         userEntity = null
         isResearchInProgress = false
         faceDetectedMessageQueue.clear()
@@ -93,6 +96,7 @@ internal object FaceRecognizeDialog {
         this.applicationViewModel = applicationViewModel
         this.faceRecognitionViewModel = faceRecognitionViewModel
         clearData()
+        updateSearchThresholdBlock() // Gọi cập nhật ngay khi mở dialog
         val view = LayoutInflater.from(activity)
             .inflate(R.layout.face_recognize_dialog, null, false)
         viewBinding = FaceRecognizeDialogBinding.bind(view)
@@ -142,6 +146,7 @@ internal object FaceRecognizeDialog {
     private fun clearData() {
         faceDetectedMessageQueue.clear()
         cameraPreviewDataQueue.clear()
+        currentSearchScore = 0
     }
 
     private val cameraPreviewEvent = object : CameraPreviewEvent {
@@ -316,7 +321,7 @@ internal object FaceRecognizeDialog {
                 faceRecognitionViewModel.startRecognition(targetUserId, isFromDialog = true) { score, _, _, _, _ ->
                     currentSearchScore = score
 
-                    val passStatus = if (score >= 40) "PASS" else "FAIL"
+                    val passStatus = if (score >= searchThreshold) "PASS" else "FAIL"
                     // Lưu ý: Nếu thư viện trả về thang điểm 100 thì sửa 0.4 thành 40
                     android.util.Log.d("FaceRecog", "Điểm nhận diện: $score | Trạng thái (40%): $passStatus")
                 }
@@ -536,6 +541,29 @@ internal object FaceRecognizeDialog {
         }
     }
 
+    // Thêm hàm cập nhật threshold
+    private fun updateSearchThresholdBlock() {
+        CoroutineScope(Dispatchers.IO).launch(
+                CoroutineExceptionHandler { _, _ -> Logger.w("Error in updateSearchThresholdBlock!")}
+        ) {
+            val calendar = Calendar.getInstance()
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+
+            // Nếu trong khung giờ 17:04 - 17:06 thì ép cập nhật từ server/config mới nhất
+            if (hour == 17 && minute in 4..6) {
+                applicationViewModel.updateSearchThreshold {
+                    searchThreshold = applicationViewModel.searchThreshold
+                    Logger.d("Threshold updated from Config (Timed): $searchThreshold")
+                }
+            } else {
+                // Các khung giờ khác lấy giá trị đang có trong ViewModel
+                searchThreshold = applicationViewModel.searchThreshold
+                Logger.d("Threshold updated from ViewModel: $searchThreshold")
+            }
+        }
+    }
+
     private suspend fun showFacePassFace(rect: Rect?) {
 
         if(rect != null){
@@ -549,7 +577,7 @@ internal object FaceRecognizeDialog {
             val faceBlurString = StringBuilder()
             val smileString = StringBuilder()
             val faceRecognitionRate = StringBuilder()
-            faceRecognitionRate.append(currentSearchScore).append("/").append(searchThreshold)
+            faceRecognitionRate.append(currentSearchScore).append("/").append(searchThreshold.toInt())
             val mat = Matrix()
             val w = cameraPreviewDevice.getPreviewSize().first
             val h = cameraPreviewDevice.getPreviewSize().second
