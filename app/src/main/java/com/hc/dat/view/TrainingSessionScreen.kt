@@ -321,6 +321,8 @@ class TrainingSessionScreen : DatBaseScreen() {
                 appViewModel.updateSearchThreshold(){
                     searchThreshold = appViewModel.searchThreshold
                 }
+            } else {
+                searchThreshold = appViewModel.searchThreshold
             }
         }
     }
@@ -875,43 +877,8 @@ class TrainingSessionScreen : DatBaseScreen() {
                 deviceStatusCheckingBlock()
             }
         ) {
-//            val connManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-//            val mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-//            var mMobile = false
-//            val networks = connManager.allNetworks
-//            for (network in networks) {
-//                // > android M
-//                val capabilities = connManager.getNetworkCapabilities(network)
-//                if (capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-//                    mMobile = true
-//                }
-//            }
             var messageError: String = ""
             withContext(Dispatchers.Main) {
-//                if (mWifi?.isConnected == true) {
-//                    // Do whatever
-//                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconwifi)
-//                    viewBinding.ivWifiStatus.setImageBitmap(bImage)
-//                    LogRecorder.i("Trạng thái kết nối wifi: bật","")
-//                } else {
-//                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconnonwifi)
-//                    viewBinding.ivWifiStatus.setImageBitmap(bImage)
-//                    LogRecorder.i("Trạng thái kết nối wifi: tắt","")
-//                }
-//                if (mMobile) {
-//                    // Do whatever
-//                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconwireless)
-//                    viewBinding.ivWirelessStatus.setImageBitmap(bImage)
-//                    LogRecorder.i("Trạng thái kết nối 4G: bật","")
-//                } else {
-//                    val bImage = BitmapFactory.decodeResource(resources, R.drawable.iconnonwireless)
-//                    viewBinding.ivWirelessStatus.setImageBitmap(bImage)
-//                    LogRecorder.i("Trạng thái kết nối 4G: tắt","")
-//                }
-//                if (mWifi?.isConnected != true && mMobile != true) {
-//                    LogRecorder.e("Hệ thống", "Không có kết nối network")
-//                    messageError += " ${getString(R.string.network_not_available)}"
-//                }
                 // 1. Cập nhật icon (lấy từ biến đã có, không gọi API hệ thống nên KHÔNG CRASH)
                 updateNetworkIconsUI()
                 // 2. Ghi Log theo đúng nghiệp vụ của bạn
@@ -921,6 +888,15 @@ class TrainingSessionScreen : DatBaseScreen() {
                 if (!isWifiConnected && !isMobileConnected) {
                     LogRecorder.e("Hệ thống", "Không có kết nối network")
                     BaseNotification.showWarning(getString(R.string.network_not_available), showToast = false)
+
+                    // Tăng biến đếm lỗi kết nối server vì không có mạng thì không thể kết nối server
+                    connectServiceFailCounter++
+
+                    if (connectServiceFailCounter >= CONNECT_SERVICE_FAIL_WARNING) {
+                        // Không reset counter ở đây để giữ trạng thái lỗi cho đến khi có mạng lại và gọi service thành công
+                        connectServiceFailFlag = true
+                        viewBinding.ivServerStatus.setImageResource(R.drawable.iconnonserver)
+                    }
                 }
                 if (Environment.MEDIA_MOUNTED == Environment.getExternalStorageState()) {
                     // Do whatever
