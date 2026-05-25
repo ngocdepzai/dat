@@ -337,8 +337,23 @@ class ApplicationViewModel @Inject constructor(
                     repository.getUserInfoByUserCode(code, getImeiDevice(context))
                 if (resResult.isError) {
                     Logger.e("Error: ${resResult.errorMessage}")
-                    CoroutineScope(Dispatchers.Main).launch {
-                        callback(AppAction.GET_USER_INFO_FAIL, resResult.errorMessage)
+//                    CoroutineScope(Dispatchers.Main).launch {
+//                        callback(AppAction.GET_USER_INFO_FAIL, resResult.errorMessage)
+//                    }
+                    val userEntity: UserEntity? = repository.getUserLocalByUserCode(userCode = code)
+                    userEntity?.also {
+                        val userItem = userEntity.convertToModel()
+                        userItem.loginType = LoginType.RFID
+                        CoroutineScope(Dispatchers.Main).launch {
+                            callback(AppAction.GET_USER_INFO_SUCCESS, userItem)
+                        }
+                    } ?: also {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            callback(
+                                    AppAction.GET_USER_INFO_FAIL,
+                                    "Mã thẻ NFC này không tồn tại trên thiết bị! Kết nối lại internet và thử lại."
+                            )
+                        }
                     }
                 } else {
                     val userItem = resResult.data

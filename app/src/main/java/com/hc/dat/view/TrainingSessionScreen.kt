@@ -2198,22 +2198,37 @@ class TrainingSessionScreen : DatBaseScreen() {
             RiderSessionAction.FINISH_RIDER_SESSION_FAIL_BY_LOCATION,
             RiderSessionAction.FINISH_RIDER_SESSION_FAIL -> {
                 dismissProgress()
+//                showDialog(
+//                    title = getString(R.string.error_title_dialog),
+//                    message = data as String,
+//                    cancelable = false,
+//                    buttonList = listOf(getString(R.string.retry_button)),
+//                    listener = object : DialogButtonClickListener {
+//                        override fun onDialogButtonClick(position: Int) {
+//                            dismissDialog()
+//                            if (riderSessionViewModel.teacherAuthInfo != null &&
+//                                studentAuthInfo != null &&
+//                                riderSessionViewModel.getSessionInProgress() != null
+//                            ) {
+//                                openCamera()
+//                            }
+//                        }
+//                    }
+//                )
                 showDialog(
-                    title = getString(R.string.error_title_dialog),
-                    message = data as String,
-                    cancelable = false,
-                    buttonList = listOf(getString(R.string.retry_button)),
-                    listener = object : DialogButtonClickListener {
-                        override fun onDialogButtonClick(position: Int) {
-                            dismissDialog()
-                            if (riderSessionViewModel.teacherAuthInfo != null &&
-                                studentAuthInfo != null &&
-                                riderSessionViewModel.getSessionInProgress() != null
-                            ) {
-                                openCamera()
+                        title = getString(R.string.title_notification),
+                        message = getString(R.string.finish_session_offline),
+                        buttonList = listOf(getString(R.string.ok)),
+                        cancelable = false,
+                        listener = object : DialogButtonClickListener {
+                            override fun onDialogButtonClick(position: Int) {
+                                dismissDialog()
+                                // handle cancel all job running
+                                clearSessionHandler()
+                                BaseNotification.showMessage(getString(R.string.finish_session_success))
+                                requireActivity().onBackPressed()
                             }
                         }
-                    }
                 )
             }
             // [DAT CER]: only use for get DAT certification
@@ -2442,19 +2457,30 @@ class TrainingSessionScreen : DatBaseScreen() {
             // [DAT CER]
             RiderSessionAction.GET_LIST_CARS_STUDENT_FAIL -> {
                 dismissProgress()
-                // clear student Info
-                studentAuthInfo = null
-                riderSessionViewModel.dropStudentOutSession()
+//                // clear student Info
+//                studentAuthInfo = null
+//                riderSessionViewModel.dropStudentOutSession()
+//                showDialog(
+//                    title = getString(R.string.error_title_dialog),
+//                    message = data as String,
+//                    buttonList = listOf(getString(R.string.ok)),
+//                    listener = object : DialogButtonClickListener {
+//                        override fun onDialogButtonClick(position: Int) {
+//                            dismissDialog()
+//                        }
+//                    }
+//                )
                 showDialog(
-                    title = getString(R.string.error_title_dialog),
-                    message = data as String,
-                    buttonList = listOf(getString(R.string.ok)),
-                    listener = object : DialogButtonClickListener {
-                        override fun onDialogButtonClick(position: Int) {
-                            dismissDialog()
+                        title = getString(R.string.title_notification),
+                        message = getString(R.string.can_not_check_car_in_course_by_internet),
+                        buttonList = listOf(getString(R.string.ok)),
+                        listener = object : DialogButtonClickListener {
+                            override fun onDialogButtonClick(position: Int) {
+                                dismissDialog()
+                            }
                         }
-                    }
                 )
+                handleGetStudentInProgressSession(studentAuthInfo!!.userCode)
             }
             RiderSessionAction.CHECK_DEVICE_DATE_TIME_FAIL -> {
                 dismissProgress()

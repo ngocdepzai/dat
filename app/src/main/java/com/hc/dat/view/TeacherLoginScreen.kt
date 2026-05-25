@@ -527,16 +527,32 @@ class TeacherLoginScreen : DatBaseScreen() {
             }
             AppAction.INIT_CONFIG_DATA_FAIL -> {
                 LogRecorder.e("Config Error", getString(R.string.load_dat_device_config_error))
+//                showDialog(
+//                    title = getString(R.string.error_title_dialog),
+//                    message = getString(R.string.load_dat_device_config_error),
+//                    buttonList = listOf(getString(R.string.retry_button)),
+//                    listener = object : DialogButtonClickListener {
+//                        override fun onDialogButtonClick(position: Int) {
+//                            dismissDialog()
+//                            loadDatDeviceConfig()
+//                        }
+//                    }
+//                )
                 showDialog(
-                    title = getString(R.string.error_title_dialog),
-                    message = getString(R.string.load_dat_device_config_error),
-                    buttonList = listOf(getString(R.string.retry_button)),
-                    listener = object : DialogButtonClickListener {
-                        override fun onDialogButtonClick(position: Int) {
-                            dismissDialog()
-                            loadDatDeviceConfig()
+                        title = getString(R.string.error_title_dialog),
+                        message = "Lấy cấu hình thiết bị thất bại. Bạn muốn thử lại hay tiếp tục với cấu hình cũ?",
+                        buttonList = listOf("Thử lại", "Tiếp tục"), // Thêm nút Tiếp tục
+                        listener = object : DialogButtonClickListener {
+                            override fun onDialogButtonClick(position: Int) {
+                                dismissDialog()
+                                if (position == 0) {
+                                    loadDatDeviceConfig()
+                                } else {
+                                    // Nếu chọn tiếp tục, thử gọi đăng nhập tự động ngay
+                                    checkTeacherReLogin()
+                                }
+                            }
                         }
-                    }
                 )
             }
             AppAction.GET_USER_INFO_AUTO_SUCCESS,
@@ -687,19 +703,37 @@ class TeacherLoginScreen : DatBaseScreen() {
         dismissProgress()
         when (action) {
             RiderSessionAction.GET_LIST_CARS_TEACHER_FAIL -> {
-                LogRecorder.e("Đăng nhập giảng viên thất bại", data as String)
-                // clear teacher info
-                teacherAuthInfo = null
-                riderSessionViewModel.dropTeachOutWorking()
+//                LogRecorder.e("Đăng nhập giảng viên thất bại", data as String)
+//                // clear teacher info
+//                teacherAuthInfo = null
+//                riderSessionViewModel.dropTeachOutWorking()
+//                showDialog(
+//                    title = getString(R.string.error_title_dialog),
+//                    message = data as String,
+//                    buttonList = listOf(getString(R.string.ok)),
+//                    listener = object : DialogButtonClickListener {
+//                        override fun onDialogButtonClick(position: Int) {
+//                            dismissDialog()
+//                        }
+//                    }
+//                )
+                // Thay vì gọi dropTeachOutWorking, hãy làm như sau:
+                LogRecorder.e("Lỗi API nhưng vẫn cho vào phiên", data as String)
+                // Vẫn hiện thông báo lỗi để người dùng biết
                 showDialog(
-                    title = getString(R.string.error_title_dialog),
-                    message = data as String,
-                    buttonList = listOf(getString(R.string.ok)),
-                    listener = object : DialogButtonClickListener {
-                        override fun onDialogButtonClick(position: Int) {
-                            dismissDialog()
+                        title = getString(R.string.error_title_dialog),
+                        message = data as String,
+                        buttonList = listOf(getString(R.string.ok)),
+                        listener = object : DialogButtonClickListener {
+                            override fun onDialogButtonClick(position: Int) {
+                                dismissDialog()
+                                // Sau khi nhấn OK thì cho vào phiên luôn
+                                teacherAuthInfo?.also {
+                                    riderSessionViewModel.pushTeacherInWorking(it)
+                                }
+                                viewBinding.root.findNavController().navigate(R.id.action_loginMenuScreen_to_trainingSessionScreen)
+                            }
                         }
-                    }
                 )
             }
             RiderSessionAction.GET_LIST_CARS_TEACHER_SUCCESS -> {
