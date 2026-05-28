@@ -1605,7 +1605,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                             inProgressSession = riderSessionViewModel.inProgressSession!!,
                             faceRecognitionViewModel = faceRecognitionViewModel,
                             ) { confirm, notSendTC ->
-                            if (confirm) {
+                            if (confirm && isAdded) {
                                 FinishSessionDialog.dismiss()
                                 handleCallFinishRiderSession(isNotSendTC || notSendTC)
                             }
@@ -2503,16 +2503,31 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
 
     private fun handleCallFinishRiderSession(notSendTC: Boolean) {
+        if (!isAdded) return
         showProgressDialog(message = getString(R.string.transmitting_data_to_server))
         BaseNotification.showMessage(message = getString(R.string.transmitting_data_to_server), muteSpeak = true)
-        CoroutineScope(Dispatchers.Default).launch {
-            // Delay 1s for camera restate
-            delay(1000)
-            riderSessionViewModel.finishRiderSession(
-                notSendTC = notSendTC,
-                studentLogoutImage = studentImageLogout!!,
-                callback = riderSessionCallback
-            )
+//        CoroutineScope(Dispatchers.Default).launch {
+//            // Delay 1s for camera restate
+//            delay(1000)
+//            riderSessionViewModel.finishRiderSession(
+//                notSendTC = notSendTC,
+//                studentLogoutImage = studentImageLogout!!,
+//                callback = riderSessionCallback
+//            )
+//        }
+        // Sử dụng lifecycleScope của Fragment thay vì GlobalScope
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                delay(1000) // Chờ một chút để các hiệu ứng UI trước đó ổn định
+                riderSessionViewModel.finishRiderSession(
+                        notSendTC = notSendTC,
+                        studentLogoutImage = studentImageLogout!!,
+                        callback = riderSessionCallback
+                )
+            } catch (e: Exception) {
+                Logger.e("Error during finishRiderSession: ${e.message}")
+                withContext(Dispatchers.Main) { dismissProgress() }
+            }
         }
     }
     private fun handleLogoutByAdmin(){
@@ -2527,12 +2542,26 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
     private fun handleSessionCompletionEvent(){
-        if (!isAdded) return
-        dismissProgress()
-        // handle cancel all job running
-        clearSessionHandler()
-        BaseNotification.showMessage(getString(R.string.finish_session_success))
-        requireActivity().onBackPressed()
+        // 1. Kiểm tra an toàn: Nếu Fragment đã thoát thì không làm gì cả
+        if (!isAdded || activity == null) return
+//        dismissProgress()
+//        // handle cancel all job running
+//        clearSessionHandler()
+//        BaseNotification.showMessage(getString(R.string.finish_session_success))
+//        requireActivity().onBackPressed()
+        // 2. Thực thi trên Main Thread để đảm bảo UI không crash
+        activity?.runOnUiThread {
+            dismissProgress()
+            clearSessionHandler()
+
+            // Hiển thị thông báo an toàn
+            context?.let {
+                BaseNotification.showMessage(it.getString(R.string.finish_session_success))
+            }
+
+            // Thoát màn hình một cách an toàn
+            activity?.onBackPressed()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
