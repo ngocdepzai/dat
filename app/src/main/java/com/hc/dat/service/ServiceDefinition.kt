@@ -3,6 +3,7 @@ package com.hc.dat.service
 object ServiceDefinition {
     const val CONNECTING_TIMEOUTS_DEFAULT = 120L // second
     const val HOST_BASE_URL = "http://api.hcsky.vn/"
+//    const val HOST_BASE_URL = "https://webapi.hcsky.vn/"
     const val HOST_BASE_URL2 = "http://27.118.25.80:8007/"
     const val IMAGE_FULL_SIZE_URL = "http://api.hcsky.vn/api/Resource/v2024/get_link_image/"
     const val IMAGE_RESIZE_URL = "http://api.hcsky.vn/api/Resource/v2024/get_link_image_resize/"
@@ -22,7 +23,7 @@ object ServiceDefinition {
     const val FINISH_RIDER_SESSION_V335_URL = "api/Session/v2024/v335/finish-rider-session"
     const val GET_IN_PROGRESS_SESSION_BY_STUDENT_URL = "/api/User/v2024/check-user-in-session"
 
-    //    const val FETCH_CURRENT_SESSION_URL = "api/Session/session-total"
+    //    const val FETCH_CURRENT_SESSION_URL = "api/Session/v2/fetch-current-session"
     const val FETCH_CURRENT_SESSION_URL = "api/Session/v2024/fetch-current-session"
     var UPLOAD_IMAGE_AUTHEN_PROGRESS_URL = ""
     const val UPDATE_IMAGE_RECOGNITION_URL = "api/User/v2024/v1/update_avatar"
@@ -34,7 +35,7 @@ object ServiceDefinition {
     const val UPLOAD_LOGS = "api/Device/v2024/upload_files_log"
     const val UPLOAD_DEVICE_INFO = "api/Device/v2024/updatedeviceinfo"
     const val GET_DEVICE_CONFIG = "api/Device/v2024/check_device_version_code"
-
+    const val RESENT_SESSION_TC_URL = "api/session/resent-session-tc"
     const val ID_CARD = "idCard"
     const val SERIAL_NUMBER = "seri"
     const val IMEI1 = "imei1"

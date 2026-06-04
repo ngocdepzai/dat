@@ -5,6 +5,7 @@ import com.hc.dat.model.UserInfo
 import com.hc.dat.model.database.entity.*
 import com.hc.dat.model.result.ResponseResult
 import com.hc.dat.service.model.*
+import hc.manager.datapp.models.response.ResentSessionResponse
 import kotlinx.coroutines.channels.Channel
 import java.io.File
 
@@ -245,7 +246,7 @@ interface Repository {
         sessionId: String,
         state: Int
     )
-
+    suspend fun resentSession(sessionId: String): ResponseResult<ResentSessionResponse?>
     fun insertNewGPSSignal(gpsSignalEntity: GPSSignalEntity)
     fun updateGPSSignalUploadState(
         id: Long,

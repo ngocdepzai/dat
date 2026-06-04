@@ -29,6 +29,7 @@ import com.hc.dat.viewmodel.RiderSessionViewModel
 import com.lws.type.LogRecorder
 import com.lws.type.Logger
 import hc.manager.datapp.databinding.ActivityCompareSessionBinding
+import hc.manager.datapp.utils.SharedPreferencesUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -207,7 +208,42 @@ class SessionHistoryScreen : DatBaseScreen() {
         override fun onCheckDataMissing(sessionId: String) {
             riderSessionViewModel.checkMissingDataSession(sessionId = sessionId, callback = riderSessionCallback)
         }
+
+        override fun onItemResentClickListener(position: Int) {
+            // Lấy session dựa trên vị trí người dùng click
+            val session = listSessionHistory[position]
+            resentSessionToTC(session.id)
+        }
     }
+    private fun resentSessionToTC(sessionId: String) {
+        // 1. Kiểm tra quyền từ SharedPreferences
+        val trainingCenterModel = SharedPreferencesUtil.getTrainingCenter(requireActivity())
+
+        if (trainingCenterModel != null && trainingCenterModel.isTeacherSendTc) {
+            // 2. Hiện loading
+            showProgressDialog()
+
+            // 3. Gọi ViewModel để xử lý API (Giống cách làm với CheckMissingData)
+            // Lưu ý: Bạn cần đảm bảo trong RiderSessionViewModel đã có hàm resentSession
+            riderSessionViewModel.resentSessionToTC(
+                    sessionId = sessionId,
+                    callback = riderSessionCallback
+            )
+        } else {
+            // 4. Hiển thị thông báo không có quyền
+            showDialog(
+                    title = getString(hc.manager.datapp.R.string.title_notification),
+                    message = "KHÔNG CÓ QUYỀN, VUI LÒNG LIÊN HỆ VỚI TRUNG TÂM!",
+                    buttonList = listOf(getString(hc.manager.datapp.R.string.ok)),
+                    listener = object : DialogButtonClickListener {
+                        override fun onDialogButtonClick(position: Int) {
+                            dismissDialog()
+                        }
+                    }
+            )
+        }
+    }
+
     private val appCallback: (action: AppAction, data: Any?)
     -> Unit = { action: AppAction, data: Any? ->
         Logger.d("Callback action: $action | data: $data")
@@ -353,6 +389,16 @@ class SessionHistoryScreen : DatBaseScreen() {
             RiderSessionAction.PUSH_DATA_MISSING_FAIL -> {
                 dismissProgress()
                 BaseNotification.showError(message = "Đẩy dữ liệu thất bại", muteSpeak = true)
+            }
+            RiderSessionAction.RESENT_SESSION_SUCCESS -> {
+                val message = data as? String ?: "Truyền dữ liệu thành công"
+                BaseNotification.showMessage(message = message, muteSpeak = true)
+                // Load lại danh sách để cập nhật trạng thái "Đã truyền Tc"
+                getListSessionHistory()
+            }
+            RiderSessionAction.RESENT_SESSION_FAIL -> {
+                val message = data as? String ?: "Lỗi kết nối Server"
+                BaseNotification.showError(message = message, muteSpeak = true)
             }
             else -> {}
         }

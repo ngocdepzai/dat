@@ -3,6 +3,8 @@ package com.hc.dat.service.api
 import com.hc.dat.service.ServiceDefinition
 import com.hc.dat.service.model.*
 import com.lws.type.Logger
+import hc.manager.datapp.models.request.ResentSessionRequest
+import hc.manager.datapp.models.response.ResentSessionResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -119,6 +121,12 @@ interface DatService {
         @Part("seri") imei: RequestBody,
         @Part("confidence") confidence: RequestBody
     ): Response<UploadImageStartSessionResponse>
+
+    @Headers("Content-Type: application/json;charset=UTF-8")
+    @POST(ServiceDefinition.RESENT_SESSION_TC_URL)
+    suspend fun resentSession(
+            @Body resentSessionRequest: ResentSessionRequest
+    ): Response<ResentSessionResponse>
 
     @Multipart
     @POST(ServiceDefinition.UPDATE_IMAGE_RECOGNITION_URL)

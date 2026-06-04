@@ -20,6 +20,8 @@ import com.lws.type.LogRecorder
 import com.lws.type.Logger
 import com.omi.service.ResponseStatus
 import com.omi.service.Service
+import hc.manager.datapp.models.request.ResentSessionRequest
+import hc.manager.datapp.models.response.ResentSessionResponse
 import hc.manager.datapp.utils.UpdateUserType
 import kotlinx.coroutines.channels.Channel
 import okhttp3.MultipartBody
@@ -1543,6 +1545,35 @@ class RepositoryImpl @Inject constructor(
             )
         } catch (ex: Exception) {
             Logger.i("Error ${ex.message}")
+        }
+    }
+
+    override suspend fun resentSession(sessionId: String): ResponseResult<ResentSessionResponse?> {
+        Logger.d("resentSession API sessionId: $sessionId")
+        try {
+            val request = ResentSessionRequest()
+            request.sessionId = sessionId
+
+            val response = datService.resentSession(request)
+            val responseData = response.body()
+
+            return when (response.code()) {
+                200 -> { // SUCCESS
+                    if (responseData?.status == 1) {
+                        ResponseResult(data = responseData)
+                    } else {
+                        ResponseResult(
+                                isError = true,
+                                errorCode = responseData?.status ?: -1,
+                                errorMessage = responseData?.message ?: "Gửi lại thất bại!"
+                        )
+                    }
+                }
+                else -> ResponseResult(isError = true, errorMessage = "Lỗi kết nối HTTP: ${response.code()}")
+            }
+        } catch (ex: Exception) {
+            Logger.e("resentSession Exception: ${ex.message}")
+            return ResponseResult(isError = true, errorMessage = "Lỗi đường truyền!")
         }
     }
 

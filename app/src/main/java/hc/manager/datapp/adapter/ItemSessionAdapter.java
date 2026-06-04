@@ -47,31 +47,33 @@ public class ItemSessionAdapter extends RecyclerView.Adapter<ItemSessionAdapter.
     public void onBindViewHolder(@NonNull ItemSessionAdapter.RecyclerViewHolder holder, int position) {
         final SessionModel item = listData.get(position);
         try {
-            if (item.id != null && item.id != "") {
-                holder.tvNo.setText((position + 1) + "");
+            if (item.id != null && !item.id.isEmpty()) {
+                holder.tvNo.setText(String.valueOf(position + 1));
                 holder.tvStudentName.setText(item.studentName);
                 holder.tvId.setText(item.id);
                 holder.tvTotalTime.setText(DateUtil.ConvertHms(item.totalTime));
-                holder.tvTotalDis.setText(item.totalDis + "");
-
+                holder.tvTotalDis.setText(String.valueOf(item.totalDis));
                 holder.tvLoginDate.setText(item.loginDateParse);
                 holder.tvLogoutDate.setText(item.logoutDateParse);
+
                 if (!item.sentGeneral) {
                     holder.tvStatus.setText("Chưa truyền Tc");
-                    Bitmap bImage = BitmapFactory.decodeResource(context.getResources(), R.drawable.resenttc);
-                    holder.ivResentTC.setImageBitmap(bImage);
+                    holder.tvStatus.setTextColor(Color.RED);
+                    holder.ivResentTC.setVisibility(View.VISIBLE);
+                    holder.ivResentTC.setImageResource(R.drawable.resenttc);
+//                    Bitmap bImage = BitmapFactory.decodeResource(context.getResources(), R.drawable.resenttc);
+//                    holder.ivResentTC.setImageBitmap(bImage);
                 } else {
                     holder.tvStatus.setText("Đã truyền Tc");
                     holder.tvStatus.setTextColor(Color.GREEN);
+                    holder.ivResentTC.setVisibility(View.INVISIBLE);
                 }
                 holder.ivResentTC.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
                         if (mItemButtonClickListener != null) {
                             mItemButtonClickListener.onItemResentClickListener(position);
                         }
-
                     }
                 });
             } else {

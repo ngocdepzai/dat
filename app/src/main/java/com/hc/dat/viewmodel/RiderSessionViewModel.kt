@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Environment
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import com.hc.dat.di.ApplicationContext
 import com.hc.dat.model.*
@@ -751,6 +752,7 @@ data class RiderSessionViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private suspend fun handleRecoverUploadSession(riderSessionEntity: RiderSessionEntity): String? {
         val deviceInfo = Utils.getDeviceInfo(context)
         try {
@@ -821,6 +823,43 @@ data class RiderSessionViewModel @Inject constructor(
 
     fun checkGPSAvailable(activity: Activity): Boolean {
         return device.getCurrentGPS()?.checkGPSAvailable(activity) ?: false
+    }
+
+    fun resentSessionToTC(
+            sessionId: String,
+            callback: (action: RiderSessionAction, data: Any?) -> Unit
+    ) {
+        Logger.d("resentSessionToTC sessionId: $sessionId")
+        CoroutineScope(Dispatchers.IO).launch(
+                CoroutineExceptionHandler { _, ex ->
+                    Logger.e("resentSessionToTC: Found an exception: ${ex.message}")
+                    CoroutineScope(Dispatchers.Main).launch {
+                        callback(RiderSessionAction.RESENT_SESSION_FAIL, "Lỗi hệ thống!")
+                    }
+                }
+        ) {
+            // Kiểm tra internet trước khi gửi
+            if (!isConnectionAvailable()) {
+                withContext(Dispatchers.Main) {
+                    callback(RiderSessionAction.RESENT_SESSION_FAIL, "Không có kết nối internet")
+                }
+                return@launch
+            }
+
+            // Gọi API thông qua repository
+            // Chú ý: Bạn cần thêm hàm resentSession vào class Repository và DataService tương ứng
+            val resResult = repository.resentSession(sessionId)
+
+            withContext(Dispatchers.Main) {
+                if (resResult.isError) {
+                    Logger.e("resentSessionToTC Error: ${resResult.errorMessage}")
+                    callback(RiderSessionAction.RESENT_SESSION_FAIL, resResult.errorMessage)
+                } else {
+                    Logger.i("resentSessionToTC Success")
+                    callback(RiderSessionAction.RESENT_SESSION_SUCCESS, resResult.errorMessage ?: "Gửi thành công!")
+                }
+            }
+        }
     }
 
     fun pushAuthenticateData(callback: () -> Unit) {
@@ -2536,6 +2575,8 @@ enum class RiderSessionAction {
     PUSH_DATA_MISSING_FAIL,
     CHECK_DEVICE_DATE_TIME_FAIL,
     SENT_DATA_IMMEDIATELY,
+    RESENT_SESSION_SUCCESS,
+    RESENT_SESSION_FAIL,
 }
 
 enum class VerifyResult(val code: Int) {

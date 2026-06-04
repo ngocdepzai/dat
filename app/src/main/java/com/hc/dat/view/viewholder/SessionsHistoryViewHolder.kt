@@ -33,9 +33,18 @@ data class SessionsHistoryViewHolder constructor(
         viewBinding.tvId.text = sessionHistory.id
         if (!sessionHistory.sentGeneral) {
             viewBinding.tvStatus.text = "Chưa truyền Tc"
+            viewBinding.tvStatus.setTextColor(Color.RED)
+            viewBinding.ivResentTC.visibility = View.VISIBLE
+            viewBinding.ivResentTC.setImageResource(hc.manager.datapp.R.drawable.resenttc)
+            viewBinding.ivResentTC.setColorFilter(Color.GREEN, android.graphics.PorterDuff.Mode.SRC_IN)
+            viewBinding.ivResentTC.setOnClickListener {
+                listener?.onItemResentClickListener(position)
+            }
         } else {
             viewBinding.tvStatus.text = "Đã truyền Tc"
             viewBinding.tvStatus.setTextColor(Color.GREEN)
+            viewBinding.ivResentTC.visibility = View.GONE
+            viewBinding.ivResentTC.setOnClickListener(null)
         }
         if(sessionHistory.logoutDateParse == null){
             viewBinding.btnUploadLog.visibility = View.VISIBLE

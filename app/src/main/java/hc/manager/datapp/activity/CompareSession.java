@@ -23,6 +23,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.hc.dat.view.adapter.ListSessionHistoryAdapter;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -121,16 +123,7 @@ public class CompareSession extends AppCompatActivity {
                 resentSessionToTC(sessionModel);
             }
         });
-//        lvSession.addOnScrollListener(new RecyclerView.OnScrollListener() {
-//            @Override
-//            public void onScrollStateChanged(@NonNull @NotNull RecyclerView recyclerView, int newState) {
-//                super.onScrollStateChanged(recyclerView, newState);
-//                if (!recyclerView.canScrollVertically(1)) {
-//                    Toast.makeText(CompareSession.this, "Last", Toast.LENGTH_LONG).show();
-//
-//                }
-//            }
-//        });
+
         btNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

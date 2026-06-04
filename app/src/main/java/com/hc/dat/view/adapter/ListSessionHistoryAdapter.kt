@@ -52,4 +52,5 @@ interface ItemButtonClickListener {
     fun onUploadLog()
     fun onShowDialog(messages: List<String>)
     fun onCheckDataMissing(sessionId: String)
+    fun onItemResentClickListener(position: Int)
 }
