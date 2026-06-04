@@ -134,7 +134,7 @@
                 android:textStyle="bold"
                 android:visibility="gone"
                 android:text="Gửi Log"
-                android:layout_marginHorizontal="5dp"
+                android:layout_marginRight="5dp"
                 android:paddingLeft="5dp"
                 android:background="@color/orange"
                 android:textColor="@color/white"
