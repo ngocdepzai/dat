@@ -560,7 +560,9 @@ class ApplicationViewModel @Inject constructor(
                             repository.savePlateSlug(vehicleInfo?.plateSlug)
                             trainingCenter?.teacherSendTc?.let {
                                 repository.saveTeacherSendTc(it)
+                                Logger.i("getObjectsLinkedDat teacherSendTc saved: $it")
                             }
+                            Logger.i("getObjectsLinkedDat: trainingCenter: ${trainingCenter?.teacherSendTc}")
                             CoroutineScope(Dispatchers.Main).launch {
                                 callback(AppAction.INIT_CONFIG_DATA_SUCCESS, null)
                             }
