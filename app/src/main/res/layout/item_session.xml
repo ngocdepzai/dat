@@ -104,13 +104,6 @@
                 android:paddingLeft="5dp"
                 android:textColor="@color/orange"
                 android:textSize="20sp" />
-            <ImageView
-                android:id="@+id/ivResentTC"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:padding="5dp"
-                android:src="@drawable/resenttc"
-                android:visibility="gone" />
             <TextView
                 android:layout_width="450dp"
                 android:layout_height="wrap_content"
@@ -141,6 +134,7 @@
                 android:textStyle="bold"
                 android:visibility="gone"
                 android:text="Gửi Log"
+                android:layout_marginHorizontal="5dp"
                 android:paddingLeft="5dp"
                 android:background="@color/orange"
                 android:textColor="@color/white"
@@ -154,6 +148,17 @@
                 android:textStyle="bold"
                 android:visibility="gone"
                 android:text="Gửi lại dữ liệu"
+                android:background="@color/orange"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/ivResentTC"
+                android:paddingHorizontal="5dp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:text="Truyền tổng cục"
                 android:background="@color/orange"
                 android:textColor="@color/white"
                 android:textSize="20sp" />

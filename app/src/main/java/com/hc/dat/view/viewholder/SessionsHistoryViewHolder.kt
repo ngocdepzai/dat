@@ -8,6 +8,7 @@ import com.hc.dat.model.result.SessionHistory
 import com.hc.dat.view.adapter.ItemButtonClickListener
 import hc.manager.datapp.databinding.ItemSessionBinding
 import hc.manager.datapp.utils.DateUtil
+import hc.manager.datapp.utils.SharedPreferencesUtil
 
 data class SessionsHistoryViewHolder constructor(
     val viewBinding: ItemSessionBinding,
@@ -15,10 +16,12 @@ data class SessionsHistoryViewHolder constructor(
 ) :
     RecyclerView.ViewHolder(viewBinding.root) {
     private lateinit var localSessionHistory: RiderSessionEntity
+
     fun build(
         sessionHistory: SessionHistory,
         position: Int,
-        localListSessionHistory: List<RiderSessionEntity>
+        localListSessionHistory: List<RiderSessionEntity>,
+        isTeacherSendTc: Boolean
     ) {
         viewBinding.tvNo.text = position.toString()
         if(!sessionHistory.isSessionValid){
@@ -31,15 +34,21 @@ data class SessionsHistoryViewHolder constructor(
         viewBinding.tvTotalDis.text = sessionHistory.totalDis.toString()
         viewBinding.tvStatus.text = sessionHistory.sentGeneral.toString()
         viewBinding.tvId.text = sessionHistory.id
+
         if (!sessionHistory.sentGeneral) {
             viewBinding.tvStatus.text = "Chưa truyền Tc"
             viewBinding.tvStatus.setTextColor(Color.RED)
-            viewBinding.ivResentTC.visibility = View.VISIBLE
-            viewBinding.ivResentTC.setImageResource(hc.manager.datapp.R.drawable.resenttc)
-            viewBinding.ivResentTC.setColorFilter(Color.GREEN, android.graphics.PorterDuff.Mode.SRC_IN)
-            viewBinding.ivResentTC.setOnClickListener {
-                listener?.onItemResentClickListener(position)
+
+            if (isTeacherSendTc) {
+                viewBinding.ivResentTC.visibility = View.VISIBLE
+                viewBinding.ivResentTC.setOnClickListener {
+                    listener?.onItemResentClickListener(position)
+                }
+            } else {
+                viewBinding.ivResentTC.visibility = View.GONE
+                viewBinding.ivResentTC.setOnClickListener(null)
             }
+
         } else {
             viewBinding.tvStatus.text = "Đã truyền Tc"
             viewBinding.tvStatus.setTextColor(Color.GREEN)

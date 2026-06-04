@@ -16,6 +16,14 @@ class ListSessionHistoryAdapter(
 
     private var listSessionHistory: List<SessionHistory> = listOf()
     private var localListSessionHistory: List<RiderSessionEntity> = listOf()
+    private var isTeacherSendTc: Boolean = false
+
+    // 2. Thêm hàm cập nhật trạng thái từ Fragment/Activity
+    @SuppressLint("NotifyDataSetChanged")
+    fun updateTeacherSendTcState(isEnabled: Boolean) {
+        this.isTeacherSendTc = isEnabled
+        notifyDataSetChanged()
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateListSessionHistory(listSessionHistory: List<SessionHistory>){
@@ -44,7 +52,7 @@ class ListSessionHistoryAdapter(
     }
 
     override fun onBindViewHolder(holder: SessionsHistoryViewHolder, position: Int) {
-        holder.build(listSessionHistory[position], position, localListSessionHistory)
+        holder.build(listSessionHistory[position], position, localListSessionHistory, isTeacherSendTc)
     }
 }
 interface ItemButtonClickListener {

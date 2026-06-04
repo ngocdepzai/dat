@@ -73,6 +73,7 @@ class SessionHistoryScreen : DatBaseScreen() {
         viewBinding.rvSession.layoutManager =
             LinearLayoutManager(requireActivity(), RecyclerView.VERTICAL, false)
         listSessionHistoryAdapter = ListSessionHistoryAdapter(listener)
+        listSessionHistoryAdapter.updateTeacherSendTcState(appViewModel.isTeacherSendTc())
         viewBinding.rvSession.adapter = listSessionHistoryAdapter
 
         viewBinding.etStartDate.inputType = InputType.TYPE_NULL
@@ -216,10 +217,10 @@ class SessionHistoryScreen : DatBaseScreen() {
         }
     }
     private fun resentSessionToTC(sessionId: String) {
-        // 1. Kiểm tra quyền từ SharedPreferences
-        val trainingCenterModel = SharedPreferencesUtil.getTrainingCenter(requireActivity())
-
-        if (trainingCenterModel != null && trainingCenterModel.isTeacherSendTc) {
+//        // 1. Kiểm tra quyền từ SharedPreferences
+//        val trainingCenterModel = SharedPreferencesUtil.getTrainingCenter(requireActivity())
+//
+//        if (trainingCenterModel != null && trainingCenterModel.isTeacherSendTc) {
             // 2. Hiện loading
             showProgressDialog()
 
@@ -229,19 +230,19 @@ class SessionHistoryScreen : DatBaseScreen() {
                     sessionId = sessionId,
                     callback = riderSessionCallback
             )
-        } else {
-            // 4. Hiển thị thông báo không có quyền
-            showDialog(
-                    title = getString(hc.manager.datapp.R.string.title_notification),
-                    message = "KHÔNG CÓ QUYỀN, VUI LÒNG LIÊN HỆ VỚI TRUNG TÂM!",
-                    buttonList = listOf(getString(hc.manager.datapp.R.string.ok)),
-                    listener = object : DialogButtonClickListener {
-                        override fun onDialogButtonClick(position: Int) {
-                            dismissDialog()
-                        }
-                    }
-            )
-        }
+//        } else {
+//            // 4. Hiển thị thông báo không có quyền
+//            showDialog(
+//                    title = getString(hc.manager.datapp.R.string.title_notification),
+//                    message = "KHÔNG CÓ QUYỀN, VUI LÒNG LIÊN HỆ VỚI TRUNG TÂM!",
+//                    buttonList = listOf(getString(hc.manager.datapp.R.string.ok)),
+//                    listener = object : DialogButtonClickListener {
+//                        override fun onDialogButtonClick(position: Int) {
+//                            dismissDialog()
+//                        }
+//                    }
+//            )
+//        }
     }
 
     private val appCallback: (action: AppAction, data: Any?)

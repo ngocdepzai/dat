@@ -55,6 +55,7 @@ class RepositoryImpl @Inject constructor(
         const val SERIAL_NUMBER = "SERIAL_NUMBER"
         const val IMEI1 = "IMEI1"
         const val IMEI2 = "IMEI2"
+        const val KEY_TEACHER_SEND_TC = "key_teacher_send_tc"
     }
 
     // [DAT CER]: only use for get DAT certification
@@ -229,6 +230,15 @@ class RepositoryImpl @Inject constructor(
                 isError = true
             )
         }
+    }
+
+    // Hàm lưu
+    override fun saveTeacherSendTc(value: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_TEACHER_SEND_TC, value).apply()
+    }
+
+    override fun getTeacherSendTc(): Boolean {
+        return sharedPreferences.getBoolean(KEY_TEACHER_SEND_TC, false)
     }
 
     override suspend fun finishRiderSession(

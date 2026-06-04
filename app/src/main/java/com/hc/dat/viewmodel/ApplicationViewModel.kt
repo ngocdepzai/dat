@@ -558,6 +558,9 @@ class ApplicationViewModel @Inject constructor(
                             // save to local for offline case
                             repository.saveTrainingCenterName(trainingCenter?.name)
                             repository.savePlateSlug(vehicleInfo?.plateSlug)
+                            trainingCenter?.teacherSendTc?.let {
+                                repository.saveTeacherSendTc(it)
+                            }
                             CoroutineScope(Dispatchers.Main).launch {
                                 callback(AppAction.INIT_CONFIG_DATA_SUCCESS, null)
                             }
@@ -575,6 +578,12 @@ class ApplicationViewModel @Inject constructor(
             }
         }
     }
+
+    fun isTeacherSendTc(): Boolean {
+        // Ưu tiên lấy từ biến memory, nếu không có thì lấy từ SharedPreferences
+        return trainingCenter?.teacherSendTc ?: repository.getTeacherSendTc()
+    }
+
     fun uploadDeviceInfo(callback: (action: AppAction, data: Any?) -> Unit) {
         CoroutineScope(Dispatchers.Default).launch(
             CoroutineExceptionHandler { _, ex ->

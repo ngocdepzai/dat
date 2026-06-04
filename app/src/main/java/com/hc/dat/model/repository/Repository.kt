@@ -89,6 +89,9 @@ interface Repository {
         coverReSend: Boolean = false // coverReSend = true when resend session save in local device
     ): ResponseResult<Any?>
 
+    fun saveTeacherSendTc(value: Boolean)
+    fun getTeacherSendTc(): Boolean
+
     suspend fun getRequestRetrieverLog(imei: String): ResponseResult<GetRequestRetrieverLogResponse>
     suspend fun uploadUserLog(file: File, userCode: String, imei: String): ResponseResult<Any?>
 
