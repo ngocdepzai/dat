@@ -461,43 +461,6 @@ class ApplicationViewModel @Inject constructor(
         return vehicleInfo?.plateSlug ?: repository.getPlateSlug()
     }
 
-//    private fun checkRequestRetrieverLog() {
-//        CoroutineScope(Dispatchers.IO).launch(
-//            CoroutineExceptionHandler { _, ex ->
-//                Logger.e("checkRequestRetrieverLog: Found an exception exception: ${ex.message}")
-//            }
-//        ) {
-//            if (device.getCurrentNetworkConnection()?.checkConnectionAvailable() == true) {
-//                val imei = Utils.getImeiDevice(context)
-//                val resResult: ResponseResult<GetRequestRetrieverLogResponse> =
-//                    repository.getRequestRetrieverLog(imei = imei)
-//                Logger.i("resResult: $resResult")
-//                if (!resResult.isError && resResult.data != null) {
-//                    val getRequestRetrieverLogResponse = resResult.data
-//                    val studentCode = getRequestRetrieverLogResponse.studentCode
-//                    val logDate =
-//                        Utils.convertServerTimeToDate(getRequestRetrieverLogResponse.dateTimeLog)
-//                    val dateString =
-//                        SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(logDate)
-//                    Logger.i("checkRequestRetrieverLog dateString: $dateString")
-//                    var userLogFolder = File(
-//                        Environment.getExternalStorageDirectory()
-//                            .toString() + "/HC_DAT_LOGS/$studentCode"
-//                    )
-//                    val fileLog = File(userLogFolder, "${studentCode}_$dateString.log")
-//                    if (fileLog.exists()) {
-//                        // upload logfile
-//                        repository.uploadUserLog(
-//                            file = fileLog,
-//                            userCode = studentCode,
-//                            imei = imei
-//                        )
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     fun getObjectsLinkedDat(callback: (action: AppAction, data: Any?) -> Unit) {
         Logger.d("getObjectsLinkedDat")
         // [DAT CER]: only use for get DAT certification
