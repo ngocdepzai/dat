@@ -960,44 +960,6 @@ class RepositoryImpl @Inject constructor(
         }
     }
 
-
-//    override suspend fun getCurrentSessionInfo(sessionId: String): ResponseResult<GetCurrentSessionInfoResponse?> {
-//        Logger.d("getCurrentSessionInfo sessionId: $sessionId")
-//        try {
-//            val response = datService.getCurrentSessionInfo(GetCurrentSessionInfoRequest(sessionId = sessionId))
-//            val responseData = response.body()
-//            Logger.i("getCurrentSessionInfo: $responseData")
-//            Logger.i("response.code: ${response.code()}")
-//            return when (response.code()) {
-//                ResponseStatus.SUCCESS -> {
-//                    if (responseData?.status == 1) {
-//                        ResponseResult(
-//                            data = responseData
-//                        )
-//                    } else {
-//                        ResponseResult(
-//                            isError = true,
-//                            errorCode = responseData?.status ?: -1,
-//                            errorMessage = responseData?.message ?: ""
-//                        )
-//                    }
-//                }
-//                else -> {
-//                    ResponseResult(
-//                        isError = true,
-//                        errorCode = responseData?.status ?: -1,
-//                        errorMessage = responseData?.message ?: ""
-//                    )
-//                }
-//            }
-//        } catch (ex: UnknownHostException) {
-//            Logger.i("Error ${ex.message}")
-//            return ResponseResult(
-//                isError = true,
-//            )
-//        }
-//    }
-
     override suspend fun getObjectsLinkedDat(imei: String): ResponseResult<GetObjectsLinkedDatResponse?> {
         Logger.d("getObjectsLinkedDat imei: $imei")
         try {

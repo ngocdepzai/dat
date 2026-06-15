@@ -30,23 +30,11 @@ interface DatService {
         @Body checkMissingDataSessionRequest: CheckMissingDataSessionRequest
     ): Response<CheckMissingDataSessionResponse>
 
-//    @Headers("Content-Type: application/json;charset=UTF-8")
-//    @POST(ServiceDefinition.GET_CURRENT_SESSION_INFO_URL)
-//    suspend fun getCurrentSessionInfo(
-//        @Body loginRequest: GetCurrentSessionInfoRequest
-//    ): Response<GetCurrentSessionInfoResponse>
-
     @Headers("Content-Type: application/json;charset=UTF-8")
     @POST(ServiceDefinition.GET_OBJECTS_LINKED_DAT_URL)
     suspend fun getObjectsLinkedDat(
         @Body loginRequest: GetObjectsLinkedDatRequest
     ): Response<GetObjectsLinkedDatResponse>
-
-//    @Headers("Content-Type: application/json;charset=UTF-8")
-//    @POST(ServiceDefinition.GET_USER_INFO_URL)
-//    suspend fun getUserInfo(
-//        @Body loginRequest: GetUserInfoRequest
-//    ): Response<GetUserInfoResponse>
 
     @Headers("Content-Type: application/json;charset=UTF-8")
     @POST(ServiceDefinition.GET_USER_INFO_URL)
