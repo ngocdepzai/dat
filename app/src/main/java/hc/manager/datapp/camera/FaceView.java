@@ -2,6 +2,7 @@ package hc.manager.datapp.camera;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -30,6 +31,11 @@ public class FaceView extends View {
     private Paint idPaint = new Paint();
     private Paint posePaint = new Paint();
     private Paint backPaint = new Paint();
+    private Paint guidePaint = new Paint();
+    private boolean showGuide = false;
+    private float guideMarginHorizontal = 0.10f;
+    private float guideMarginTop = 0.10f;
+    private float guideMarginBottom = 0.10f;
 
     public FaceView(Context context) {
         super(context);
@@ -66,6 +72,37 @@ public class FaceView extends View {
 
         posePaint.setARGB(255, 80, 80, 80);
         posePaint.setTextSize(25);
+
+        guidePaint.setColor(Color.RED);
+        guidePaint.setStyle(Paint.Style.STROKE);
+        guidePaint.setStrokeWidth(6.0f);
+    }
+
+    public void setShowGuide(boolean show) {
+        this.showGuide = show;
+        postInvalidate();
+    }
+
+    public void setGuideMarginTop(float ratio) {
+        this.guideMarginTop = ratio;
+    }
+
+    public RectF getGuideRect() {
+        int w = getWidth();
+        int h = getHeight();
+        if (w == 0 || h == 0) return null;
+        return new RectF(
+                w * guideMarginHorizontal,
+                h * guideMarginTop,
+                w * (1f - guideMarginHorizontal),
+                h * (1f - guideMarginBottom)
+        );
+    }
+
+    public boolean isInsideGuide(RectF faceRect) {
+        RectF g = getGuideRect();
+        if (g == null) return false;
+        return g.contains(faceRect);
     }
 
     public void addId(String label) {
@@ -119,6 +156,12 @@ public class FaceView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if (showGuide) {
+            RectF g = getGuideRect();
+            if (g != null) {
+                canvas.drawRect(g, guidePaint);
+            }
+        }
         for (int i = 0; i < rect.size(); i++) {
             if (rect != null) {
 

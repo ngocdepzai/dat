@@ -52,6 +52,12 @@ internal object FinishSessionDialog {
     private const val autoLogoutTime = 1 * 60
     private var currentSearchScore: Int = 0
     private var searchThreshold: Float = 65F // Ngưỡng pass
+    private var pendingFrame: Nv21ImageData? = null
+    private var pendingCaptureTime = 0L
+    private var temporalConfirmed = false
+    private const val temporalConfirmDelay = 1000L
+    @Volatile private var lastFaceInsideGuide: Boolean = false
+    private var lastOutsideGuideNotifyTime: Long = 0L
     private lateinit var applicationViewModel: ApplicationViewModel
 
     init {
@@ -162,6 +168,11 @@ internal object FinishSessionDialog {
                 return@setOnClickListener
             }
 
+            if (!lastFaceInsideGuide) {
+                BaseNotification.showWarning(activity.getString(R.string.student_not_in_recognition_frame))
+                return@setOnClickListener
+            }
+
             // Kiểm tra điểm số nhận diện
             if (currentSearchScore >= searchThreshold) {
                 Logger.i("Xác nhận kết thúc: Khớp khuôn mặt ($currentSearchScore điểm)")
@@ -194,6 +205,8 @@ internal object FinishSessionDialog {
                 }
             }
         }
+
+        viewBinding.faceView.setShowGuide(true)
 
         CoroutineScope(Dispatchers.Default).launch {
             delay(1000)
@@ -244,6 +257,11 @@ internal object FinishSessionDialog {
         cameraPreviewDataQueue.clear()
         lastPreviewData = null
         currentSearchScore = 0
+        pendingFrame = null
+        pendingCaptureTime = 0L
+        temporalConfirmed = false
+        lastFaceInsideGuide = false
+        lastOutsideGuideNotifyTime = 0L
     }
 
     private val cameraPreviewEvent = object : CameraPreviewEvent {
@@ -325,7 +343,9 @@ internal object FinishSessionDialog {
                     )
                 }
             } else {
-                lastPreviewData?.also { previewData ->
+                // Ưu tiên dùng pendingFrame nếu đã temporal confirm, fallback về lastPreviewData
+                val frameToSave = if (temporalConfirmed && pendingFrame != null) pendingFrame else lastPreviewData
+                frameToSave?.also { previewData ->
                     val studentFolder = File(hcImageFolder, userEntity.userCode)
                     if (!studentFolder.exists()) {
                         studentFolder.mkdirs()
@@ -413,8 +433,8 @@ internal object FinishSessionDialog {
                 previewData?.also { previewData ->
                      faceRecognitionViewModel.faceDetect(previewData){rect ->
                          CoroutineScope(Dispatchers.Default).launch(){
-                             showFacePassFace(rect = rect)
-                             if (rect != null) {
+                             val insideGuide = showFacePassFace(rect = rect)
+                             if (rect != null && insideGuide) {
                                  lastPreviewData = previewData
 
                                  // 2. Chuyển frame thành Bitmap và gọi AI phân tích điểm số
@@ -422,9 +442,48 @@ internal object FinishSessionDialog {
                                  faceRecognitionViewModel.facialAnalysis(frameBitmap, userEntity.userCode)
                                  // Log để kiểm tra điểm thực tế từ Processor trả về
                                   android.util.Log.d("FinishDialog", "Score: $currentSearchScore")
+                                 // Temporal confirmation: chụp giây 2, xác nhận giây 3
+                                 if (currentSearchScore >= searchThreshold) {
+                                     if (pendingFrame == null) {
+                                         pendingFrame = previewData
+                                         pendingCaptureTime = Utils.getRealTimeStamp()
+                                         temporalConfirmed = false
+                                         Logger.i("Logout: pass lần 1, chụp và chờ xác nhận. Score: $currentSearchScore")
+                                     } else if (!temporalConfirmed && Utils.getRealTimeStamp() - pendingCaptureTime >= temporalConfirmDelay) {
+                                         temporalConfirmed = true
+                                         Logger.i("Logout: XÁC NHẬN THÀNH CÔNG (temporal). Score: $currentSearchScore")
+                                     }
+                                 } else {
+                                     if (pendingFrame != null) {
+                                         Logger.w("Logout: score fail (${currentSearchScore}). Reset pending.")
+                                         pendingFrame = null
+                                         temporalConfirmed = false
+                                     }
+                                 }
+                             } else if (rect != null && !insideGuide) {
+                                 // Face detected but outside guide → reset temporal + notify
+                                 if (pendingFrame != null) {
+                                     pendingFrame = null
+                                     temporalConfirmed = false
+                                 }
+                                 val now = Utils.getRealTimeStamp()
+                                 if (now - lastOutsideGuideNotifyTime >= 5000) {
+                                     lastOutsideGuideNotifyTime = now
+                                     withContext(Dispatchers.Main) {
+                                         BaseNotification.showWarning(
+                                             viewBinding.root.context.getString(R.string.student_not_in_recognition_frame)
+                                         )
+                                     }
+                                 }
                              } else {
+                                 if (pendingFrame != null) {
+                                     Logger.w("Logout: không phát hiện face, reset pending.")
+                                     pendingFrame = null
+                                     temporalConfirmed = false
+                                 }
                                  withContext(Dispatchers.Main) {
                                      viewBinding.faceView.clear()
+                                     viewBinding.faceView.setShowGuide(true)
                                      viewBinding.faceView.invalidate()
                                  }
                              }
@@ -436,7 +495,7 @@ internal object FinishSessionDialog {
         }
     }
 
-    private suspend fun showFacePassFace(rect: Rect?) {
+    private suspend fun showFacePassFace(rect: Rect?): Boolean {
 
         if(rect != null){
             viewBinding.faceView.clear()
@@ -521,10 +580,16 @@ internal object FinishSessionDialog {
             viewBinding.faceView.addBlur(faceBlurString.toString())
             viewBinding.faceView.addSmile(smileString.toString())
             viewBinding.faceView.addRate(faceRecognitionRate.toString())
+            val insideGuide = viewBinding.faceView.isInsideGuide(drect)
+            lastFaceInsideGuide = insideGuide
+            viewBinding.faceView.setShowGuide(!insideGuide)
             withContext(Dispatchers.Main){
                 viewBinding.faceView.invalidate()
             }
+            return insideGuide
         }
+        lastFaceInsideGuide = false
+        return false
     }
 }
 

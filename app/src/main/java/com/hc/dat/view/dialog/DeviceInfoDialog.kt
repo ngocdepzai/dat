@@ -30,6 +30,7 @@ internal object DeviceInfoDialog {
     var imei2 = ""
     private lateinit var activity: Activity
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     fun showDialog(
         activity: Activity,
         applicationViewModel: ApplicationViewModel,
@@ -86,6 +87,7 @@ internal object DeviceInfoDialog {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     val appCallback: (action: AppAction, data: Any?)
     -> Unit = { action: AppAction, data: Any? ->
         Logger.d("loginCallback action: $action | data: $data")

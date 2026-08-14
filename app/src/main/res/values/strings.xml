@@ -37,6 +37,7 @@
     <string name="teacher_not_link_any_car">Giáo viên chưa được gán với xe tập lái có biển số: %s!\n\nHãy báo trung tâm để được xử lý.</string>
     <string name="active_security_fail">Kích hoạt bảo mật thiết bị thất bại!\n\nHãy thử khởi động lại ứng dụng.</string>
     <string name="student_not_in_camera">Không có học viên trong khung hình!!!</string>
+    <string name="student_not_in_recognition_frame">Học viên đang không trong khung nhận dạng!!!</string>
     <string name="gps_not_available">Mất kết nối định vị GPS!!!</string>
     <string name="gps_available">Định vị GPS đã kết nối lại.</string>
     <string name="network_not_available">Mất kết nối mạng!!!</string>

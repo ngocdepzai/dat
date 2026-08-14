@@ -68,12 +68,8 @@ class ApplicationViewModel @Inject constructor(
         // delete old files
         deleteOldFilesAndFolders(File(imagesFolderPath),30)
         deleteOldFilesAndFolders(File(reportFolderPath),30)
-//        checkRequestRetrieverLog()
     }
 
-//    private val coroutineException = CoroutineExceptionHandler { handler, ex ->
-//        Logger.e("ApplicationViewModel: Found an exception handler: $handler | exception: ${ex.message}")
-//    }
     private fun isConnectionAvailable(): Boolean {
         return device.getCurrentNetworkConnection()?.checkConnectionAvailable() ?: false
     }
@@ -122,7 +118,8 @@ class ApplicationViewModel @Inject constructor(
         }
     }
 
-    fun updateSearchThreshold( callback: () -> Unit) {
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
+    fun updateSearchThreshold(callback: () -> Unit) {
         Logger.d("getsearchThreshold")
         val seri = Utils.getImeiDevice(context)
         val deviceInfo = Utils.getDeviceInfo(context)
@@ -549,6 +546,7 @@ class ApplicationViewModel @Inject constructor(
         return trainingCenter?.teacherSendTc ?: repository.getTeacherSendTc()
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     fun uploadDeviceInfo(callback: (action: AppAction, data: Any?) -> Unit) {
         CoroutineScope(Dispatchers.Default).launch(
             CoroutineExceptionHandler { _, ex ->

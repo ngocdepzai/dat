@@ -25,6 +25,7 @@ import com.hc.dat.utils.ImageLoader
 import com.hc.dat.utils.Utils
 import com.hc.dat.view.BaseDialog.dismissProgress
 import com.hc.dat.view.BaseDialog.showProgressDialog
+import com.hc.dat.view.BaseNotification
 import com.hc.dat.viewmodel.AppAction
 import com.hc.dat.viewmodel.ApplicationViewModel
 import com.hc.dat.viewmodel.FaceRecognitionViewModel
@@ -66,6 +67,8 @@ internal object FaceRecognizeDialog {
     private var isResearchInProgress = false
     private var currentSearchScore: Int = 0
     private var searchThreshold: Float = 65F
+    @Volatile private var lastFaceInsideGuide: Boolean = false
+    private var lastOutsideGuideNotifyTime: Long = 0L
 
     init {
         if (!hcImageFolder.exists()) {
@@ -86,6 +89,8 @@ internal object FaceRecognizeDialog {
         currentSearchScore = 0
         userEntity = null
         isResearchInProgress = false
+        lastFaceInsideGuide = false
+        lastOutsideGuideNotifyTime = 0L
         faceDetectedMessageQueue.clear()
 
         this.activity = activity
@@ -334,6 +339,7 @@ internal object FaceRecognizeDialog {
     }
 
     private fun initView() {
+        viewBinding.faceView.setShowGuide(!isTeacherLogin)
         viewBinding.tvAddUserLabel.text = if (isTeacherLogin) {
             activity.getString(R.string.add_new_teacher_recognition_label)
         } else activity.getString(R.string.add_new_student_recognition_label)
@@ -462,6 +468,9 @@ internal object FaceRecognizeDialog {
                 }
             }
         ) {
+            var pendingFrame: Nv21ImageData? = null
+            var pendingCaptureTime = 0L
+            val temporalConfirmDelay = 1000L
             while (dialog?.isShowing == true) {
                 if (faceDetectedMessageQueue.isEmpty()) delay(500)
                 else{
@@ -480,22 +489,34 @@ internal object FaceRecognizeDialog {
                         // 2. CHẶN Ở ĐÂY: Kiểm tra điểm số
                         Logger.i("Đang phân tích... Score hiện tại: $currentSearchScore")
                         if (currentSearchScore >= searchThreshold) {
-                            // CHỈ KHI ĐIỂM >= 40 MỚI CHO PASS
-                            Logger.i("NHẬN DIỆN THÀNH CÔNG! Score: $currentSearchScore")
-
-                            withContext(Dispatchers.Main) {
-                                faceRecognitionViewModel.stopRecognition()
-                                handleSaveImageFile(userEntity?.userCode ?: "unknown", imageData = previewData)
+                            if (pendingFrame == null) {
+                                pendingFrame = previewData
+                                pendingCaptureTime = Utils.getRealTimeStamp()
+                                Logger.i("Login: pass lần 1, chụp và chờ xác nhận. Score: $currentSearchScore")
+                            } else if (Utils.getRealTimeStamp() - pendingCaptureTime >= temporalConfirmDelay) {
+                                Logger.i("Login: NHẬN DIỆN THÀNH CÔNG (temporal confirmed)! Score: $currentSearchScore")
+                                withContext(Dispatchers.Main) {
+                                    faceRecognitionViewModel.stopRecognition()
+                                    handleSaveImageFile(userEntity?.userCode ?: "unknown", imageData = pendingFrame!!)
+                                }
+                                break // Thoát vòng lặp khi thành công
                             }
-                            break // Thoát vòng lặp khi thành công
                         } else {
-                            // Nếu không phải người này hoặc điểm thấp, tiếp tục quét frame tiếp theo
-                            Logger.w("Không khớp hoặc người lạ (Score: $currentSearchScore). Tiếp tục quét...")
+                            if (pendingFrame != null) {
+                                Logger.w("Login: xác nhận thất bại (Score: $currentSearchScore). Reset pending.")
+                                pendingFrame = null
+                            }
                         }
                     } else{
-                        handleSaveImageFile(userEntity!!.userCode, imageData = faceDetectedData.first)
-                        LogRecorder.i("Phát hiện khuôn mặt", userEntity?.fullName)
-                        break // Thoát vòng lặp khi thành công
+                        if (pendingFrame == null) {
+                            pendingFrame = faceDetectedData.first
+                            pendingCaptureTime = Utils.getRealTimeStamp()
+                            Logger.i("Teacher: phát hiện face lần 1, chờ xác nhận")
+                        } else if (Utils.getRealTimeStamp() - pendingCaptureTime >= temporalConfirmDelay) {
+                            handleSaveImageFile(userEntity!!.userCode, imageData = pendingFrame!!)
+                            LogRecorder.i("Phát hiện khuôn mặt", userEntity?.fullName)
+                            break // Thoát vòng lặp khi thành công
+                        }
                     }
                 }
             }
@@ -520,17 +541,30 @@ internal object FaceRecognizeDialog {
                     faceRecognitionViewModel.faceDetect(previewData) { rect ->
                         CoroutineScope(Dispatchers.Default).launch() {
 
-                            showFacePassFace(rect = rect)
-                            if (rect != null) {
+                            val insideGuide = showFacePassFace(rect = rect)
+                            val allowRecognition = isTeacherLogin || insideGuide
+                            if (rect != null && allowRecognition) {
                                 faceDetectedMessageQueue.offer(
                                     Pair(
                                         previewData,
                                         previewData.nv21Data
                                     )
                                 )
+                            } else if (rect != null && !allowRecognition) {
+                                // Face detected but outside guide (student only) → notify (throttled)
+                                val now = Utils.getRealTimeStamp()
+                                if (now - lastOutsideGuideNotifyTime >= 5000) {
+                                    lastOutsideGuideNotifyTime = now
+                                    withContext(Dispatchers.Main) {
+                                        BaseNotification.showWarning(
+                                            activity.getString(R.string.student_not_in_recognition_frame)
+                                        )
+                                    }
+                                }
                             } else {
                                 withContext(Dispatchers.Main) {
                                     viewBinding.faceView.clear()
+                                    viewBinding.faceView.setShowGuide(!isTeacherLogin)
                                     viewBinding.faceView.invalidate()
                                 }
                             }
@@ -564,7 +598,7 @@ internal object FaceRecognizeDialog {
         }
     }
 
-    private suspend fun showFacePassFace(rect: Rect?) {
+    private suspend fun showFacePassFace(rect: Rect?): Boolean {
 
         if(rect != null){
             viewBinding.faceView.clear()
@@ -650,10 +684,16 @@ internal object FaceRecognizeDialog {
             if(!isTeacherLogin){
                 viewBinding.faceView.addRate(faceRecognitionRate.toString())
             }
+            val insideGuide = viewBinding.faceView.isInsideGuide(drect)
+            lastFaceInsideGuide = insideGuide
+            viewBinding.faceView.setShowGuide(!isTeacherLogin && !insideGuide)
             withContext(Dispatchers.Main){
                 viewBinding.faceView.invalidate()
             }
+            return insideGuide
         }
+        lastFaceInsideGuide = false
+        return false
     }
 
 //    override fun onPictureTaken(cameraPreviewData: CameraPreviewData?) {

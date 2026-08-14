@@ -96,6 +96,8 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var successScore: Float = 0F
     private var failScore: Float = 0F
     private var searchThreshold: Float = 65F
+    @Volatile private var faceInGuideSeenThisCycle: Boolean = false
+    @Volatile private var lastFaceOutsideGuideTime: Long = 0L
     private var isThreadRunningJob: Job? = null
     private var recognitionJob: Job? = null
     @Volatile
@@ -534,6 +536,7 @@ class TrainingSessionScreen : DatBaseScreen() {
             // reset recognizeFaceTimeDuration to deault
             recognizeFaceTimeDuration = TIME_FREQUENCY_FACE_RECOGNITION
             verifyFailCounter = 0
+            faceInGuideSeenThisCycle = false
 
             notifyUse4G()
             notifyErrorVelocity()
@@ -605,6 +608,9 @@ class TrainingSessionScreen : DatBaseScreen() {
         var notFaceMatchingCounter = 0
         var wearMaskCounter = 0
         var lastFaceRecognized: FaceImageData? = null
+        var pendingFrame: FaceImageData? = null
+        var pendingCaptureTime = 0L
+        val temporalConfirmDelay = 1000L
         faceMatching = false
         searchScore = 0f
         recognitionJob?.cancel()
@@ -615,14 +621,16 @@ class TrainingSessionScreen : DatBaseScreen() {
                     notFaceCounter++
                     if (notFaceCounter >= 20) {
                         notFaceCounter = 0
-                        Logger.w("Not face detected!")
+                        val outsideGuideRecent = Utils.getRealTimeStamp() - lastFaceOutsideGuideTime < 3000
+                        val messageRes = if (outsideGuideRecent) R.string.student_not_in_recognition_frame else R.string.student_not_in_camera
+                        Logger.w("Not face detected in guide! outsideGuideRecent=$outsideGuideRecent")
                         withContext(Dispatchers.Main) {
                             BaseNotification.showWarning(
-                                getString(R.string.student_not_in_camera),
+                                getString(messageRes),
                                 priority = Priority.HIGH,
                                 showToast = false
                             )
-                            LogRecorder.w("Thông báo: ", getString(R.string.student_not_in_camera))
+                            LogRecorder.w("Thông báo: ", getString(messageRes))
                         }
                     }
                     delay(500)
@@ -640,6 +648,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         val result = searchScore >= searchThreshold
                         Logger.i("handleRecognizeFaceDetected result: $result")
                         if (!notMask) {
+                            pendingFrame = null
                             ++wearMaskCounter
                             if (wearMaskCounter > 10) {
                                 wearMaskCounter = 0
@@ -650,21 +659,31 @@ class TrainingSessionScreen : DatBaseScreen() {
                                 }
                             }
                         } else if (result) {
-                            Logger.i("Verify face success")
-                            LogRecorder.i("NHẬN DIỆN THÀNH CÔNG", studentAuthInfo?.fullName)
-                            notFaceMatchingCounter = 0
-                            // show success message if has been show warning before
-                            if (verifyFailCounter > 0 || recognizeFail) {
-                                withContext(Dispatchers.Main) {
-                                    BaseNotification.showMessage(getString(
-                                            R.string.face_verify_success
-                                        ))
+                            if (pendingFrame == null) {
+                                pendingFrame = faceDetectedMessage
+                                pendingCaptureTime = Utils.getRealTimeStamp()
+                                Logger.i("Nhận dạng lần 1 pass, chụp và chờ xác nhận. Score: $searchScore")
+                            } else if (Utils.getRealTimeStamp() - pendingCaptureTime >= temporalConfirmDelay) {
+                                Logger.i("Verify face success (temporal confirmed)")
+                                LogRecorder.i("NHẬN DIỆN THÀNH CÔNG", studentAuthInfo?.fullName)
+                                notFaceMatchingCounter = 0
+                                if (verifyFailCounter > 0 || recognizeFail) {
+                                    withContext(Dispatchers.Main) {
+                                        BaseNotification.showMessage(getString(
+                                                R.string.face_verify_success
+                                            ))
+                                    }
                                 }
+                                lastFaceRecognized = pendingFrame
+                                resultCheck = true
+                                verifyFailCounter = 0
+                                faceMatching = true
                             }
-                            resultCheck = true
-                            verifyFailCounter = 0
-                            faceMatching = true
                         } else {
+                            if (pendingFrame != null) {
+                                Logger.w("Xác nhận thất bại (frame trước pass, frame này fail). Reset pending.")
+                                pendingFrame = null
+                            }
                             // notify not face matching
                             ++notFaceMatchingCounter
                             if (notFaceMatchingCounter > 10) {
@@ -722,12 +741,13 @@ class TrainingSessionScreen : DatBaseScreen() {
                 previewData?.also { previewData ->
                     faceRecognitionViewModel.faceDetect(previewData) { rect ->
                         CoroutineScope(Dispatchers.IO).launch() {
-                            showFacePassFace(rect)
-                            if (rect != null) {
+                            val insideGuide = showFacePassFace(rect)
+                            if (rect != null && insideGuide) {
                                 faceDetectedMessageQueue.offer(FaceImageData(previewData, previewData.nv21Data))
-                            } else {
+                            } else if (rect == null) {
                                 withContext(Dispatchers.Main) {
                                     viewBinding.faceView.clear()
+                                    viewBinding.faceView.setShowGuide(true)
                                     viewBinding.faceView.invalidate()
                                 }
                             }
@@ -986,6 +1006,8 @@ class TrainingSessionScreen : DatBaseScreen() {
         viewBinding.tvSerialNumber.text = getString(R.string.serial_value, riderSessionViewModel.getImeiDevice(requireContext()))
         viewBinding.tvVehiclePlate.text = getString(R.string.vehicle_value, appViewModel.getPlateSlug())
         viewBinding.tvTrainingCenterName.text = appViewModel.getTrainingCenterName() ?: "-/-"
+        viewBinding.faceView.setGuideMarginTop(0.02f)
+        viewBinding.faceView.setShowGuide(true)
         viewBinding.rgNightMode.setOnCheckedChangeListener { _, checked ->
             autoChangeNightMode = false
             LogRecorder.d("", "Bật chế độ ban đêm")
@@ -2920,7 +2942,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
-    private suspend fun showFacePassFace(rect: Rect?) {
+    private suspend fun showFacePassFace(rect: Rect?): Boolean {
         if(rect != null){
             viewBinding.faceView.clear()
             val mirror = viewBinding.extraCamera == false
@@ -2982,6 +3004,7 @@ class TrainingSessionScreen : DatBaseScreen() {
             val drect = RectF()
             val srect = RectF(left, top, right, bottom)
             mat.mapRect(drect, srect)
+            val insideGuide = viewBinding.faceView.isInsideGuide(drect)
             viewBinding.faceView.addRect(drect)
             viewBinding.faceView.addId(faceIdString.toString())
             viewBinding.faceView.addRoll(faceRollString.toString())
@@ -2990,10 +3013,19 @@ class TrainingSessionScreen : DatBaseScreen() {
             viewBinding.faceView.addBlur(faceBlurString.toString())
             viewBinding.faceView.addSmile(smileString.toString())
             viewBinding.faceView.addRate(faceRecognitionRate.toString())
+            if (insideGuide) {
+                faceInGuideSeenThisCycle = true
+                viewBinding.faceView.setShowGuide(false)
+            } else {
+                lastFaceOutsideGuideTime = Utils.getRealTimeStamp()
+                viewBinding.faceView.setShowGuide(true)
+            }
             withContext(Dispatchers.Main){
                 viewBinding.faceView.invalidate()
             }
+            return insideGuide
         }
+        return false
     }
 
     private fun notifyAuthenticationFail() {
