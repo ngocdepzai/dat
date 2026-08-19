@@ -1,6 +1,8 @@
 package com.hc.dat.view.dialog
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +14,7 @@ import com.hc.dat.model.database.entity.UserEntity
 import com.hc.dat.model.database.entity.UserType
 import com.hc.dat.service.ServiceDefinition
 import com.hc.dat.utils.ImageLoader
+import com.hc.dat.view.BaseNotification
 import com.lws.type.Logger
 import hc.manager.datapp.R
 import hc.manager.datapp.databinding.DatUserInfoDialogBinding
@@ -75,12 +78,20 @@ internal object UserInfoDialog {
             .setView(viewBinding.root).create()
         dialog?.setOnShowListener {
             dialog?.window?.setLayout(
-                view.width + 100,
-
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
         dialog?.show()
+
+        viewBinding.btCancelDialog.visibility = View.GONE
+        viewBinding.btConfirm.visibility = View.GONE
+        BaseNotification.waitForSpeechDone {
+            Handler(Looper.getMainLooper()).post {
+                viewBinding.btCancelDialog.visibility = View.VISIBLE
+                viewBinding.btConfirm.visibility = View.VISIBLE
+            }
+        }
 
         viewBinding.btCancelDialog.setOnClickListener {
             dialog?.dismiss()

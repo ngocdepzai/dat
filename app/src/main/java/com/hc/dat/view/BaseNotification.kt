@@ -27,6 +27,8 @@ internal object BaseNotification {
     private var messageText: TextView? = null
     private var messageView: LinearLayout? = null
     private val priorityQueues: Deque<String> = LinkedList()
+    private val speechCallbacks: MutableMap<String, () -> Unit> = mutableMapOf()
+    private val speechDoneListeners: MutableList<() -> Unit> = mutableListOf()
 
     fun init(context: Context) {
         this.context = context
@@ -41,6 +43,10 @@ internal object BaseNotification {
                     }
 
                     override fun onDone(utteranceId: String?) {
+                        utteranceId?.let { id -> speechCallbacks.remove(id)?.invoke() }
+                        val listeners = speechDoneListeners.toList()
+                        speechDoneListeners.clear()
+                        listeners.forEach { it.invoke() }
                         autoSpeaking()
                     }
 
@@ -124,6 +130,21 @@ internal object BaseNotification {
             toastMessage!!.duration = duration
             toastMessage!!.show()
         }
+    }
+
+    fun waitForSpeechDone(onDone: () -> Unit) {
+        if (textToSpeech?.isSpeaking == true) {
+            speechDoneListeners.add(onDone)
+        } else {
+            onDone()
+        }
+    }
+
+    fun speakWithCallback(message: String, onDone: () -> Unit) {
+        val utteranceId = "cb_${System.currentTimeMillis()}"
+        speechCallbacks[utteranceId] = onDone
+        val params = hashMapOf(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID to utteranceId)
+        textToSpeech?.speak(message, TextToSpeech.QUEUE_FLUSH, params)
     }
 
     private fun speechMessage(message: String) {

@@ -15,6 +15,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.hc.dat.model.InProgressSession
 import com.hc.dat.model.database.entity.UserEntity
 import com.hc.dat.utils.Utils
+import android.os.Handler
+import android.os.Looper
 import com.hc.dat.view.BaseNotification
 import com.hc.dat.view.TrainingSessionScreen
 import com.hc.dat.viewmodel.ApplicationViewModel
@@ -251,6 +253,15 @@ internal object FinishSessionDialog {
         }
 
         dialog?.show()
+
+        viewBinding.btContinues.visibility = View.GONE
+        viewBinding.btSaveInfo.visibility = View.GONE
+        BaseNotification.speakWithCallback(activity.getString(R.string.confirm_logout_info_message)) {
+            Handler(Looper.getMainLooper()).post {
+                if (sessionContinues) viewBinding.btContinues.visibility = View.VISIBLE
+                viewBinding.btSaveInfo.visibility = View.VISIBLE
+            }
+        }
     }
 
     private fun clearData(){
