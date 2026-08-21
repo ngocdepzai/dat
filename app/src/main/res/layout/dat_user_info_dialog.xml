@@ -3,69 +3,68 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="#B7000000"
-    android:orientation="vertical">
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="10dp">
 
-    <!-- 2 ảnh nằm ngang, mỗi ảnh chiếm 50% chiều rộng -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:weightSum="2">
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_margin="10dp"
             android:layout_weight="1"
+            android:gravity="center"
             android:orientation="vertical">
+
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:layout_marginTop="10dp"
-                android:gravity="center_horizontal"
-                android:text="ẢNH MẪU"
-                android:textAlignment="center"
+                android:text="Ảnh mẫu"
                 android:textColor="@color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:textSize="35sp" />
+
             <ImageView
                 android:id="@+id/imgAvatar"
-                android:layout_width="match_parent"
-                android:layout_height="400dp"
-                android:padding="10dp"
+                android:layout_width="400dp"
+                android:layout_height="250dp"
+                android:layout_marginTop="10dp"
                 android:scaleType="fitXY"
-                android:src="@drawable/ic_face_recog"/>
+                android:src="@drawable/ic_face_recog" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/vCapture"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_margin="10dp"
             android:layout_weight="1"
-            android:visibility="gone"
-            android:orientation="vertical">
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:layout_marginTop="10dp"
-                android:gravity="center_horizontal"
-                android:text="ẢNH CHỤP ĐĂNG NHẬP"
-                android:textAlignment="center"
+                android:gravity="center"
+                android:text="Ảnh chụp đăng nhập"
                 android:textColor="@color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:textSize="35sp" />
+
             <ImageView
                 android:id="@+id/ivCapture"
-                android:layout_width="match_parent"
-                android:layout_height="400dp"
-                android:padding="10dp"
+                android:layout_width="400dp"
+                android:layout_height="250dp"
+                android:layout_marginTop="10dp"
                 android:scaleType="fitXY"
-                android:src="@drawable/ic_face_recog"/>
+                android:src="@drawable/ic_face_recog" />
         </LinearLayout>
-
     </LinearLayout>
 
-    <!-- Thông tin user + nút bấm -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -83,20 +82,22 @@
             android:textAlignment="center"
             android:textColor="@color/orange"
             android:textSize="40sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="4dp">
+
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Họ và tên:"
                 android:textColor="@color/white"
-                android:textSize="28sp"/>
+                android:textSize="28sp" />
+
             <TextView
                 android:id="@+id/tvFullName"
                 android:layout_width="0dp"
@@ -104,7 +105,7 @@
                 android:layout_weight="2"
                 android:textColor="@color/white"
                 android:textSize="30sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -112,13 +113,15 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="4dp">
+
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Ngày sinh:"
                 android:textColor="@color/white"
-                android:textSize="28sp"/>
+                android:textSize="28sp" />
+
             <TextView
                 android:id="@+id/tvBirthday"
                 android:layout_width="0dp"
@@ -126,7 +129,7 @@
                 android:layout_weight="2"
                 android:textColor="@color/white"
                 android:textSize="30sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -134,13 +137,15 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="4dp">
+
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Giới tính:"
                 android:textColor="@color/white"
-                android:textSize="28sp"/>
+                android:textSize="28sp" />
+
             <TextView
                 android:id="@+id/tvGender"
                 android:layout_width="0dp"
@@ -148,7 +153,7 @@
                 android:layout_weight="2"
                 android:textColor="@color/white"
                 android:textSize="30sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -156,13 +161,15 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="4dp">
+
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Số điện thoại:"
                 android:textColor="@color/white"
-                android:textSize="28sp"/>
+                android:textSize="28sp" />
+
             <TextView
                 android:id="@+id/tvPhoneNumber"
                 android:layout_width="0dp"
@@ -170,7 +177,7 @@
                 android:layout_weight="2"
                 android:textColor="@color/white"
                 android:textSize="30sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -178,13 +185,15 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="4dp">
+
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Mã:"
                 android:textColor="@color/white"
-                android:textSize="28sp"/>
+                android:textSize="28sp" />
+
             <TextView
                 android:id="@+id/tvIdNumber"
                 android:layout_width="0dp"
@@ -192,7 +201,7 @@
                 android:layout_weight="2"
                 android:textColor="@color/white"
                 android:textSize="30sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -200,13 +209,15 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="4dp">
+
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Địa chỉ:"
                 android:textColor="@color/white"
-                android:textSize="28sp"/>
+                android:textSize="28sp" />
+
             <TextView
                 android:id="@+id/tvAddressInfo"
                 android:layout_width="0dp"
@@ -214,28 +225,30 @@
                 android:layout_weight="2"
                 android:textColor="@color/white"
                 android:textSize="30sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="2"
-            android:layout_marginBottom="10dp"
             android:layout_marginTop="10dp"
-            android:padding="4dp">
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal"
+            android:padding="4dp"
+            android:weightSum="2">
+
             <Button
                 android:id="@+id/btCancelDialog"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginRight="40dp"
+                android:layout_weight="1"
                 android:background="@color/white"
                 android:text="Hủy bỏ"
                 android:textColor="@color/black"
                 android:textSize="30sp"
                 android:textStyle="bold" />
+
             <Button
                 android:id="@+id/btConfirm"
                 android:layout_width="0dp"
@@ -247,7 +260,5 @@
                 android:textSize="30sp"
                 android:textStyle="bold" />
         </LinearLayout>
-
     </LinearLayout>
-
 </LinearLayout>

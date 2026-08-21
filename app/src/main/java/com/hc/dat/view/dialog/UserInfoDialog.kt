@@ -6,6 +6,9 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import coil.request.ImageRequest
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -17,7 +20,6 @@ import com.hc.dat.utils.ImageLoader
 import com.hc.dat.view.BaseNotification
 import com.lws.type.Logger
 import hc.manager.datapp.R
-import hc.manager.datapp.databinding.DatUserInfoDialogBinding
 
 internal object UserInfoDialog {
     private var dialog: AlertDialog? = null
@@ -29,42 +31,57 @@ internal object UserInfoDialog {
         callback: (confirm: Boolean, data: UserEntity) -> Unit
     ) {
         Logger.d("showDialog userEntity: $userEntity")
-        val view = LayoutInflater.from(context)
-            .inflate(R.layout.dat_user_info_dialog, null, false)
-        val viewBinding = DatUserInfoDialogBinding.bind(view)
-        viewBinding.tvTitle.text = if (userEntity.userType == UserType.STUDENT.code) {
-            context.getString(R.string.student_info_title) 
-        }else context.getString(R.string.teacher_info_title)
-        viewBinding.tvFullName.text = userEntity.fullName
-        viewBinding.tvPhoneNumber.text = userEntity.phoneNumber
-        viewBinding.tvIdNumber.text = userEntity.userCode
-        viewBinding.tvGender.text = Gender.findByCode(userEntity.gender).valueName
-        viewBinding.tvBirthday.text = userEntity.birthday
-        viewBinding.tvAddressInfo.text = userEntity.address
+        val isTeacher = userEntity.userType != UserType.STUDENT.code
+        val layoutRes = if (isTeacher) {
+            R.layout.dat_user_info_dialog_teacher
+        } else {
+            R.layout.dat_user_info_dialog
+        }
+        val view = LayoutInflater.from(context).inflate(layoutRes, null, false)
+
+        val tvTitle = view.findViewById<TextView>(R.id.tvTitle)
+        val tvFullName = view.findViewById<TextView>(R.id.tvFullName)
+        val tvPhoneNumber = view.findViewById<TextView>(R.id.tvPhoneNumber)
+        val tvIdNumber = view.findViewById<TextView>(R.id.tvIdNumber)
+        val tvGender = view.findViewById<TextView>(R.id.tvGender)
+        val tvBirthday = view.findViewById<TextView>(R.id.tvBirthday)
+        val tvAddressInfo = view.findViewById<TextView>(R.id.tvAddressInfo)
+        val imgAvatar = view.findViewById<ImageView>(R.id.imgAvatar)
+        val vCapture = view.findViewById<View>(R.id.vCapture)
+        val ivCapture = view.findViewById<ImageView>(R.id.ivCapture)
+        val btCancelDialog = view.findViewById<Button>(R.id.btCancelDialog)
+        val btConfirm = view.findViewById<Button>(R.id.btConfirm)
+
+        tvTitle.text = if (userEntity.userType == UserType.STUDENT.code) {
+            context.getString(R.string.student_info_title)
+        } else context.getString(R.string.teacher_info_title)
+        tvFullName.text = userEntity.fullName
+        tvPhoneNumber.text = userEntity.phoneNumber
+        tvIdNumber.text = userEntity.userCode
+        tvGender.text = Gender.findByCode(userEntity.gender).valueName
+        tvBirthday.text = userEntity.birthday
+        tvAddressInfo.text = userEntity.address
         Logger.i("Image link: ${ServiceDefinition.IMAGE_RESIZE_URL}${userEntity.avatarId}")
         userEntity.avatarId?.also {
-//            ImageUtil.imageLoader
-//                ?.load("${ServiceDefinition.IMAGE_RESIZE_URL}$it")
-//                ?.into(viewBinding.imgAvatar,)
             val request = ImageRequest.Builder(context)
                 .data("${ServiceDefinition.IMAGE_FULL_SIZE_URL}$it")
                 .setHeader("User-Agent", "Mozilla/5.0")
                 .crossfade(true)
                 .placeholder(R.drawable.ic_loading)
                 .allowHardware(false)
-                .target(viewBinding.imgAvatar)
+                .target(imgAvatar)
                 .build()
             ImageLoader.imageLoader?.enqueue(request)
         }
-            ?: also { viewBinding.imgAvatar.setImageDrawable(context.getDrawable(R.drawable.nonavatar)) }
+            ?: also { imgAvatar.setImageDrawable(context.getDrawable(R.drawable.nonavatar)) }
 
         captureImagePath?.also {
-            viewBinding.vCapture.visibility = View.VISIBLE
+            vCapture.visibility = View.VISIBLE
             val request = ImageRequest.Builder(context)
                 .data(captureImagePath)
                 .crossfade(true)
                 .allowHardware(false)
-                .target(viewBinding.ivCapture)
+                .target(ivCapture)
                 .build()
             ImageLoader.imageLoader?.enqueue(request)
         }
@@ -75,7 +92,7 @@ internal object UserInfoDialog {
 
         dialog = MaterialAlertDialogBuilder(context)
             .setCancelable(false)
-            .setView(viewBinding.root).create()
+            .setView(view).create()
         dialog?.setOnShowListener {
             dialog?.window?.setLayout(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -84,21 +101,21 @@ internal object UserInfoDialog {
         }
         dialog?.show()
 
-        viewBinding.btCancelDialog.visibility = View.GONE
-        viewBinding.btConfirm.visibility = View.GONE
+        btCancelDialog.visibility = View.GONE
+        btConfirm.visibility = View.GONE
         BaseNotification.waitForSpeechDone {
             Handler(Looper.getMainLooper()).post {
-                viewBinding.btCancelDialog.visibility = View.VISIBLE
-                viewBinding.btConfirm.visibility = View.VISIBLE
+                btCancelDialog.visibility = View.VISIBLE
+                btConfirm.visibility = View.VISIBLE
             }
         }
 
-        viewBinding.btCancelDialog.setOnClickListener {
+        btCancelDialog.setOnClickListener {
             dialog?.dismiss()
             dialog = null
             callback(false, userEntity)
         }
-        viewBinding.btConfirm.setOnClickListener {
+        btConfirm.setOnClickListener {
             dialog?.dismiss()
             dialog = null
             callback(true, userEntity)
