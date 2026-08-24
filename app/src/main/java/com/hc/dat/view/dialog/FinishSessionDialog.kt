@@ -254,8 +254,8 @@ internal object FinishSessionDialog {
 
         dialog?.show()
 
-        viewBinding.btContinues.visibility = View.GONE
-        viewBinding.btSaveInfo.visibility = View.GONE
+        viewBinding.btContinues.visibility = if (sessionContinues) View.INVISIBLE else View.GONE
+        viewBinding.btSaveInfo.visibility = View.INVISIBLE
         BaseNotification.speakWithCallback(activity.getString(R.string.confirm_logout_info_message)) {
             Handler(Looper.getMainLooper()).post {
                 if (sessionContinues) viewBinding.btContinues.visibility = View.VISIBLE

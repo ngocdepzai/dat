@@ -3,12 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="#B7000000"
-    android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="4dp">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:weightSum="2">
@@ -16,7 +15,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
+            android:layout_margin="4dp"
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
@@ -26,13 +25,13 @@
                 android:layout_height="wrap_content"
                 android:text="Ảnh mẫu"
                 android:textColor="@color/white"
-                android:textSize="35sp" />
+                android:textSize="24sp" />
 
             <ImageView
                 android:id="@+id/imgAvatar"
-                android:layout_width="400dp"
-                android:layout_height="250dp"
-                android:layout_marginTop="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="350dp"
+                android:layout_marginTop="4dp"
                 android:scaleType="fitXY"
                 android:src="@drawable/ic_face_recog" />
         </LinearLayout>
@@ -41,7 +40,7 @@
             android:id="@+id/vCapture"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
+            android:layout_margin="4dp"
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical"
@@ -53,13 +52,13 @@
                 android:gravity="center"
                 android:text="Ảnh chụp đăng nhập"
                 android:textColor="@color/white"
-                android:textSize="35sp" />
+                android:textSize="24sp" />
 
             <ImageView
                 android:id="@+id/ivCapture"
-                android:layout_width="400dp"
-                android:layout_height="250dp"
-                android:layout_marginTop="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="350dp"
+                android:layout_marginTop="4dp"
                 android:scaleType="fitXY"
                 android:src="@drawable/ic_face_recog" />
         </LinearLayout>
@@ -70,25 +69,25 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="4dp">
 
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="4dp"
             android:gravity="center_horizontal"
             android:text="THÔNG TIN HỌC VIÊN"
             android:textAlignment="center"
             android:textColor="@color/orange"
-            android:textSize="40sp"
+            android:textSize="32sp"
             android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="4dp">
+            android:padding="2dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -112,7 +111,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="4dp">
+            android:padding="2dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -136,7 +135,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="4dp">
+            android:visibility="gone"
+            android:padding="2dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -159,8 +159,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             android:orientation="horizontal"
-            android:padding="4dp">
+            android:padding="2dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -184,7 +185,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="4dp">
+            android:padding="2dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -208,7 +209,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="4dp">
+            android:visibility="gone"
+            android:padding="2dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -231,10 +233,10 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
             android:orientation="horizontal"
-            android:padding="4dp"
+            android:padding="2dp"
             android:weightSum="2">
 
             <Button

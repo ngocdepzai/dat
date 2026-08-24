@@ -43,14 +43,12 @@ internal object BaseNotification {
                     }
 
                     override fun onDone(utteranceId: String?) {
-                        utteranceId?.let { id -> speechCallbacks.remove(id)?.invoke() }
-                        val listeners = speechDoneListeners.toList()
-                        speechDoneListeners.clear()
-                        listeners.forEach { it.invoke() }
+                        fireSpeechCallbacks(utteranceId)
                         autoSpeaking()
                     }
 
                     override fun onError(utteranceId: String?) {
+                        fireSpeechCallbacks(utteranceId)
                     }
                 })
             }
@@ -141,10 +139,26 @@ internal object BaseNotification {
     }
 
     fun speakWithCallback(message: String, onDone: () -> Unit) {
+        val tts = textToSpeech
+        if (tts == null || message.isBlank()) {
+            onDone()
+            return
+        }
+        priorityQueues.clear()
         val utteranceId = "cb_${System.currentTimeMillis()}"
         speechCallbacks[utteranceId] = onDone
         val params = hashMapOf(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID to utteranceId)
-        textToSpeech?.speak(message, TextToSpeech.QUEUE_FLUSH, params)
+        val result = tts.speak(message, TextToSpeech.QUEUE_FLUSH, params)
+        if (result != TextToSpeech.SUCCESS) {
+            speechCallbacks.remove(utteranceId)?.invoke()
+        }
+    }
+
+    private fun fireSpeechCallbacks(utteranceId: String?) {
+        utteranceId?.let { id -> speechCallbacks.remove(id)?.invoke() }
+        val listeners = speechDoneListeners.toList()
+        speechDoneListeners.clear()
+        listeners.forEach { it.invoke() }
     }
 
     private fun speechMessage(message: String) {

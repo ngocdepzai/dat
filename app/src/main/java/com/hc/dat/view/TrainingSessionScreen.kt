@@ -1007,6 +1007,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         viewBinding.tvVehiclePlate.text = getString(R.string.vehicle_value, appViewModel.getPlateSlug())
         viewBinding.tvTrainingCenterName.text = appViewModel.getTrainingCenterName() ?: "-/-"
         viewBinding.faceView.setGuideMarginTop(0.02f)
+        viewBinding.faceView.setGuideMarginHorizontal(0.02f)
         viewBinding.faceView.setShowGuide(true)
         viewBinding.rgNightMode.setOnCheckedChangeListener { _, checked ->
             autoChangeNightMode = false

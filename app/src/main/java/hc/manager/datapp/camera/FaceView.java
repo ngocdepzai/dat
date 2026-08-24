@@ -87,6 +87,10 @@ public class FaceView extends View {
         this.guideMarginTop = ratio;
     }
 
+    public void setGuideMarginHorizontal(float ratio) {
+        this.guideMarginHorizontal = ratio;
+    }
+
     public RectF getGuideRect() {
         int w = getWidth();
         int h = getHeight();
