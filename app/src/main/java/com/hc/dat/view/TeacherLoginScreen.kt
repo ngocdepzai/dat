@@ -38,6 +38,7 @@ import com.lws.device.nfc.NFCEvent
 import com.lws.type.LogRecorder
 import com.lws.type.Logger
 import hc.manager.datapp.R
+import hc.manager.datapp.activity.InAppUpdateActivity
 import hc.manager.datapp.databinding.ScreenTeacherLoginBinding
 import hc.manager.datapp.utils.UserTypeContant
 import kotlinx.android.synthetic.main.dat_activity_main.*
@@ -281,10 +282,13 @@ class TeacherLoginScreen : DatBaseScreen() {
     private fun showAppVersionLockedMessage(){
             showDialog(title = getString(R.string.title_notification),
                 message = getString(R.string.version_locked_message),
-                buttonList = listOf(getString(R.string.ok)),
+                buttonList = listOf(getString(R.string.ok), getString(R.string.download_app)),
                 listener = object : DialogButtonClickListener {
                     override fun onDialogButtonClick(position: Int) {
                         dismissDialog()
+                        if (position == 1) {
+                            startActivity(Intent(requireContext(), InAppUpdateActivity::class.java))
+                        }
                     }
                 })
     }

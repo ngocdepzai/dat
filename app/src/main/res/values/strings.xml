@@ -255,6 +255,7 @@
     <string name="login_finger">Sử dụng vân tay</string>
     <string name="login_rfid">Sử dụng thẻ</string>
     <string name="guide">Hướng dẫn sử dụng</string>
+    <string name="download_app">Tải app</string>
     <string name="login_face">Nhận diện khuôn mặt</string>
     <string name="login_fail">Lỗi đăng nhập</string>
     <string name="serial">STT</string>
