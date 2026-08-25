@@ -6,11 +6,11 @@
     android:background="#B7000000"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="4dp">
 
     <LinearLayout
         android:id="@+id/llviewContent"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:weightSum="2"
@@ -31,12 +31,12 @@
                 android:layout_height="wrap_content"
                 android:text="Ảnh đăng nhập"
                 android:textColor="@color/white"
-                android:textSize="35sp" />
+                android:textSize="24sp" />
 
             <ImageView
                 android:id="@+id/ivImageLogin"
-                android:layout_width="400dp"
-                android:layout_height="250dp"
+                android:layout_width="match_parent"
+                android:layout_height="350dp"
                 android:layout_marginTop="10dp"
                 android:scaleType="fitXY"
                 android:src="@drawable/ic_face_recog" />
@@ -58,12 +58,12 @@
                 android:gravity="center"
                 android:text="Ảnh đăng xuất"
                 android:textColor="@color/white"
-                android:textSize="35sp" />
+                android:textSize="24sp" />
 
             <ImageView
                 android:id="@+id/ivImageLogout"
-                android:layout_width="400dp"
-                android:layout_height="250dp"
+                android:layout_width="match_parent"
+                android:layout_height="350dp"
                 android:layout_marginTop="10dp"
                 android:scaleType="fitXY"
                 android:src="@drawable/ic_face_recog" />

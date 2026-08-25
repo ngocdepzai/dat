@@ -327,6 +327,8 @@ internal object FinishSessionDialog {
         dialog?.dismiss()
     }
 
+    fun isShowing(): Boolean = dialog?.isShowing == true
+
     private fun handleSaveImageFile(lastAuthenImage: File? = null) {
         Logger.i("handleSaveImageFile lastAuthenImage: $lastAuthenImage")
         CoroutineScope(Dispatchers.Default).launch(
@@ -478,7 +480,7 @@ internal object FinishSessionDialog {
                                      temporalConfirmed = false
                                  }
                                  val now = Utils.getRealTimeStamp()
-                                 if (now - lastOutsideGuideNotifyTime >= 5000) {
+                                 if (now - lastOutsideGuideNotifyTime >= 5000 && !ConFirmLogoutDialog.isShowing()) {
                                      lastOutsideGuideNotifyTime = now
                                      withContext(Dispatchers.Main) {
                                          BaseNotification.showWarning(

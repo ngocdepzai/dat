@@ -4,12 +4,16 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.*
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.hc.dat.model.InProgressSession
+import com.hc.dat.view.BaseNotification
 import com.hc.dat.view.TrainingSessionScreen
 import com.hc.dat.viewmodel.FaceRecognitionViewModel
 import com.lws.device.camerapreview.*
@@ -83,12 +87,21 @@ internal object ConFirmLogoutDialog {
             .setView(viewBinding.root).create()
         dialog?.setOnShowListener {
             dialog?.window?.setLayout(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
             )
         }
         dialog?.show()
         initView(imageLogin = imageLogin, imageLogout = imageLogout, faceRecognitionViewModel = faceRecognitionViewModel, callback = callback)
+
+        viewBinding.btCancel.visibility = View.INVISIBLE
+        viewBinding.btConfirm.visibility = View.INVISIBLE
+        BaseNotification.speakWithCallback(activity.getString(R.string.confirm_logout_info_message)) {
+            Handler(Looper.getMainLooper()).post {
+                viewBinding.btCancel.visibility = View.VISIBLE
+                viewBinding.btConfirm.visibility = View.VISIBLE
+            }
+        }
     }
 
 
@@ -171,6 +184,8 @@ internal object ConFirmLogoutDialog {
         Logger.d("dismiss")
         dialog?.dismiss()
     }
+
+    fun isShowing(): Boolean = dialog?.isShowing == true
 
     /**
      * Hàm hỗ trợ Log chi tiết tình trạng file và decode bitmap

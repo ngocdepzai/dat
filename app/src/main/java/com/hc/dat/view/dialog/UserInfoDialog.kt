@@ -104,11 +104,11 @@ internal object UserInfoDialog {
         if (!isTeacher) {
             btCancelDialog.visibility = View.INVISIBLE
             btConfirm.visibility = View.INVISIBLE
-        }
-        BaseNotification.speakWithCallback(context.getString(R.string.confirm_user_info_message)) {
-            Handler(Looper.getMainLooper()).post {
-                btCancelDialog.visibility = View.VISIBLE
-                btConfirm.visibility = View.VISIBLE
+            BaseNotification.speakWithCallback(context.getString(R.string.confirm_user_info_message)) {
+                Handler(Looper.getMainLooper()).post {
+                    btCancelDialog.visibility = View.VISIBLE
+                    btConfirm.visibility = View.VISIBLE
+                }
             }
         }
 

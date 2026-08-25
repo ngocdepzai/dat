@@ -158,7 +158,13 @@ class TrainingSessionScreen : DatBaseScreen() {
     var trackingLastAuthenDataCounter = 0L
     var updateSearchThresholdCounter = 0L
     var trackingGPSCounter = 0L
-    var sendAuthenDataCounter = 0L
+
+    // Mốc thời gian (epoch giây) của lần gửi dữ liệu xác thực kế tiếp.
+    // Dùng đồng hồ thực thay vì đếm số vòng lặp: mỗi vòng của startTimeCounter()
+    // luôn dài hơn 1000ms (sleep + thời gian xử lý các block khác), nên đếm vòng
+    // lặp sẽ làm chu kỳ 5 phút trôi dần ra xa.
+    @Volatile
+    private var nextSendAuthenDataTime = 0L
 
     companion object {
         const val TIME_FREQUENCY_FACE_RECOGNITION: Long = 3 * 60L
@@ -206,6 +212,38 @@ class TrainingSessionScreen : DatBaseScreen() {
         connectivityManager!!.registerDefaultNetworkCallback(networkCallback)
     }
 
+    /**
+     * Đặt lịch cho lần gửi dữ liệu xác thực kế tiếp sau [delaySeconds] giây tính từ hiện tại.
+     * Dùng cho các mốc neo lại theo sự kiện (mở phiên, tiếp tục phiên, ép gửi ngay);
+     * nhịp 5 phút định kỳ được [checkSendAuthenDataBlock] tự cộng dồn từ mốc cũ.
+     */
+    private fun scheduleNextSendAuthenData(delaySeconds: Long) {
+        sendAuthenDataDuration = delaySeconds
+        nextSendAuthenDataTime = Calendar.getInstance().timeInMillis / 1000 + delaySeconds
+    }
+
+    /**
+     * Kiểm tra tới hạn gửi dữ liệu xác thực và neo mốc kế tiếp.
+     * Mốc kế tiếp cộng dồn từ mốc cũ nên sai số của từng vòng lặp không tích lũy.
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun checkSendAuthenDataBlock() {
+        val currentTime = Calendar.getInstance().timeInMillis / 1000
+        if (nextSendAuthenDataTime == 0L) {
+            nextSendAuthenDataTime = currentTime + sendAuthenDataDuration
+            return
+        }
+        if (currentTime < nextSendAuthenDataTime) return
+
+        nextSendAuthenDataTime += TIME_FREQUENCY_SENT_DATA
+        // Trễ quá một chu kỳ (máy ngủ, xử lý treo) thì neo lại từ hiện tại
+        // để không bắn dồn nhiều lần liên tiếp cho các mốc đã lỡ.
+        if (nextSendAuthenDataTime <= currentTime) {
+            nextSendAuthenDataTime = currentTime + TIME_FREQUENCY_SENT_DATA
+        }
+        sendDataAuthenBlock()
+    }
+
     private fun logicBlockChecking(secondCounter: Long, secondDuration: Long, block: () -> Unit): Long {
         if (secondCounter >= secondDuration) {
             block()
@@ -220,6 +258,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         timeCounterThread = Thread {
             try {
                 while (timeCounterThread?.isAlive == true || timeCounterThread?.isInterrupted == false) {
+                    val loopStartTime = Calendar.getInstance().timeInMillis
                     // Time counter logic block checking
                     timeSecondCounter = logicBlockChecking(
                         secondCounter = timeSecondCounter,
@@ -230,7 +269,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         recognizeFirstTime = false
                         recognizeFaceTimeDuration = 4 // second
                         // delay 20s for face recognition can be detect
-                        sendAuthenDataDuration = 20 // second
+                        scheduleNextSendAuthenData(20) // second
                         // time to calculate data validation time
                         timeSendAuthData = sendAuthenDataDuration
                         timeStartRecognition = Calendar.getInstance().timeInMillis / 1000
@@ -283,10 +322,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         ) { recognizeUserFaceBlock() }
 
                         // send user authentication logic block
-                        sendAuthenDataCounter = logicBlockChecking(
-                            secondCounter = sendAuthenDataCounter,
-                            secondDuration = sendAuthenDataDuration,
-                        ) { sendDataAuthenBlock() }
+                        checkSendAuthenDataBlock()
                         // Check learning time over logic block
                         trackingLastImageRecognizedCounter = logicBlockChecking(
                             secondCounter = trackingLastImageRecognizedCounter,
@@ -298,8 +334,11 @@ class TrainingSessionScreen : DatBaseScreen() {
                             secondDuration = authDataMissingTimeDuration,
                         ) { trackingLastAuthenTimeBlock() }
                     }
-                    // Default count time by one second
-                    Thread.sleep(1000)
+                    // Default count time by one second.
+                    // Trừ đi thời gian xử lý của vòng lặp để mỗi tick đúng 1 giây thực;
+                    // nếu đã quá hạn thì chạy tiếp ngay thay vì ngủ thêm.
+                    val processingTime = Calendar.getInstance().timeInMillis - loopStartTime
+                    Thread.sleep((1000 - processingTime).coerceAtLeast(0))
                 }
 
             } catch (e: InterruptedException) {
@@ -364,7 +403,9 @@ class TrainingSessionScreen : DatBaseScreen() {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun sendDataAuthenBlock() {
-        // re-set sendAuthenDataDuration to default
+        // re-set sendAuthenDataDuration to default.
+        // Không neo lại nextSendAuthenDataTime ở đây: checkSendAuthenDataBlock() đã
+        // cộng dồn mốc kế tiếp từ mốc cũ để giữ đúng nhịp 5 phút.
         sendAuthenDataDuration = TIME_FREQUENCY_SENT_DATA
         CoroutineScope(Dispatchers.IO).launch(
             CoroutineExceptionHandler { _, _ ->
@@ -619,7 +660,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 //reset recognition score
                 if (faceDetectedMessageQueue.isEmpty()) {
                     notFaceCounter++
-                    if (notFaceCounter >= 20) {
+                    if (notFaceCounter >= 20 && !FinishSessionDialog.isShowing() && !ConFirmLogoutDialog.isShowing()) {
                         notFaceCounter = 0
                         val outsideGuideRecent = Utils.getRealTimeStamp() - lastFaceOutsideGuideTime < 3000
                         val messageRes = if (outsideGuideRecent) R.string.student_not_in_recognition_frame else R.string.student_not_in_camera
@@ -1620,7 +1661,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                         LogRecorder.i("LOGIN_IMAGE", "studentImageLogin (biến tạm thời): ${studentImageLogin?.absolutePath ?: "NULL"}")
                         LogRecorder.i("LOGIN_IMAGE", "getImageLogin (từ ViewModel/DB): ${riderSessionViewModel.getImageLogin()?.absolutePath ?: "NULL"}")
 
-                        BaseNotification.showWarning(getString(R.string.confirm_logout_info_message))
                         ConFirmLogoutDialog.showDialog(
                             activity = requireActivity(),
                             imageLogin = studentImageLogin ?: riderSessionViewModel.getImageLogin(),
@@ -2729,8 +2769,10 @@ class TrainingSessionScreen : DatBaseScreen() {
                 ) {
                     riderSessionViewModel.continueInProgressSession(inProgressSession)
                     resetTimeCounter()
-                    sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
-                            timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                    scheduleNextSendAuthenData(
+                            riderSessionViewModel.calculateAuthenticationPeriod(
+                                    timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                            )
                     )
                     // time to calculate data validation time
                     timeSendAuthData = sendAuthenDataDuration
@@ -2758,7 +2800,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
     private fun resetTimeCounter(){
         // reset flag
-        sendAuthenDataCounter = 0L
+        nextSendAuthenDataTime = 0L
         recognizeUserFaceSecondCounter = 0L
         recognizeFaceTimeDuration = 4 // second
     }
@@ -2865,7 +2907,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         if (timeStartRecognition != 0L && timeSendAuthData != 0L) {
             val currentTime = Calendar.getInstance().timeInMillis / 1000
             if (currentTime - timeStartRecognition >= timeSendAuthData) {
-                sendAuthenDataDuration = 0
+                scheduleNextSendAuthenData(0)
             }
             // reset flag
             timeStartRecognition = 0
@@ -3075,24 +3117,25 @@ class TrainingSessionScreen : DatBaseScreen() {
                 openCamera()
                 CoroutineScope(Dispatchers.Default).launch{
                     resetTimeCounter()
-                    sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
-                            timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                    scheduleNextSendAuthenData(
+                            riderSessionViewModel.calculateAuthenticationPeriod(
+                                    timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                            )
                     )
                 }
-            }
-            checkSessionInterrupt()
 
-            if (checkSessionInterrupt()) {
-                BaseNotification.showMessage(
-                        getString(
-                                R.string.continue_session_success,
-                                riderSessionViewModel.teacherAuthInfo?.fullName,
-                                appViewModel.getPlateSlug(),
-                                studentAuthInfo?.fullName,
-                                studentAuthInfo?.courseLicense
-                        ),
-                        showToast = false
-                )
+                if (checkSessionInterrupt()) {
+                    BaseNotification.showMessage(
+                            getString(
+                                    R.string.continue_session_success,
+                                    riderSessionViewModel.teacherAuthInfo?.fullName,
+                                    appViewModel.getPlateSlug(),
+                                    studentAuthInfo?.fullName,
+                                    studentAuthInfo?.courseLicense
+                            ),
+                            showToast = false
+                    )
+                }
             }
         } else {
             // NẾU VẪN CÒN VI PHẠM

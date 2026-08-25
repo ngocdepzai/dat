@@ -29,15 +29,16 @@ internal object BaseNotification {
     private val priorityQueues: Deque<String> = LinkedList()
     private val speechCallbacks: MutableMap<String, () -> Unit> = mutableMapOf()
     private val speechDoneListeners: MutableList<() -> Unit> = mutableListOf()
+    private var isTtsReady = false
+    private val pendingSpeakActions: MutableList<() -> Unit> = mutableListOf()
 
     fun init(context: Context) {
+        if (textToSpeech != null) return
         this.context = context
         textToSpeech = TextToSpeech(
             context
         ) { status ->
-            if (status == TextToSpeech.ERROR) {
-            } else if (status == TextToSpeech.SUCCESS) {
-
+            if (status == TextToSpeech.SUCCESS) {
                 textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
                     }
@@ -51,7 +52,11 @@ internal object BaseNotification {
                         fireSpeechCallbacks(utteranceId)
                     }
                 })
+                isTtsReady = true
             }
+            val pending = pendingSpeakActions.toList()
+            pendingSpeakActions.clear()
+            pending.forEach { it.invoke() }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 Logger.i("List locales: ${context.resources.configuration.locales}")
             }
@@ -139,8 +144,16 @@ internal object BaseNotification {
     }
 
     fun speakWithCallback(message: String, onDone: () -> Unit) {
+        if (message.isBlank()) {
+            onDone()
+            return
+        }
+        if (!isTtsReady) {
+            pendingSpeakActions.add { speakWithCallback(message, onDone) }
+            return
+        }
         val tts = textToSpeech
-        if (tts == null || message.isBlank()) {
+        if (tts == null) {
             onDone()
             return
         }
