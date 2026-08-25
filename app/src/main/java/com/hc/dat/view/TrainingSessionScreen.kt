@@ -158,13 +158,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     var trackingLastAuthenDataCounter = 0L
     var updateSearchThresholdCounter = 0L
     var trackingGPSCounter = 0L
-
-    // Mốc thời gian (epoch giây) của lần gửi dữ liệu xác thực kế tiếp.
-    // Dùng đồng hồ thực thay vì đếm số vòng lặp: mỗi vòng của startTimeCounter()
-    // luôn dài hơn 1000ms (sleep + thời gian xử lý các block khác), nên đếm vòng
-    // lặp sẽ làm chu kỳ 5 phút trôi dần ra xa.
-    @Volatile
-    private var nextSendAuthenDataTime = 0L
+    var sendAuthenDataCounter = 0L
 
     companion object {
         const val TIME_FREQUENCY_FACE_RECOGNITION: Long = 3 * 60L
@@ -212,38 +206,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         connectivityManager!!.registerDefaultNetworkCallback(networkCallback)
     }
 
-    /**
-     * Đặt lịch cho lần gửi dữ liệu xác thực kế tiếp sau [delaySeconds] giây tính từ hiện tại.
-     * Dùng cho các mốc neo lại theo sự kiện (mở phiên, tiếp tục phiên, ép gửi ngay);
-     * nhịp 5 phút định kỳ được [checkSendAuthenDataBlock] tự cộng dồn từ mốc cũ.
-     */
-    private fun scheduleNextSendAuthenData(delaySeconds: Long) {
-        sendAuthenDataDuration = delaySeconds
-        nextSendAuthenDataTime = Calendar.getInstance().timeInMillis / 1000 + delaySeconds
-    }
-
-    /**
-     * Kiểm tra tới hạn gửi dữ liệu xác thực và neo mốc kế tiếp.
-     * Mốc kế tiếp cộng dồn từ mốc cũ nên sai số của từng vòng lặp không tích lũy.
-     */
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun checkSendAuthenDataBlock() {
-        val currentTime = Calendar.getInstance().timeInMillis / 1000
-        if (nextSendAuthenDataTime == 0L) {
-            nextSendAuthenDataTime = currentTime + sendAuthenDataDuration
-            return
-        }
-        if (currentTime < nextSendAuthenDataTime) return
-
-        nextSendAuthenDataTime += TIME_FREQUENCY_SENT_DATA
-        // Trễ quá một chu kỳ (máy ngủ, xử lý treo) thì neo lại từ hiện tại
-        // để không bắn dồn nhiều lần liên tiếp cho các mốc đã lỡ.
-        if (nextSendAuthenDataTime <= currentTime) {
-            nextSendAuthenDataTime = currentTime + TIME_FREQUENCY_SENT_DATA
-        }
-        sendDataAuthenBlock()
-    }
-
     private fun logicBlockChecking(secondCounter: Long, secondDuration: Long, block: () -> Unit): Long {
         if (secondCounter >= secondDuration) {
             block()
@@ -258,7 +220,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         timeCounterThread = Thread {
             try {
                 while (timeCounterThread?.isAlive == true || timeCounterThread?.isInterrupted == false) {
-                    val loopStartTime = Calendar.getInstance().timeInMillis
                     // Time counter logic block checking
                     timeSecondCounter = logicBlockChecking(
                         secondCounter = timeSecondCounter,
@@ -269,7 +230,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         recognizeFirstTime = false
                         recognizeFaceTimeDuration = 4 // second
                         // delay 20s for face recognition can be detect
-                        scheduleNextSendAuthenData(20) // second
+                        sendAuthenDataDuration = 20 // second
                         // time to calculate data validation time
                         timeSendAuthData = sendAuthenDataDuration
                         timeStartRecognition = Calendar.getInstance().timeInMillis / 1000
@@ -322,7 +283,10 @@ class TrainingSessionScreen : DatBaseScreen() {
                         ) { recognizeUserFaceBlock() }
 
                         // send user authentication logic block
-                        checkSendAuthenDataBlock()
+                        sendAuthenDataCounter = logicBlockChecking(
+                            secondCounter = sendAuthenDataCounter,
+                            secondDuration = sendAuthenDataDuration,
+                        ) { sendDataAuthenBlock() }
                         // Check learning time over logic block
                         trackingLastImageRecognizedCounter = logicBlockChecking(
                             secondCounter = trackingLastImageRecognizedCounter,
@@ -334,11 +298,8 @@ class TrainingSessionScreen : DatBaseScreen() {
                             secondDuration = authDataMissingTimeDuration,
                         ) { trackingLastAuthenTimeBlock() }
                     }
-                    // Default count time by one second.
-                    // Trừ đi thời gian xử lý của vòng lặp để mỗi tick đúng 1 giây thực;
-                    // nếu đã quá hạn thì chạy tiếp ngay thay vì ngủ thêm.
-                    val processingTime = Calendar.getInstance().timeInMillis - loopStartTime
-                    Thread.sleep((1000 - processingTime).coerceAtLeast(0))
+                    // Default count time by one second
+                    Thread.sleep(1000)
                 }
 
             } catch (e: InterruptedException) {
@@ -403,9 +364,7 @@ class TrainingSessionScreen : DatBaseScreen() {
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun sendDataAuthenBlock() {
-        // re-set sendAuthenDataDuration to default.
-        // Không neo lại nextSendAuthenDataTime ở đây: checkSendAuthenDataBlock() đã
-        // cộng dồn mốc kế tiếp từ mốc cũ để giữ đúng nhịp 5 phút.
+        // re-set sendAuthenDataDuration to default
         sendAuthenDataDuration = TIME_FREQUENCY_SENT_DATA
         CoroutineScope(Dispatchers.IO).launch(
             CoroutineExceptionHandler { _, _ ->
@@ -537,9 +496,9 @@ class TrainingSessionScreen : DatBaseScreen() {
                 (missingTime / 60).toInt()
             )
             LogRecorder.i("", getString(
-                    R.string.missing_image_detected_message,
-                    (missingTime / 60).toInt()
-                ))
+                R.string.missing_image_detected_message,
+                (missingTime / 60).toInt()
+            ))
             withContext(Dispatchers.Main) {
                 showDialog(
                     title = getString(R.string.title_notification),
@@ -695,8 +654,8 @@ class TrainingSessionScreen : DatBaseScreen() {
                                 wearMaskCounter = 0
                                 withContext(Dispatchers.Main) {
                                     BaseNotification.showWarning(getString(
-                                            R.string.no_wearing_mask
-                                        ))
+                                        R.string.no_wearing_mask
+                                    ))
                                 }
                             }
                         } else if (result) {
@@ -711,8 +670,8 @@ class TrainingSessionScreen : DatBaseScreen() {
                                 if (verifyFailCounter > 0 || recognizeFail) {
                                     withContext(Dispatchers.Main) {
                                         BaseNotification.showMessage(getString(
-                                                R.string.face_verify_success
-                                            ))
+                                            R.string.face_verify_success
+                                        ))
                                     }
                                 }
                                 lastFaceRecognized = pendingFrame
@@ -749,11 +708,11 @@ class TrainingSessionScreen : DatBaseScreen() {
             if (!resultCheck && verifyFailCounter <= 3) {
                 withContext(Dispatchers.Main) {
                     BaseNotification.showWarning(getString(
-                            R.string.warning_verify_fail_counter
-                        ))
+                        R.string.warning_verify_fail_counter
+                    ))
                     LogRecorder.i("Thông báo: ", getString(
-                            R.string.warning_verify_fail_counter
-                        ))
+                        R.string.warning_verify_fail_counter
+                    ))
                 }
                 handleRecognizeFaceDetected1()
             } else {
@@ -840,28 +799,28 @@ class TrainingSessionScreen : DatBaseScreen() {
             Logger.i("remainingTime: ${DateUtil.ConvertHms(remainingTimeIn24H)}")
             if (remainingTimeIn24H <= 0) {
                 LogRecorder.e("Phiên học", getString(
-                        R.string.over_time_24h_error, DateUtil.ConvertHms(totalTimeIn24h)
-                    ))
+                    R.string.over_time_24h_error, DateUtil.ConvertHms(totalTimeIn24h)
+                ))
                 BaseNotification.showError(getString(
-                        R.string.over_time_24h_error, DateUtil.ConvertHms(totalTimeIn24h)
-                    ))
+                    R.string.over_time_24h_error, DateUtil.ConvertHms(totalTimeIn24h)
+                ))
                 learningTimeOver10HoursDuration = TIME_ERROR_OVER
                 delay(TIME_ERROR_OVER)
             } else if (remainingTimeIn24H <= WARNING_TIME_REMAINING_TO_10_MINUTES) {
                 LogRecorder.w("Phiên học", getString(
-                        R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
-                    ))
+                    R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
+                ))
                 BaseNotification.showWarning(getString(
-                        R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
-                    ))
+                    R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
+                ))
                 learningTimeOver10HoursDuration = TIME_ERROR_OVER
             } else if (remainingTimeIn24H <= (WARNING_TIME_REMAINING_TO_30_MINUTES - additionalTime)) {
                 LogRecorder.w("Phiên học", getString(
-                        R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
-                    ))
+                    R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
+                ))
                 BaseNotification.showWarning(getString(
-                        R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
-                    ))
+                    R.string.over_time_24h_warning, DateUtil.ConvertHms(totalTimeIn24h)
+                ))
                 learningTimeOver10HoursDuration = TIME_WARNING_OVER
             } else {
                 learningTimeOver10HoursDuration = FREQUENCY_CHECK_LEARNING_TIME
@@ -884,33 +843,33 @@ class TrainingSessionScreen : DatBaseScreen() {
         CoroutineScope(Dispatchers.Main).launch {
             if (remainingTime <= 0) {
                 LogRecorder.e("Phiên học", getString(
-                        R.string.over_time_error,
-                        DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    ))
+                    R.string.over_time_error,
+                    DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
+                ))
                 BaseNotification.showError(getString(
-                        R.string.over_time_error,
-                        DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    ))
+                    R.string.over_time_error,
+                    DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
+                ))
                 learningOverTimeDuration = TIME_ERROR_OVER
             } else if (remainingTime <= WARNING_TIME_REMAINING_TO_10_MINUTES) {
                 LogRecorder.w("Phiên học", getString(
-                        R.string.over_time_warning,
-                        DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    ))
+                    R.string.over_time_warning,
+                    DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
+                ))
                 BaseNotification.showWarning(getString(
-                        R.string.over_time_warning,
-                        DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    ))
+                    R.string.over_time_warning,
+                    DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
+                ))
                 learningOverTimeDuration = TIME_ERROR_OVER
             } else if (remainingTime <= (WARNING_TIME_REMAINING_TO_30_MINUTES - additionalTime)) {
                 LogRecorder.w("Phiên học", getString(
-                        R.string.over_time_warning,
-                        DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    ))
+                    R.string.over_time_warning,
+                    DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
+                ))
                 BaseNotification.showWarning(getString(
-                        R.string.over_time_warning,
-                        DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
-                    ))
+                    R.string.over_time_warning,
+                    DateUtil.ConvertHms(riderSessionViewModel.inProgressSession!!.totalTime)
+                ))
                 learningOverTimeDuration = TIME_WARNING_OVER
             } else {
                 learningOverTimeDuration = FREQUENCY_CHECK_LEARNING_TIME
@@ -1667,7 +1626,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                             imageLogout = studentImageLogout!!,
                             inProgressSession = riderSessionViewModel.inProgressSession!!,
                             faceRecognitionViewModel = faceRecognitionViewModel,
-                            ) { confirm, notSendTC ->
+                        ) { confirm, notSendTC ->
                             if (confirm && isAdded) {
                                 FinishSessionDialog.dismiss()
                                 handleCallFinishRiderSession(isNotSendTC || notSendTC)
@@ -2214,10 +2173,10 @@ class TrainingSessionScreen : DatBaseScreen() {
                 val pairData: Pair<Float, Double> = data as Pair<Float, Double>
                 Logger.i(
                     "Fetch data session from server totalDistance: ${
-                    getString(
-                        R.string.total_distance_value,
-                        (pairData.first / 1000f)
-                    )
+                        getString(
+                            R.string.total_distance_value,
+                            (pairData.first / 1000f)
+                        )
                     } | totalTime: ${DateUtil.ConvertHms(pairData.second)}"
                 )
                 riderSessionViewModel.inProgressSession?.also { inProgressSession ->
@@ -2243,20 +2202,20 @@ class TrainingSessionScreen : DatBaseScreen() {
             }
             RiderSessionAction.PUSH_SESSION_TO_TC_FAIL -> {
                 dismissProgress()
-                    showDialog(
-                        title = getString(R.string.error_title_dialog),
-                        message = getString(R.string.send_tc_error_message),
-                        cancelable = false,
-                        buttonList = listOf(getString(R.string.finish_with_out_send_tc)),
-                        listener = object : DialogButtonClickListener {
-                            override fun onDialogButtonClick(position1: Int) {
-                                dismissDialog()
-                                if (position1 == 0) {
-                                    handleCallFinishRiderSession(true)
-                                }
+                showDialog(
+                    title = getString(R.string.error_title_dialog),
+                    message = getString(R.string.send_tc_error_message),
+                    cancelable = false,
+                    buttonList = listOf(getString(R.string.finish_with_out_send_tc)),
+                    listener = object : DialogButtonClickListener {
+                        override fun onDialogButtonClick(position1: Int) {
+                            dismissDialog()
+                            if (position1 == 0) {
+                                handleCallFinishRiderSession(true)
                             }
                         }
-                    )
+                    }
+                )
             }
             RiderSessionAction.FINISH_RIDER_SESSION_FAIL_BY_LOCATION,
             RiderSessionAction.FINISH_RIDER_SESSION_FAIL -> {
@@ -2279,19 +2238,19 @@ class TrainingSessionScreen : DatBaseScreen() {
 //                    }
 //                )
                 showDialog(
-                        title = getString(R.string.title_notification),
-                        message = getString(R.string.finish_session_offline),
-                        buttonList = listOf(getString(R.string.ok)),
-                        cancelable = false,
-                        listener = object : DialogButtonClickListener {
-                            override fun onDialogButtonClick(position: Int) {
-                                dismissDialog()
-                                // handle cancel all job running
-                                clearSessionHandler()
-                                BaseNotification.showMessage(getString(R.string.finish_session_success))
-                                requireActivity().onBackPressed()
-                            }
+                    title = getString(R.string.title_notification),
+                    message = getString(R.string.finish_session_offline),
+                    buttonList = listOf(getString(R.string.ok)),
+                    cancelable = false,
+                    listener = object : DialogButtonClickListener {
+                        override fun onDialogButtonClick(position: Int) {
+                            dismissDialog()
+                            // handle cancel all job running
+                            clearSessionHandler()
+                            BaseNotification.showMessage(getString(R.string.finish_session_success))
+                            requireActivity().onBackPressed()
                         }
+                    }
                 )
             }
             // [DAT CER]: only use for get DAT certification
@@ -2534,14 +2493,14 @@ class TrainingSessionScreen : DatBaseScreen() {
 //                    }
 //                )
                 showDialog(
-                        title = getString(R.string.title_notification),
-                        message = getString(R.string.can_not_check_car_in_course_by_internet),
-                        buttonList = listOf(getString(R.string.ok)),
-                        listener = object : DialogButtonClickListener {
-                            override fun onDialogButtonClick(position: Int) {
-                                dismissDialog()
-                            }
+                    title = getString(R.string.title_notification),
+                    message = getString(R.string.can_not_check_car_in_course_by_internet),
+                    buttonList = listOf(getString(R.string.ok)),
+                    listener = object : DialogButtonClickListener {
+                        override fun onDialogButtonClick(position: Int) {
+                            dismissDialog()
                         }
+                    }
                 )
                 handleGetStudentInProgressSession(studentAuthInfo!!.userCode)
             }
@@ -2583,9 +2542,9 @@ class TrainingSessionScreen : DatBaseScreen() {
             try {
                 delay(1000) // Chờ một chút để các hiệu ứng UI trước đó ổn định
                 riderSessionViewModel.finishRiderSession(
-                        notSendTC = notSendTC,
-                        studentLogoutImage = studentImageLogout!!,
-                        callback = riderSessionCallback
+                    notSendTC = notSendTC,
+                    studentLogoutImage = studentImageLogout!!,
+                    callback = riderSessionCallback
                 )
             } catch (e: Exception) {
                 Logger.e("Error during finishRiderSession: ${e.message}")
@@ -2769,10 +2728,8 @@ class TrainingSessionScreen : DatBaseScreen() {
                 ) {
                     riderSessionViewModel.continueInProgressSession(inProgressSession)
                     resetTimeCounter()
-                    scheduleNextSendAuthenData(
-                            riderSessionViewModel.calculateAuthenticationPeriod(
-                                    timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
-                            )
+                    sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
+                        timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
                     )
                     // time to calculate data validation time
                     timeSendAuthData = sendAuthenDataDuration
@@ -2800,7 +2757,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
     private fun resetTimeCounter(){
         // reset flag
-        nextSendAuthenDataTime = 0L
+        sendAuthenDataCounter = 0L
         recognizeUserFaceSecondCounter = 0L
         recognizeFaceTimeDuration = 4 // second
     }
@@ -2907,7 +2864,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         if (timeStartRecognition != 0L && timeSendAuthData != 0L) {
             val currentTime = Calendar.getInstance().timeInMillis / 1000
             if (currentTime - timeStartRecognition >= timeSendAuthData) {
-                scheduleNextSendAuthenData(0)
+                sendAuthenDataDuration = 0
             }
             // reset flag
             timeStartRecognition = 0
@@ -2959,7 +2916,7 @@ class TrainingSessionScreen : DatBaseScreen() {
 
             // Thêm .coerceAtMost(100) vào cuối kết quả tính toán
             val successPercentage: Int =
-            ((inProgressSession.successVerifyCounter.toDouble() / authCountByTime) * 100).roundToInt().coerceAtMost(100)
+                ((inProgressSession.successVerifyCounter.toDouble() / authCountByTime) * 100).roundToInt().coerceAtMost(100)
             Logger.i("| Tỷ lệ thực tế: $successPercentage")
 
             Logger.i("|${appViewModel.getSearchThreshold()} |${(inProgressSession.successVerifyCounter / authCountByTime).toDouble() * 100} | totalVerifyCounter: ${inProgressSession.totalVerifyCounter} | successVerifyCounter: ${inProgressSession.successVerifyCounter} | successPercentage: $successPercentage")
@@ -3111,31 +3068,30 @@ class TrainingSessionScreen : DatBaseScreen() {
             riderSessionViewModel.startGPSEventListener(gpsEventListener)
 
             if (riderSessionViewModel.teacherAuthInfo != null &&
-                    studentAuthInfo != null &&
-                    riderSessionViewModel.getSessionInProgress() != null
+                studentAuthInfo != null &&
+                riderSessionViewModel.getSessionInProgress() != null
             ) {
                 openCamera()
                 CoroutineScope(Dispatchers.Default).launch{
                     resetTimeCounter()
-                    scheduleNextSendAuthenData(
-                            riderSessionViewModel.calculateAuthenticationPeriod(
-                                    timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
-                            )
+                    sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
+                        timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
                     )
                 }
+            }
+            checkSessionInterrupt()
 
-                if (checkSessionInterrupt()) {
-                    BaseNotification.showMessage(
-                            getString(
-                                    R.string.continue_session_success,
-                                    riderSessionViewModel.teacherAuthInfo?.fullName,
-                                    appViewModel.getPlateSlug(),
-                                    studentAuthInfo?.fullName,
-                                    studentAuthInfo?.courseLicense
-                            ),
-                            showToast = false
-                    )
-                }
+            if (checkSessionInterrupt()) {
+                BaseNotification.showMessage(
+                    getString(
+                        R.string.continue_session_success,
+                        riderSessionViewModel.teacherAuthInfo?.fullName,
+                        appViewModel.getPlateSlug(),
+                        studentAuthInfo?.fullName,
+                        studentAuthInfo?.courseLicense
+                    ),
+                    showToast = false
+                )
             }
         } else {
             // NẾU VẪN CÒN VI PHẠM
@@ -3244,28 +3200,28 @@ class TrainingSessionScreen : DatBaseScreen() {
             pauseHandleProcess()
 
             showDialog(
-                    title = "PHÁT HIỆN VI PHẠM",
-                    message = "Ứng dụng không hợp lệ: $appLabel\n\nBạn phải gỡ bỏ ứng dụng này để tiếp tục phiên học DAT theo quy định.",
-                    cancelable = false,
-                    buttonList = listOf("Gỡ cài đặt", "Thoát ứng dụng"),
-                    listener = object : DialogButtonClickListener {
-                        override fun onDialogButtonClick(position: Int) {
-                            if (position == 0) {
-                                // MỞ THẲNG TRANG QUẢN LÝ (APP INFO) ĐỂ GỠ CÀI ĐẶT
-                                try {
-                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                    val uri = android.net.Uri.fromParts("package", packageName, null)
-                                    intent.data = uri
-                                    startActivity(intent)
-                                } catch (e: Exception) {
-                                    // Nếu lỗi thì mở danh sách app chung
-                                    startActivity(Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS))
-                                }
-                            } else {
-                                requireActivity().finishAffinity()
+                title = "PHÁT HIỆN VI PHẠM",
+                message = "Ứng dụng không hợp lệ: $appLabel\n\nBạn phải gỡ bỏ ứng dụng này để tiếp tục phiên học DAT theo quy định.",
+                cancelable = false,
+                buttonList = listOf("Gỡ cài đặt", "Thoát ứng dụng"),
+                listener = object : DialogButtonClickListener {
+                    override fun onDialogButtonClick(position: Int) {
+                        if (position == 0) {
+                            // MỞ THẲNG TRANG QUẢN LÝ (APP INFO) ĐỂ GỠ CÀI ĐẶT
+                            try {
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                val uri = android.net.Uri.fromParts("package", packageName, null)
+                                intent.data = uri
+                                startActivity(intent)
+                            } catch (e: Exception) {
+                                // Nếu lỗi thì mở danh sách app chung
+                                startActivity(Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS))
                             }
+                        } else {
+                            requireActivity().finishAffinity()
                         }
                     }
+                }
             )
         }
     }
