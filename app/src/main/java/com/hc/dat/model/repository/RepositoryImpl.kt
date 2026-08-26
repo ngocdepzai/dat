@@ -56,6 +56,9 @@ class RepositoryImpl @Inject constructor(
         const val IMEI1 = "IMEI1"
         const val IMEI2 = "IMEI2"
         const val KEY_TEACHER_SEND_TC = "key_teacher_send_tc"
+        const val AUTO_LOGOUT_TEACHER_OVER_10_HOURS = "AUTO_LOGOUT_TEACHER_OVER_10_HOURS"
+        const val AUTO_LOGOUT_TEACHER_MINUTE = "AUTO_LOGOUT_TEACHER_MINUTE"
+        const val AUTO_LOGOUT_TEACHER_MINUTE_DEFAULT = 50
     }
 
     // [DAT CER]: only use for get DAT certification
@@ -1372,6 +1375,21 @@ class RepositoryImpl @Inject constructor(
     }
     override fun getAutoLogoutTime(): Int {
         return sharedPreferences.getInt(AUTO_LOGOUT_TIME, 0)
+    }
+    override fun saveAutoLogoutTeacherOver10HoursEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AUTO_LOGOUT_TEACHER_OVER_10_HOURS, enabled).apply()
+    }
+    override fun getAutoLogoutTeacherOver10HoursEnabled(): Boolean {
+        return sharedPreferences.getBoolean(AUTO_LOGOUT_TEACHER_OVER_10_HOURS, true)
+    }
+    override fun saveAutoLogoutTeacherMinute(minute: Int) {
+        sharedPreferences.edit().putInt(AUTO_LOGOUT_TEACHER_MINUTE, minute).apply()
+    }
+    override fun getAutoLogoutTeacherMinute(): Int {
+        return sharedPreferences.getInt(
+            AUTO_LOGOUT_TEACHER_MINUTE,
+            AUTO_LOGOUT_TEACHER_MINUTE_DEFAULT
+        )
     }
     override fun saveOfflineStartSessionState(offlineStartSessionState: Boolean) {
         sharedPreferences.edit().putBoolean(ALLOW_OFFLINE_START_SESSION, offlineStartSessionState).apply()

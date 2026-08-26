@@ -2283,6 +2283,39 @@ data class RiderSessionViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Cho biết có tự động đăng xuất khi giảng viên dạy quá 10 giờ trong ngày hay không.
+     *
+     * @return trạng thái đã lưu, hoặc `true` nếu người dùng chưa từng đổi cài đặt này.
+     */
+    suspend fun getAutoLogoutTeacherOver10HoursEnabled(): Boolean {
+        return withContext(Dispatchers.Default) {
+            repository.getAutoLogoutTeacherOver10HoursEnabled()
+        }
+    }
+    fun saveAutoLogoutTeacherOver10HoursEnabled(enabled: Boolean){
+        CoroutineScope(Dispatchers.Default).launch {
+            repository.saveAutoLogoutTeacherOver10HoursEnabled(enabled = enabled)
+        }
+    }
+
+    /**
+     * Phút trong khung 9 giờ mà phiên bị tự động đăng xuất khi giảng viên dạy quá 10 giờ
+     * trong ngày, ví dụ 50 nghĩa là mốc 9 giờ 50 phút.
+     *
+     * @return phút đã lưu trong khoảng 45..55, hoặc 50 nếu người dùng chưa từng đổi.
+     */
+    suspend fun getAutoLogoutTeacherMinute(): Int {
+        return withContext(Dispatchers.Default) {
+            repository.getAutoLogoutTeacherMinute()
+        }
+    }
+    fun saveAutoLogoutTeacherMinute(minute: Int){
+        CoroutineScope(Dispatchers.Default).launch {
+            repository.saveAutoLogoutTeacherMinute(minute = minute)
+        }
+    }
+
     fun getImageLogin(): File? {
         return localRiderSession?.loginImagePath?.let { File(it) }
     }

@@ -114,6 +114,23 @@ interface Repository {
     // Local query data
     fun saveAutoLogoutTime(autoLogoutTime : Int)
     fun getAutoLogoutTime(): Int
+    fun saveAutoLogoutTeacherOver10HoursEnabled(enabled: Boolean)
+
+    /**
+     * Cho biết có tự động đăng xuất khi giảng viên dạy quá 10 giờ trong ngày hay không.
+     *
+     * @return trạng thái đã lưu, hoặc `true` nếu người dùng chưa từng đổi cài đặt này.
+     */
+    fun getAutoLogoutTeacherOver10HoursEnabled(): Boolean
+    fun saveAutoLogoutTeacherMinute(minute: Int)
+
+    /**
+     * Phút trong khung 9 giờ mà phiên bị tự động đăng xuất khi giảng viên dạy quá 10 giờ
+     * trong ngày, ví dụ 50 nghĩa là mốc 9 giờ 50 phút.
+     *
+     * @return phút đã lưu trong khoảng 45..55, hoặc 50 nếu người dùng chưa từng đổi.
+     */
+    fun getAutoLogoutTeacherMinute(): Int
     fun saveOfflineStartSessionState(offlineStartSessionState : Boolean)
     fun saveSerialNumber(serialNumber : String)
     fun getSerialNumber(): String?

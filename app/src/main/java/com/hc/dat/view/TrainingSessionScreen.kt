@@ -196,6 +196,9 @@ class TrainingSessionScreen : DatBaseScreen() {
         const val LEARNING_TIME_OVER = 4 * 60 * 60
         const val AUTO_LOGOUT_TIME_IN_SESSION = 3 * 60 * 60 + 55 * 60
         const val AUTO_LOGOUT_TIME_IN_DAY = 9 * 60 * 60 + 50 * 60
+        // Mốc đăng xuất của giảng viên cấu hình được theo phút (9h45 - 9h55) nên chỉ giữ
+        // phần giờ ở đây, phần phút lấy từ cài đặt thiết bị.
+        const val AUTO_LOGOUT_TEACHER_BASE_TIME = 9 * 60 * 60
         const val LEARNING_TIME_OVER_IN_24H = 10 * 60 * 60
         const val TEACHER_WARNING_TIME_IN_24H = 9 * 60 * 60 + 45 * 60
         const val WARNING_TIME_REMAINING_TO_30_MINUTES = 30 * 60
@@ -421,12 +424,20 @@ class TrainingSessionScreen : DatBaseScreen() {
 
     private fun handleAutoLogout() {
         autoLogoutDuration = TIME_AUTO_LOGOUT
-        var autoLogoutTime = 0
-        val totalTimeIn24h = riderSessionViewModel.inProgressSession!!.totalTime + (riderSessionViewModel.inProgressSession!!.timeIn24H ?: 0.0)
+        val inProgressSession = riderSessionViewModel.inProgressSession ?: return
+        val totalTimeIn24h = inProgressSession.totalTime + (inProgressSession.timeIn24H ?: 0.0)
+        val teacherTimeIn24h = inProgressSession.totalTime + (inProgressSession.time24hTeacher ?: 0.0)
 
         CoroutineScope(Dispatchers.Default).launch {
-            autoLogoutTime = riderSessionViewModel.getAutoLogoutTime() * 60
-            if (totalTimeIn24h >= AUTO_LOGOUT_TIME_IN_DAY + autoLogoutTime) {
+            val autoLogoutTime = riderSessionViewModel.getAutoLogoutTime() * 60
+            val autoLogoutThreshold = AUTO_LOGOUT_TIME_IN_DAY + autoLogoutTime
+            // Giảng viên có mốc đăng xuất riêng cấu hình được, và có thể tắt hẳn, đều
+            // trong cài đặt thiết bị.
+            val teacherThreshold = AUTO_LOGOUT_TEACHER_BASE_TIME +
+                riderSessionViewModel.getAutoLogoutTeacherMinute() * 60
+            val teacherOverTime = teacherTimeIn24h >= teacherThreshold &&
+                riderSessionViewModel.getAutoLogoutTeacherOver10HoursEnabled()
+            if (totalTimeIn24h >= autoLogoutThreshold || teacherOverTime) {
                 withContext(Dispatchers.Main){
                     handleFinishRiderSession(sessionContinues = false, autoLogout = true)
                 }

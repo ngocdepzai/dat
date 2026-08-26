@@ -27,6 +27,8 @@ class InfoDeviceScreen : DatBaseScreen() {
     private val files = mutableListOf<File>()
     companion object{
         const val REQUEST_CODE_PICK_FOLDER = 2001
+        // SeekBar chỉ đi từ 0, nên progress được quy đổi sang phút bằng cách cộng mốc này.
+        const val AUTO_LOGOUT_TEACHER_MINUTE_MIN = 45
     }
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,6 +57,13 @@ class InfoDeviceScreen : DatBaseScreen() {
             val autoLogoutTime = riderSessionViewModel.getAutoLogoutTime()
             viewBinding.skAutoLogoutTime.progress = autoLogoutTime
             viewBinding.tvAutoLogoutTime.text = "Thời gian tự động đăng xuất quá 10 tếng: 9h${viewBinding.skAutoLogoutTime.progress + 50}p"
+            viewBinding.swtchAutoLogoutTeacher.isChecked =
+                riderSessionViewModel.getAutoLogoutTeacherOver10HoursEnabled()
+            val autoLogoutTeacherMinute = riderSessionViewModel.getAutoLogoutTeacherMinute()
+            viewBinding.skAutoLogoutTeacherTime.progress =
+                autoLogoutTeacherMinute - AUTO_LOGOUT_TEACHER_MINUTE_MIN
+            viewBinding.tvAutoLogoutTeacherTime.text =
+                "Thời gian tự động đăng xuất GV quá 10 giờ: 9h${autoLogoutTeacherMinute}p"
         }
 
         viewBinding.btUpdateApp.setOnClickListener {
@@ -96,6 +105,26 @@ class InfoDeviceScreen : DatBaseScreen() {
         viewBinding.swtchDistanceNotChange.setOnClickListener{
             riderSessionViewModel.notifyDistanceNotChange = viewBinding.swtchDistanceNotChange.isChecked
         }
+        viewBinding.swtchAutoLogoutTeacher.setOnClickListener {
+            riderSessionViewModel.saveAutoLogoutTeacherOver10HoursEnabled(
+                enabled = viewBinding.swtchAutoLogoutTeacher.isChecked
+            )
+        }
+        viewBinding.skAutoLogoutTeacherTime.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                viewBinding.tvAutoLogoutTeacherTime.text =
+                    "Thời gian tự động đăng xuất GV quá 10 giờ: 9h${progress + AUTO_LOGOUT_TEACHER_MINUTE_MIN}p"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                riderSessionViewModel.saveAutoLogoutTeacherMinute(
+                    minute = seekBar.progress + AUTO_LOGOUT_TEACHER_MINUTE_MIN
+                )
+            }
+        })
         viewBinding.skAutoLogoutTime.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 viewBinding.tvAutoLogoutTime.text =
