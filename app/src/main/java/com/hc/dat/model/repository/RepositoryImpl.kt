@@ -1961,6 +1961,19 @@ class RepositoryImpl @Inject constructor(
         }
     }
 
+    override fun updateTimeIn24h(id: Long, timeIn24H: Double?, time24hTeacher: Double?) {
+        try {
+            Logger.i("updateTimeIn24h id: $id | timeIn24H: $timeIn24H | time24hTeacher: $time24hTeacher")
+            appDatabase.riderSessionEntityDao().updateTimeIn24h(
+                id = id,
+                timeIn24H = timeIn24H,
+                time24hTeacher = time24hTeacher
+            )
+        } catch (ex: Exception) {
+            Logger.i("Error ${ex.message}")
+        }
+    }
+
     override fun updateStartSessionToOnline(id: Long, sessionId: String, state: Int) {
         try {
             Logger.i("updateSessionUploadState id: $id | state: $state | sessionId: $sessionId")

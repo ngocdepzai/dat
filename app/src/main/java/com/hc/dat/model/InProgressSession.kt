@@ -41,8 +41,10 @@ data class InProgressSession(
     val toNightTime: Double? = null,
     val automaticTransmissionTime: Double? = null,
     val totalAutomaticTransmissionTime: Double? = null,
-    val timeIn24H: Double? = null,
-    val time24hTeacher: Double? = null,
+    // var chứ không phải val: phiên mở offline chưa có hai giá trị này, chúng được đổ vào
+    // giữa phiên khi có mạng trở lại và phiên được đẩy lên server thành công.
+    var timeIn24H: Double? = null,
+    var time24hTeacher: Double? = null,
     val lastAuthenTime: Date? = null,
     // use for CER function
     var localRiderSession: RiderSessionEntity? = null

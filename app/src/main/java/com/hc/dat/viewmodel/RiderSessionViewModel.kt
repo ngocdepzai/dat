@@ -60,6 +60,7 @@ data class RiderSessionViewModel @Inject constructor(
     private var fetchSessionJob: Job? = null
     private var recoverUploadInProgress = false
     private var recoverUploadLogFiles = false
+    private var recoverCurrentSessionInProgress = false
     private var isReUploadDataInSession = false
     var notifyErrorVelocity = false
     var notifyUse4G = true
@@ -87,6 +88,7 @@ data class RiderSessionViewModel @Inject constructor(
                     recoverUploadLogFiles = true
                     recoverSendLogFilesFail()
                 }
+                recoverCurrentOfflineSession()
             }
         }
     }
@@ -211,12 +213,14 @@ data class RiderSessionViewModel @Inject constructor(
                 if (recoverSessionData.riderSessionEntity.state == SessionState.START_OFFLINE.code ||
                     recoverSessionData.riderSessionEntity.state == SessionState.START_FINISH_OFFLINE.code
                 ) {
-                    handleRecoverUploadSession(recoverSessionData.riderSessionEntity)?.also { sessionId ->
+                    handleRecoverUploadSession(recoverSessionData.riderSessionEntity)?.also { startRiderSession ->
+                        val sessionId = startRiderSession.sessionId
                         // check current rider session is this session recover
                         if (localRiderSession?.id == recoverSessionData.riderSessionEntity.id) {
                             // update sessionId to
                             localRiderSession?.sessionId = sessionId
                             inProgressSession?.id = localRiderSession?.sessionId!!
+                            applyTimeIn24hFromServer(startRiderSession)
                         }
 
                         // update data in local session
@@ -753,7 +757,7 @@ data class RiderSessionViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
-    private suspend fun handleRecoverUploadSession(riderSessionEntity: RiderSessionEntity): String? {
+    private suspend fun handleRecoverUploadSession(riderSessionEntity: RiderSessionEntity): StartRiderSessionResponse? {
         val deviceInfo = Utils.getDeviceInfo(context)
         try {
             val loginImageFile = File(riderSessionEntity.loginImagePath)
@@ -779,7 +783,7 @@ data class RiderSessionViewModel @Inject constructor(
                 Logger.i("handleRecoverUploadSession resResult: ${resResult.data}")
                 if (!resResult.isError) {
                     Logger.i("sessionId: ${resResult.data?.sessionId}")
-                    return resResult.data?.sessionId
+                    return resResult.data
                 }
             }
             return null
@@ -788,6 +792,77 @@ data class RiderSessionViewModel @Inject constructor(
             return null
         }
     }
+
+    /**
+     * Đổ thời gian 24h của học viên và giảng viên từ phản hồi start-rider-session vào phiên
+     * đang chạy, đồng thời ghi xuống bản ghi local.
+     *
+     * Phiên mở offline không có hai giá trị này vì chưa từng hỏi server. Lần đẩy phiên lên
+     * thành công là lần đầu tiên biết được mốc thời gian đã lái trong ngày; không lấy về thì
+     * cảnh báo quá 10 tiếng sẽ im lặng đến hết phiên.
+     */
+    private fun applyTimeIn24hFromServer(startRiderSession: StartRiderSessionResponse) {
+        Logger.i(
+            "applyTimeIn24hFromServer timeIn24H: ${startRiderSession.timeIn24H}" +
+                " | time24hTeacher: ${startRiderSession.time24hTeacher}"
+        )
+        inProgressSession?.timeIn24H = startRiderSession.timeIn24H
+        inProgressSession?.time24hTeacher = startRiderSession.time24hTeacher
+        localRiderSession?.timeIn24H = startRiderSession.timeIn24H
+        localRiderSession?.time24hTeacher = startRiderSession.time24hTeacher
+        localRiderSession?.id?.also { id ->
+            repository.updateTimeIn24h(
+                id = id,
+                timeIn24H = startRiderSession.timeIn24H,
+                time24hTeacher = startRiderSession.time24hTeacher
+            )
+        }
+    }
+
+    /**
+     * Đẩy phiên đang chạy lên server nếu nó được mở trong lúc mất mạng.
+     *
+     * recoverSendOfflineData() loại bản ghi cuối khỏi danh sách khôi phục, mà phiên đang chạy
+     * luôn là bản ghi cuối, nên đường đó chỉ đẩy phiên lên sau khi đã kết thúc. Cảnh báo quá
+     * giờ cần thời gian 24h ngay trong phiên nên phải đẩy riêng ở đây.
+     */
+    @Synchronized
+    private fun recoverCurrentOfflineSession() {
+        val riderSessionEntity = localRiderSession ?: return
+        if (riderSessionEntity.state != SessionState.START_OFFLINE.code) return
+        if (recoverCurrentSessionInProgress) return
+        recoverCurrentSessionInProgress = true
+        CoroutineScope(Dispatchers.Default).launch(
+            CoroutineExceptionHandler { _, ex ->
+                Logger.e("recoverCurrentOfflineSession: Found an exception: ${ex.message}")
+                recoverCurrentSessionInProgress = false
+            }
+        ) {
+            try {
+                handleRecoverUploadSession(riderSessionEntity)?.also { startRiderSession ->
+                    val sessionId = startRiderSession.sessionId
+                    Logger.i("recoverCurrentOfflineSession sessionId: $sessionId")
+                    localRiderSession?.sessionId = sessionId
+                    localRiderSession?.state = SessionState.START_ONLINE.code
+                    inProgressSession?.id = sessionId
+                    repository.updateStartSessionToOnline(
+                        id = riderSessionEntity.id,
+                        sessionId = sessionId,
+                        state = SessionState.START_ONLINE.code
+                    )
+                    repository.saveSessionCode(sessionId)
+                    applyTimeIn24hFromServer(startRiderSession)
+                    LogRecorder.i(
+                        "Đẩy phiên offline lên server thành công",
+                        localRiderSession.toString()
+                    )
+                }
+            } finally {
+                recoverCurrentSessionInProgress = false
+            }
+        }
+    }
+
     // [DAT CER]
 
     init {

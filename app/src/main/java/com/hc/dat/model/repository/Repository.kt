@@ -249,6 +249,11 @@ interface Repository {
         sessionId: String,
         state: Int
     )
+    fun updateTimeIn24h(
+        id: Long,
+        timeIn24H: Double?,
+        time24hTeacher: Double?
+    )
     suspend fun resentSession(sessionId: String): ResponseResult<ResentSessionResponse?>
     fun insertNewGPSSignal(gpsSignalEntity: GPSSignalEntity)
     fun updateGPSSignalUploadState(

@@ -119,6 +119,18 @@ interface RiderSessionEntityDao {
 
     @Query(
         "UPDATE ${RiderSessionEntity.TABLE_NAME} SET " +
+            "${RiderSessionEntity.TIME_IN_24H} = :timeIn24H, " +
+            "${RiderSessionEntity.TIME_24H_TEACHER} = :time24hTeacher " +
+            "WHERE ${RiderSessionEntity.ID} = :id"
+    )
+    fun updateTimeIn24h(
+        id: Long,
+        timeIn24H: Double?,
+        time24hTeacher: Double?
+    )
+
+    @Query(
+        "UPDATE ${RiderSessionEntity.TABLE_NAME} SET " +
             "${RiderSessionEntity.STATE} = :state " +
             "WHERE ${RiderSessionEntity.ID} = :id"
     )
