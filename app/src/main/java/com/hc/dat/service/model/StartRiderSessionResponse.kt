@@ -13,5 +13,6 @@ data class StartRiderSessionResponse(
     @SerializedName(ServiceDefinition.TO_NIGHT_TIME) val toNightTime: Double,
     @SerializedName(ServiceDefinition.AUTOMATIC_TIME) val automaticTransmissionTime: Double,
     @SerializedName(ServiceDefinition.TOTAL_AUTOMATIC_TIME) val totalAutomaticTransmissionTime: Double,
-    @SerializedName(ServiceDefinition.TIME_IN_24H) val timeIn24H: Double
+    @SerializedName(ServiceDefinition.TIME_IN_24H) val timeIn24H: Double,
+    @SerializedName(ServiceDefinition.TIME_24H_TEACHER) val time24hTeacher: Double? = null
 )

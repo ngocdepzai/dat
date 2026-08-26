@@ -1464,7 +1464,8 @@ data class RiderSessionViewModel @Inject constructor(
                                 toNightTime = startRiderSession.toNightTime,
                                 automaticTransmissionTime = startRiderSession.automaticTransmissionTime,
                                 totalAutomaticTransmissionTime = startRiderSession.totalAutomaticTransmissionTime,
-                                timeIn24H = startRiderSession.timeIn24H
+                                timeIn24H = startRiderSession.timeIn24H,
+                                time24hTeacher = startRiderSession.time24hTeacher
                             )
                             Logger.i("inProgressSession: $inProgressSession")
                             // insert new session to local db

@@ -968,6 +968,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                 inProgressSession.totalTime = (Utils.getRealTimeStamp() - startTime).toDouble() / 1000
                 viewBinding.tvTotalTime.text = DateUtil.ConvertHms(inProgressSession.totalTime)
                 viewBinding.tvTotalTimeInDay.text = inProgressSession.timeIn24H?.let { it1 -> DateUtil.ConvertHms(it1 + inProgressSession.totalTime) }
+                viewBinding.tvTotalTimeTeacherInDay.text = inProgressSession.time24hTeacher?.let { teacherTime -> DateUtil.ConvertHms(teacherTime + inProgressSession.totalTime) }
             }
         }
     }

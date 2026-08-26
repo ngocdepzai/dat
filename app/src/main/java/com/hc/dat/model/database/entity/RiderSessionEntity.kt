@@ -60,6 +60,8 @@ constructor(
     var sessionDisruptionCount: Int = 0,
     @ColumnInfo(name = TIME_IN_24H)
     var timeIn24H: Double? = null,
+    @ColumnInfo(name = TIME_24H_TEACHER)
+    var time24hTeacher: Double? = null,
     @ColumnInfo(name = LOGIN_STATUS)
     var loginStatus: String? = null
 
@@ -90,6 +92,7 @@ constructor(
         const val SESSION_DISRUPTION_COUNT = "session_disruption_count"
         const val IS_SENT_LOG_STATE = "sent_log_state"
         const val TIME_IN_24H = "time_in_24h"
+        const val TIME_24H_TEACHER = "time_24h_teacher"
         const val LOGIN_STATUS = "login_status"
     }
 
@@ -149,7 +152,8 @@ fun RiderSessionEntity.convertToModel(
         totalVerifyCounter = totalVerifyCounter,
         successVerifyCounter = successVerifyCounter,
         startTime = loginTime.toLong(),
-        timeIn24H = timeIn24H
+        timeIn24H = timeIn24H,
+        time24hTeacher = time24hTeacher
     )
 }
 
@@ -178,6 +182,7 @@ fun InProgressSession.convertToModelEntity(
         totalTime = this.totalTime,
         totalDistance = this.totalDis,
         state = state.code,
-        timeIn24H = timeIn24H
+        timeIn24H = timeIn24H,
+        time24hTeacher = time24hTeacher
     )
 }

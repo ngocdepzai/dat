@@ -42,6 +42,7 @@ data class InProgressSession(
     val automaticTransmissionTime: Double? = null,
     val totalAutomaticTransmissionTime: Double? = null,
     val timeIn24H: Double? = null,
+    val time24hTeacher: Double? = null,
     val lastAuthenTime: Date? = null,
     // use for CER function
     var localRiderSession: RiderSessionEntity? = null
