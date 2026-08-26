@@ -105,6 +105,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var nfcResultData: String? = null
     private var learningOverTimeDuration = 2L
     private var learningTimeOver10HoursDuration = 2L
+    private var teacherTimeOver10HoursDuration = 2L
     private var autoLogoutDuration = 2L
     private var sendAuthenDataDuration = TIME_FREQUENCY_SENT_DATA
     private var recognizeFaceTimeDuration = TIME_FREQUENCY_FACE_RECOGNITION
@@ -151,6 +152,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     var deviceStatusSecondCounter = 0L
     var learningOverTimeSecondCounter = 0L
     var learningTimeOver10HoursCounter = 0L
+    var teacherTimeOver10HoursCounter = 0L
     var autoLogoutCounter = 0L
     var collectFaceDetectedSecondCounter = 0L
     var recognizeUserFaceSecondCounter = 0L
@@ -195,6 +197,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         const val AUTO_LOGOUT_TIME_IN_SESSION = 3 * 60 * 60 + 55 * 60
         const val AUTO_LOGOUT_TIME_IN_DAY = 9 * 60 * 60 + 50 * 60
         const val LEARNING_TIME_OVER_IN_24H = 10 * 60 * 60
+        const val TEACHER_WARNING_TIME_IN_24H = 9 * 60 * 60 + 45 * 60
         const val WARNING_TIME_REMAINING_TO_30_MINUTES = 30 * 60
         const val WARNING_TIME_REMAINING_TO_10_MINUTES = 10 * 60
     }
@@ -353,6 +356,11 @@ class TrainingSessionScreen : DatBaseScreen() {
                             secondCounter = learningTimeOver10HoursCounter,
                             secondDuration = learningTimeOver10HoursDuration,
                         ) { checkLearningOver10HoursBlock() }
+
+                        teacherTimeOver10HoursCounter = logicBlockChecking(
+                            secondCounter = teacherTimeOver10HoursCounter,
+                            secondDuration = teacherTimeOver10HoursDuration,
+                        ) { checkTeacherOver10HoursBlock() }
 
                         autoLogoutCounter = logicBlockChecking(
                             secondCounter = autoLogoutCounter,
@@ -906,6 +914,28 @@ class TrainingSessionScreen : DatBaseScreen() {
                 learningTimeOver10HoursDuration = TIME_WARNING_OVER
             } else {
                 learningTimeOver10HoursDuration = FREQUENCY_CHECK_LEARNING_TIME
+            }
+        }
+    }
+
+    private fun checkTeacherOver10HoursBlock() {
+        teacherTimeOver10HoursDuration = FREQUENCY_CHECK_LEARNING_TIME
+        val inProgressSession = riderSessionViewModel.inProgressSession ?: return
+        // Phiên mở offline chưa gọi server nên không có time24hTeacher. Coi như 0 để đồng nhất
+        // với cách checkLearningOver10HoursBlock xử lý timeIn24H, đổi lại mốc cảnh báo khi đó
+        // chỉ tính riêng phiên hiện tại.
+        val teacherTimeIn24h =
+            inProgressSession.totalTime + (inProgressSession.time24hTeacher ?: 0.0)
+        Logger.i("teacherTimeIn24h: ${DateUtil.ConvertHms(teacherTimeIn24h)}")
+        CoroutineScope(Dispatchers.Main).launch {
+            if (teacherTimeIn24h > LEARNING_TIME_OVER_IN_24H) {
+                LogRecorder.e("Phiên học", getString(R.string.teacher_over_time_24h_error))
+                BaseNotification.showError(getString(R.string.teacher_over_time_24h_error))
+                teacherTimeOver10HoursDuration = TIME_WARNING_OVER
+            } else if (teacherTimeIn24h >= TEACHER_WARNING_TIME_IN_24H) {
+                LogRecorder.w("Phiên học", getString(R.string.teacher_over_time_24h_warning))
+                BaseNotification.showWarning(getString(R.string.teacher_over_time_24h_warning))
+                teacherTimeOver10HoursDuration = TIME_WARNING_OVER
             }
         }
     }

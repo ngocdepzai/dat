@@ -52,6 +52,8 @@
     <string name="over_time_error">Đã học %s. Phiên học vị phạm quy định không học quá 4 giờ liên tiếp!</string>
     <string name="over_time_24h_warning">Đã học %s. Cảnh báo chạy quá 10 giờ trong 24 giờ sẽ vi phạm!</string>
     <string name="over_time_24h_error">Đã học %s. Phiên học vị phạm quy định không chạy quá 10 giờ trong 24 giờ!</string>
+    <string name="teacher_over_time_24h_warning">Giảng viên chuẩn bị quá 10 tiếng trong ngày</string>
+    <string name="teacher_over_time_24h_error">Giảng viên quá 10 tiếng trong 1 ngày</string>
     <string name="connect_server_error">Kết nối máy chủ bị gián đoạn! Kiểm tra lại kết nối internet trên thiết bị.</string>
     <string name="connect_server_success">Kết nối lại máy chủ thành công.</string>
     <string name="finish_session_success">Phiên học đã kết thúc, vui lòng kiểm tra đối soát phiên. Xin cảm ơn!</string>
