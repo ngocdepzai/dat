@@ -158,7 +158,13 @@ class TrainingSessionScreen : DatBaseScreen() {
     var trackingLastAuthenDataCounter = 0L
     var updateSearchThresholdCounter = 0L
     var trackingGPSCounter = 0L
-    var sendAuthenDataCounter = 0L
+    // Mốc gửi dữ liệu xác thực kế tiếp, tính bằng epoch millisecond.
+    // Dùng mốc đồng hồ thực thay cho bộ đếm vòng lặp cũ vì mỗi vòng của
+    // startTimeCounter() dài hơn 1000ms, đếm vòng sẽ làm chu kỳ 5 phút trôi dần.
+    @Volatile
+    private var nextSendAuthenDataTime = 0L
+    @Volatile
+    private var sendAuthenDataJob: Job? = null
 
     companion object {
         const val TIME_FREQUENCY_FACE_RECOGNITION: Long = 3 * 60L
@@ -206,6 +212,79 @@ class TrainingSessionScreen : DatBaseScreen() {
         connectivityManager!!.registerDefaultNetworkCallback(networkCallback)
     }
 
+    /**
+     * Neo mốc gửi dữ liệu xác thực kế tiếp về [delaySeconds] giây kể từ hiện tại,
+     * rồi khởi động lại bộ định thời để nó ngủ theo mốc mới.
+     *
+     * Chỉ dùng cho ba mốc neo theo sự kiện đã có sẵn: lần gửi đầu phiên, tiếp tục
+     * phiên, và ép gửi ngay khi ảnh nhận dạng về trễ. Nhịp 5 phút định kỳ do
+     * [startSendAuthenDataScheduler] tự cộng dồn, không đi qua hàm này.
+     *
+     * Không được gọi từ bên trong [sendAuthenDataJob] vì hàm này huỷ chính job đó.
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun scheduleNextSendAuthenData(delaySeconds: Long) {
+        sendAuthenDataDuration = delaySeconds
+        // Cắt phần lẻ mili giây để mọi mốc rơi đúng đầu giây. Nếu để phần lẻ ngẫu
+        // nhiên, mốc có thể nằm sát ranh giới giây (vd .995) và chỉ vài ms đánh thức
+        // coroutine cũng đủ đẩy giây ghi nhận sang +1.
+        nextSendAuthenDataTime =
+            (Calendar.getInstance().timeInMillis / 1000 + delaySeconds) * 1000
+        startSendAuthenDataScheduler()
+    }
+
+    /**
+     * Bộ định thời riêng cho việc gửi dữ liệu xác thực: ngủ thẳng tới mốc kế tiếp
+     * rồi bắn, thay vì dò mỗi giây bên trong [startTimeCounter].
+     *
+     * Vòng lặp [startTimeCounter] chỉ kiểm tra một lần mỗi vòng, mà mỗi vòng luôn
+     * dài hơn 1000ms, nên mốc có thể bị phát hiện muộn tới cả giây — giờ ghi nhận
+     * vì thế lệch 1 giây so với chu kỳ. Ngủ thẳng tới mốc thì độ trễ chỉ còn thời
+     * gian đánh thức coroutine.
+     *
+     * Mốc kế tiếp cộng dồn từ mốc cũ nên sai số không tích lũy qua các chu kỳ:
+     * bắn lần đầu lúc 10:35:12 thì lần sau đúng 10:40:12.
+     */
+    @Synchronized
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun startSendAuthenDataScheduler() {
+        sendAuthenDataJob?.cancel()
+        sendAuthenDataJob = CoroutineScope(Dispatchers.Default).launch(
+            CoroutineExceptionHandler { _, _ ->
+                Logger.w("Error in sendAuthenDataScheduler!")
+                startSendAuthenDataScheduler()
+            }
+        ) {
+            while (isActive) {
+                val currentTimeMillis = Calendar.getInstance().timeInMillis
+                // Mốc bằng 0 nghĩa là chưa neo (khởi động lần đầu, hoặc vừa bị
+                // resetTimeCounter() xoá) -> neo theo chu kỳ hiện hành.
+                if (nextSendAuthenDataTime == 0L) {
+                    nextSendAuthenDataTime =
+                        (currentTimeMillis / 1000 + sendAuthenDataDuration) * 1000
+                }
+                val waitMillis = nextSendAuthenDataTime - currentTimeMillis
+                if (waitMillis > 0) {
+                    delay(waitMillis)
+                    // Đọc lại mốc thay vì bắn ngay sau khi ngủ dậy: mốc có thể đã
+                    // bị neo lại trong lúc đang ngủ.
+                    continue
+                }
+
+                nextSendAuthenDataTime += TIME_FREQUENCY_SENT_DATA * 1000
+                // Trễ quá một chu kỳ (máy ngủ, tiến trình bị treo) thì neo lại từ
+                // hiện tại để không bắn dồn nhiều lần cho các mốc đã lỡ.
+                if (nextSendAuthenDataTime <= currentTimeMillis) {
+                    nextSendAuthenDataTime = currentTimeMillis + TIME_FREQUENCY_SENT_DATA * 1000
+                }
+                // Giữ đúng điều kiện của vị trí cũ: chỉ gửi khi phiên đang chạy
+                if (riderSessionViewModel.inProgressSession != null) {
+                    sendDataAuthenBlock()
+                }
+            }
+        }
+    }
+
     private fun logicBlockChecking(secondCounter: Long, secondDuration: Long, block: () -> Unit): Long {
         if (secondCounter >= secondDuration) {
             block()
@@ -217,6 +296,10 @@ class TrainingSessionScreen : DatBaseScreen() {
     private fun startTimeCounter() {
         Logger.d("startTimeCounter")
         timeCounterThread?.interrupt()
+        // Gắn vòng đời bộ định thời gửi dữ liệu vào đúng vòng đời timeCounterThread:
+        // mọi đường resume đều đi qua đây, và pauseHandleProcess() huỷ cả hai.
+        // Mốc nextSendAuthenDataTime là field nên khởi động lại không làm dịch lưới.
+        startSendAuthenDataScheduler()
         timeCounterThread = Thread {
             try {
                 while (timeCounterThread?.isAlive == true || timeCounterThread?.isInterrupted == false) {
@@ -230,7 +313,7 @@ class TrainingSessionScreen : DatBaseScreen() {
                         recognizeFirstTime = false
                         recognizeFaceTimeDuration = 4 // second
                         // delay 20s for face recognition can be detect
-                        sendAuthenDataDuration = 20 // second
+                        scheduleNextSendAuthenData(20) // second
                         // time to calculate data validation time
                         timeSendAuthData = sendAuthenDataDuration
                         timeStartRecognition = Calendar.getInstance().timeInMillis / 1000
@@ -282,11 +365,10 @@ class TrainingSessionScreen : DatBaseScreen() {
                             secondDuration = recognizeFaceTimeDuration,
                         ) { recognizeUserFaceBlock() }
 
-                        // send user authentication logic block
-                        sendAuthenDataCounter = logicBlockChecking(
-                            secondCounter = sendAuthenDataCounter,
-                            secondDuration = sendAuthenDataDuration,
-                        ) { sendDataAuthenBlock() }
+                        // Việc gửi dữ liệu xác thực không nằm trong vòng lặp này nữa:
+                        // nó chạy bằng startSendAuthenDataScheduler() để không chịu
+                        // độ trễ tick.
+
                         // Check learning time over logic block
                         trackingLastImageRecognizedCounter = logicBlockChecking(
                             secondCounter = trackingLastImageRecognizedCounter,
@@ -1525,6 +1607,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         faceRecognitionViewModel.stopRecognition()
         isThreadRunningJob?.cancel(cause = CancellationException("Cancel by pause process!"))
         timeCounterThread?.interrupt()
+        sendAuthenDataJob?.cancel(cause = CancellationException("Cancel by pause process!"))
         recognitionJob?.cancel()
         cameraPreviewDevice.stopCameraPreview()
     }
@@ -2728,8 +2811,10 @@ class TrainingSessionScreen : DatBaseScreen() {
                 ) {
                     riderSessionViewModel.continueInProgressSession(inProgressSession)
                     resetTimeCounter()
-                    sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
-                        timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                    scheduleNextSendAuthenData(
+                        riderSessionViewModel.calculateAuthenticationPeriod(
+                            timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                        )
                     )
                     // time to calculate data validation time
                     timeSendAuthData = sendAuthenDataDuration
@@ -2757,7 +2842,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     }
     private fun resetTimeCounter(){
         // reset flag
-        sendAuthenDataCounter = 0L
+        nextSendAuthenDataTime = 0L
         recognizeUserFaceSecondCounter = 0L
         recognizeFaceTimeDuration = 4 // second
     }
@@ -2864,7 +2949,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         if (timeStartRecognition != 0L && timeSendAuthData != 0L) {
             val currentTime = Calendar.getInstance().timeInMillis / 1000
             if (currentTime - timeStartRecognition >= timeSendAuthData) {
-                sendAuthenDataDuration = 0
+                scheduleNextSendAuthenData(0)
             }
             // reset flag
             timeStartRecognition = 0
@@ -3074,8 +3159,10 @@ class TrainingSessionScreen : DatBaseScreen() {
                 openCamera()
                 CoroutineScope(Dispatchers.Default).launch{
                     resetTimeCounter()
-                    sendAuthenDataDuration = riderSessionViewModel.calculateAuthenticationPeriod(
-                        timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                    scheduleNextSendAuthenData(
+                        riderSessionViewModel.calculateAuthenticationPeriod(
+                            timeFrequencySentData = TIME_FREQUENCY_SENT_DATA,
+                        )
                     )
                 }
             }
