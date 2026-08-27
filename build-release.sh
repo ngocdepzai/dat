@@ -15,6 +15,26 @@ if [ ! -x "$JAVA17_HOME/bin/java" ]; then
   exit 1
 fi
 
+# AGP 7.3.1 (ide.common.resources.NodeUtils) crash khi merge resources trên openjdk@17
+# bản mới (17.0.20): "Cannot invoke org.w3c.dom.Node.getLocalName() because node is null".
+# JDK 21 của Android Studio (JBR) không dính lỗi này, nên merge resources chạy bằng JBR 21
+# trước, rồi assembleRelease chạy bằng JDK 17 (kapt Kotlin 1.5.31 cần JDK 17)
+# và dùng lại kết quả merge đã up-to-date.
+JBR_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+
+stop_daemons() {
+  # Kotlin daemon giữ nguyên JVM đã khởi động; nếu còn daemon của JDK 21 thì kapt sẽ
+  # "Internal compiler error" ở lần chạy JDK 17 kế tiếp.
+  ./gradlew --stop >/dev/null 2>&1 || true
+  pkill -f KotlinCompileDaemon >/dev/null 2>&1 || true
+}
+
+run_with_jdk() {
+  local jdk_home="$1"
+  shift
+  JAVA_HOME="$jdk_home" PATH="$jdk_home/bin:$PATH" ./gradlew "$@"
+}
+
 export JAVA_HOME="$JAVA17_HOME"
 export PATH="$JAVA_HOME/bin:$PATH"
 
@@ -22,7 +42,18 @@ echo "Java: $(java -version 2>&1 | head -1)"
 echo "Bắt đầu build release..."
 echo
 
-./gradlew clean assembleRelease
+run_with_jdk "$JAVA17_HOME" clean
+
+if [ -x "$JBR_HOME/bin/java" ]; then
+  echo "Merge resources bằng JBR: $("$JBR_HOME/bin/java" -version 2>&1 | head -1)"
+  stop_daemons
+  run_with_jdk "$JBR_HOME" mergeReleaseResources
+  stop_daemons
+else
+  echo "Không tìm thấy JBR tại $JBR_HOME, thử merge resources bằng JDK 17"
+fi
+
+run_with_jdk "$JAVA17_HOME" assembleRelease
 
 APK_PATH="app/build/outputs/apk/release/app-release.apk"
 if [ ! -f "$APK_PATH" ]; then
