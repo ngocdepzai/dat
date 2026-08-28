@@ -56,6 +56,10 @@ data class RiderSessionViewModel @Inject constructor(
     var studentAuthInfo: UserEntity? = null
     var sessionVerificationInfo: SessionVerificationInfo = SessionVerificationInfo()
     var inProgressSession: InProgressSession? = null
+    // Giữ ở ViewModel để trạng thái đã thông báo tiếp tục phiên sống cùng inProgressSession:
+    // fragment bị tạo lại thì vẫn không thông báo lại lần nữa.
+    var continueSessionNotifiedId: String? = null
+    var continueSessionNotifiedAt = 0L
     private var localRiderSession: RiderSessionEntity? = null
     private var fetchSessionJob: Job? = null
     private var recoverUploadInProgress = false

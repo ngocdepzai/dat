@@ -212,6 +212,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         const val BLINK_SESSION_CYCLE_SECONDS = 4
         const val WARNING_TIME_REMAINING_TO_30_MINUTES = 30 * 60
         const val WARNING_TIME_REMAINING_TO_10_MINUTES = 10 * 60
+        const val CONTINUE_SESSION_NOTIFY_MIN_INTERVAL = 60 * 1000L // mili giây
     }
 
     init {
@@ -2907,16 +2908,9 @@ class TrainingSessionScreen : DatBaseScreen() {
                 }
                 LogRecorder.i("Tiếp tục phiên học", inProgressSession.toString())
                 if (checkSessionInterrupt()) {
-                    BaseNotification.showMessage(
-                        getString(
-                            R.string.continue_session_success,
-                            riderSessionViewModel.teacherAuthInfo?.fullName,
-                            appViewModel.getPlateSlug(),
-                            studentAuthInfo?.fullName,
-                            studentAuthInfo?.courseLicense
-                        ),
-                        showToast = false
-                    )
+                    // Dùng id của tham số vì riderSessionViewModel.inProgressSession còn
+                    // đang được gán trong coroutine ở trên.
+                    notifyContinueSession(inProgressSession.id)
                 }
             }
         }
@@ -3252,17 +3246,8 @@ class TrainingSessionScreen : DatBaseScreen() {
             // Không có phiên đang chạy thì không được thông báo tiếp tục phiên:
             // checkSessionInterrupt() trả true trong trường hợp đó vì thời gian gián đoạn
             // tính ra 0 khi chưa có bản ghi phiên nào.
-            if (riderSessionViewModel.inProgressSession != null && isSessionInterrupt) {
-                BaseNotification.showMessage(
-                    getString(
-                        R.string.continue_session_success,
-                        riderSessionViewModel.teacherAuthInfo?.fullName,
-                        appViewModel.getPlateSlug(),
-                        studentAuthInfo?.fullName,
-                        studentAuthInfo?.courseLicense
-                    ),
-                    showToast = false
-                )
+            riderSessionViewModel.inProgressSession?.also { inProgressSession ->
+                if (isSessionInterrupt) notifyContinueSession(inProgressSession.id)
             }
         } else {
             // NẾU VẪN CÒN VI PHẠM
@@ -3276,6 +3261,29 @@ class TrainingSessionScreen : DatBaseScreen() {
             }
             return // THOÁT KHÔNG CHO CHẠY TIẾP CÁC LOGIC DƯỚI
         }
+    }
+
+    // Một lần tiếp tục phiên được thông báo ở hai nơi: luồng auto-continue lúc mở app và
+    // onResume. Lúc mở app còn có thêm nhịp pause/resume do dialog xin quyền USB camera
+    // hoặc quyền bộ nhớ, nên phải chặn phát lại cho cùng phiên trong khoảng ngắn.
+    private fun notifyContinueSession(sessionId: String) {
+        val now = Utils.getRealTimeStamp()
+        if (sessionId == riderSessionViewModel.continueSessionNotifiedId &&
+            now - riderSessionViewModel.continueSessionNotifiedAt < CONTINUE_SESSION_NOTIFY_MIN_INTERVAL
+        ) return
+
+        riderSessionViewModel.continueSessionNotifiedId = sessionId
+        riderSessionViewModel.continueSessionNotifiedAt = now
+        BaseNotification.showMessage(
+            getString(
+                R.string.continue_session_success,
+                riderSessionViewModel.teacherAuthInfo?.fullName,
+                appViewModel.getPlateSlug(),
+                studentAuthInfo?.fullName,
+                studentAuthInfo?.courseLicense
+            ),
+            showToast = false
+        )
     }
 
     private fun checkSessionInterrupt(): Boolean {
