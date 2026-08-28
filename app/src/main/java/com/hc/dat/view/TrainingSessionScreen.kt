@@ -125,6 +125,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var timeSendAuthData: Long = 0
     private var adminLogoutRequestCount: Int = 0
     private var blinkTimeInDayCounter: Int = 0
+    private var blinkSessionTimeCounter: Int = 0
     // 1. Khai báo Callback ở cấp class
     private var connectivityManager: ConnectivityManager? = null
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
@@ -204,8 +205,11 @@ class TrainingSessionScreen : DatBaseScreen() {
         const val LEARNING_TIME_OVER_IN_24H = 10 * 60 * 60
         const val TEACHER_WARNING_TIME_IN_24H = 9 * 60 * 60 + 45 * 60
         const val BLINK_WARNING_TIME_IN_24H = 9 * 60 * 60 + 45 * 60
-        const val BLINK_RED_SECONDS = 2
-        const val BLINK_CYCLE_SECONDS = 3
+        const val BLINK_IN_24H_RED_SECONDS = 2
+        const val BLINK_IN_24H_CYCLE_SECONDS = 3
+        const val BLINK_WARNING_TIME_IN_SESSION = 3 * 60 * 60 + 45 * 60
+        const val BLINK_SESSION_RED_SECONDS = 3
+        const val BLINK_SESSION_CYCLE_SECONDS = 4
         const val WARNING_TIME_REMAINING_TO_30_MINUTES = 30 * 60
         const val WARNING_TIME_REMAINING_TO_10_MINUTES = 10 * 60
     }
@@ -1019,16 +1023,32 @@ class TrainingSessionScreen : DatBaseScreen() {
                 viewBinding.tvTotalTimeTeacherInDay.text = teacherTimeIn24h?.let { DateUtil.ConvertHms(it) }
 
                 // Khối này chạy mỗi giây nên dùng luôn nó làm nhịp nhấp nháy, không cần timer riêng.
-                blinkTimeInDayCounter = (blinkTimeInDayCounter + 1) % BLINK_CYCLE_SECONDS
-                val showRed = blinkTimeInDayCounter < BLINK_RED_SECONDS
-                applyTimeInDayColor(viewBinding.tvTotalTimeInDay, studentTimeIn24h, showRed)
-                applyTimeInDayColor(viewBinding.tvTotalTimeTeacherInDay, teacherTimeIn24h, showRed)
+                // Ô 24h và ô giờ phiên có nhịp khác nhau nên đếm riêng.
+                blinkTimeInDayCounter = (blinkTimeInDayCounter + 1) % BLINK_IN_24H_CYCLE_SECONDS
+                val showRedIn24h = blinkTimeInDayCounter < BLINK_IN_24H_RED_SECONDS
+                applyBlinkColor(
+                    viewBinding.tvTotalTimeInDay, studentTimeIn24h, BLINK_WARNING_TIME_IN_24H, showRedIn24h
+                )
+                applyBlinkColor(
+                    viewBinding.tvTotalTimeTeacherInDay, teacherTimeIn24h, BLINK_WARNING_TIME_IN_24H, showRedIn24h
+                )
+
+                blinkSessionTimeCounter = (blinkSessionTimeCounter + 1) % BLINK_SESSION_CYCLE_SECONDS
+                val showRedSession = blinkSessionTimeCounter < BLINK_SESSION_RED_SECONDS
+                applyBlinkColor(
+                    viewBinding.tvTotalTime, inProgressSession.totalTime, BLINK_WARNING_TIME_IN_SESSION, showRedSession
+                )
             }
         }
     }
 
-    private fun applyTimeInDayColor(textView: TextView, timeIn24h: Double?, showRed: Boolean) {
-        val isOverWarningTime = timeIn24h != null && timeIn24h > BLINK_WARNING_TIME_IN_24H
+    private fun applyBlinkColor(
+        textView: TextView,
+        time: Double?,
+        warningTime: Int,
+        showRed: Boolean
+    ) {
+        val isOverWarningTime = time != null && time > warningTime
         val normalColor = if (viewBinding.nightMode == true) Color.BLACK else Color.WHITE
         textView.setTextColor(if (isOverWarningTime && showRed) Color.RED else normalColor)
     }
@@ -3227,9 +3247,12 @@ class TrainingSessionScreen : DatBaseScreen() {
                     )
                 }
             }
-            checkSessionInterrupt()
+           val isSessionInterrupt = checkSessionInterrupt()
 
-            if (checkSessionInterrupt()) {
+            // Không có phiên đang chạy thì không được thông báo tiếp tục phiên:
+            // checkSessionInterrupt() trả true trong trường hợp đó vì thời gian gián đoạn
+            // tính ra 0 khi chưa có bản ghi phiên nào.
+            if (riderSessionViewModel.inProgressSession != null && isSessionInterrupt) {
                 BaseNotification.showMessage(
                     getString(
                         R.string.continue_session_success,
