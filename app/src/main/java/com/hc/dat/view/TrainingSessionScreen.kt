@@ -22,6 +22,7 @@ import android.provider.Settings
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
 import android.view.*
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.core.os.bundleOf
@@ -123,6 +124,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var timeStartRecognition: Long = 0
     private var timeSendAuthData: Long = 0
     private var adminLogoutRequestCount: Int = 0
+    private var blinkTimeInDayCounter: Int = 0
     // 1. Khai báo Callback ở cấp class
     private var connectivityManager: ConnectivityManager? = null
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
@@ -201,6 +203,9 @@ class TrainingSessionScreen : DatBaseScreen() {
         const val AUTO_LOGOUT_TEACHER_BASE_TIME = 9 * 60 * 60
         const val LEARNING_TIME_OVER_IN_24H = 10 * 60 * 60
         const val TEACHER_WARNING_TIME_IN_24H = 9 * 60 * 60 + 45 * 60
+        const val BLINK_WARNING_TIME_IN_24H = 9 * 60 * 60 + 45 * 60
+        const val BLINK_RED_SECONDS = 2
+        const val BLINK_CYCLE_SECONDS = 3
         const val WARNING_TIME_REMAINING_TO_30_MINUTES = 30 * 60
         const val WARNING_TIME_REMAINING_TO_10_MINUTES = 10 * 60
     }
@@ -1008,10 +1013,24 @@ class TrainingSessionScreen : DatBaseScreen() {
                 //convert to seconds
                 inProgressSession.totalTime = (Utils.getRealTimeStamp() - startTime).toDouble() / 1000
                 viewBinding.tvTotalTime.text = DateUtil.ConvertHms(inProgressSession.totalTime)
-                viewBinding.tvTotalTimeInDay.text = inProgressSession.timeIn24H?.let { it1 -> DateUtil.ConvertHms(it1 + inProgressSession.totalTime) }
-                viewBinding.tvTotalTimeTeacherInDay.text = inProgressSession.time24hTeacher?.let { teacherTime -> DateUtil.ConvertHms(teacherTime + inProgressSession.totalTime) }
+                val studentTimeIn24h = inProgressSession.timeIn24H?.plus(inProgressSession.totalTime)
+                val teacherTimeIn24h = inProgressSession.time24hTeacher?.plus(inProgressSession.totalTime)
+                viewBinding.tvTotalTimeInDay.text = studentTimeIn24h?.let { DateUtil.ConvertHms(it) }
+                viewBinding.tvTotalTimeTeacherInDay.text = teacherTimeIn24h?.let { DateUtil.ConvertHms(it) }
+
+                // Khối này chạy mỗi giây nên dùng luôn nó làm nhịp nhấp nháy, không cần timer riêng.
+                blinkTimeInDayCounter = (blinkTimeInDayCounter + 1) % BLINK_CYCLE_SECONDS
+                val showRed = blinkTimeInDayCounter < BLINK_RED_SECONDS
+                applyTimeInDayColor(viewBinding.tvTotalTimeInDay, studentTimeIn24h, showRed)
+                applyTimeInDayColor(viewBinding.tvTotalTimeTeacherInDay, teacherTimeIn24h, showRed)
             }
         }
+    }
+
+    private fun applyTimeInDayColor(textView: TextView, timeIn24h: Double?, showRed: Boolean) {
+        val isOverWarningTime = timeIn24h != null && timeIn24h > BLINK_WARNING_TIME_IN_24H
+        val normalColor = if (viewBinding.nightMode == true) Color.BLACK else Color.WHITE
+        textView.setTextColor(if (isOverWarningTime && showRed) Color.RED else normalColor)
     }
 
     private fun deviceStatusCheckingBlock() {
