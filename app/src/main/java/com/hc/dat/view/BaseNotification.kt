@@ -3,11 +3,12 @@ package com.hc.dat.view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.lws.type.Logger
@@ -23,13 +24,11 @@ enum class Priority {
 internal object BaseNotification {
     private var textToSpeech: TextToSpeech? = null
     private var context: Context? = null
-    private var toastMessage: Toast? = null
-    private var messageText: TextView? = null
-    private var messageView: LinearLayout? = null
     private val priorityQueues: Deque<String> = LinkedList()
     private val speechCallbacks: MutableMap<String, () -> Unit> = mutableMapOf()
     private val speechDoneListeners: MutableList<() -> Unit> = mutableListOf()
     private var isTtsReady = false
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val pendingSpeakActions: MutableList<() -> Unit> = mutableListOf()
 
     fun init(context: Context) {
@@ -64,16 +63,6 @@ internal object BaseNotification {
             Logger.i("Current locale: $locale")
         }
         textToSpeech?.setSpeechRate(0.8F)
-
-        toastMessage = Toast(BaseNotification.context)
-        val layout = LayoutInflater.from(BaseNotification.context)
-            .inflate(R.layout.custom_toast, null, false)
-        messageText = layout.findViewById<View>(R.id.toast_text) as TextView
-        messageView = layout.findViewById<View>(R.id.toast_type) as LinearLayout
-        messageText!!.text = ""
-        messageView!!.setBackgroundResource(R.drawable.success_shape)
-        toastMessage!!.duration = Toast.LENGTH_LONG
-        toastMessage!!.view = layout
     }
 
     fun showMessage(
@@ -88,10 +77,7 @@ internal object BaseNotification {
             handleNotifyQueue(message = message, priority = priority)
         }
         if (showToast) {
-            messageText!!.text = message
-            messageView!!.setBackgroundResource(R.drawable.success_shape)
-            toastMessage!!.duration = duration
-            toastMessage!!.show()
+            showStyledToast(message, R.drawable.success_shape, duration)
         }
     }
 
@@ -108,10 +94,7 @@ internal object BaseNotification {
         }
 
         if (showToast) {
-            messageText!!.text = message
-            messageView!!.setBackgroundResource(R.drawable.warning_shape)
-            toastMessage!!.duration = duration
-            toastMessage!!.show()
+            showStyledToast(message, R.drawable.warning_shape, duration)
         }
     }
 
@@ -128,10 +111,26 @@ internal object BaseNotification {
         }
 
         if (showToast) {
-            messageText!!.text = message
-            messageView!!.setBackgroundResource(R.drawable.error_shape)
-            toastMessage!!.duration = duration
-            toastMessage!!.show()
+            showStyledToast(message, R.drawable.error_shape, duration)
+        }
+    }
+
+    // Mỗi thông báo phải có Toast và view riêng: dùng lại một Toast duy nhất khiến thông báo
+    // sau ghi đè text của thông báo trước trong cùng cửa sổ hiển thị, nên có message chỉ được
+    // TTS đọc mà không bao giờ hiện chữ. Toast riêng thì hệ thống xếp hàng hiển thị lần lượt.
+    private fun showStyledToast(message: String, backgroundRes: Int, duration: Int) {
+        val currentContext = context ?: return
+        // Toast lấy Handler theo thread gọi, mà nhiều nơi báo lỗi từ thread nền, nên luôn
+        // dựng Toast trên main thread.
+        mainHandler.post {
+            val layout = LayoutInflater.from(currentContext)
+                .inflate(R.layout.custom_toast, null, false)
+            (layout.findViewById<View>(R.id.toast_text) as TextView).text = message
+            layout.findViewById<View>(R.id.toast_type).setBackgroundResource(backgroundRes)
+            Toast(currentContext).apply {
+                this.duration = duration
+                this.view = layout
+            }.show()
         }
     }
 
