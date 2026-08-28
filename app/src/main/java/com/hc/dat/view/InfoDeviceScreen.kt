@@ -56,7 +56,7 @@ class InfoDeviceScreen : DatBaseScreen() {
         CoroutineScope(Dispatchers.Main).launch {
             val autoLogoutTime = riderSessionViewModel.getAutoLogoutTime()
             viewBinding.skAutoLogoutTime.progress = autoLogoutTime
-            viewBinding.tvAutoLogoutTime.text = "Thời gian tự động đăng xuất quá 10 tếng: 9h${viewBinding.skAutoLogoutTime.progress + 50}p"
+            viewBinding.tvAutoLogoutTime.text = "Thời gian tự động đăng xuất HV quá 10 giờ: 9h${viewBinding.skAutoLogoutTime.progress + 50}p"
             viewBinding.swtchAutoLogoutTeacher.isChecked =
                 riderSessionViewModel.getAutoLogoutTeacherOver10HoursEnabled()
             val autoLogoutTeacherMinute = riderSessionViewModel.getAutoLogoutTeacherMinute()
@@ -128,7 +128,7 @@ class InfoDeviceScreen : DatBaseScreen() {
         viewBinding.skAutoLogoutTime.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 viewBinding.tvAutoLogoutTime.text =
-                    "Thời gian tự động đăng xuất quá 10 tếng: 9h${progress + 50}p"
+                    "Thời gian tự động đăng xuất HV quá 10 giờ: 9h${progress + 50}p"
 
             }
 
@@ -144,9 +144,7 @@ class InfoDeviceScreen : DatBaseScreen() {
     private fun updateView(){
         val deviceInfo = getDeviceInfo(requireActivity())
         viewBinding.tvSeri.text = deviceInfo.seri
-        viewBinding.tvSerialDevice.text = " :${deviceInfo.seri}"
         viewBinding.tvImei1.text = " :${deviceInfo.imei1}"
-        viewBinding.tvImei2.text = " :${deviceInfo.imei2}"
         viewBinding.tvSerialSIM.text = " :${deviceInfo.simReal}"
         viewBinding.tvVersionApp.text = " :${deviceInfo.versionAppDat}"
     }
