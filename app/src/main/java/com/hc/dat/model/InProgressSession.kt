@@ -1,6 +1,8 @@
 package com.hc.dat.model
 
+import com.google.gson.annotations.SerializedName
 import com.hc.dat.model.database.entity.RiderSessionEntity
+import com.hc.dat.service.ServiceDefinition
 import com.hc.dat.utils.Utils
 import java.util.Date
 
@@ -42,6 +44,13 @@ data class InProgressSession(
     val automaticTransmissionTime: Double? = null,
     val totalAutomaticTransmissionTime: Double? = null,
     val timeIn24H: Double? = null,
+    // Hai endpoint đặt tên khác nhau cho cùng một giá trị: check-user-in-session trả
+    // "timeIn24hTeacher", còn start-rider-session trả "time24hTeacher". Khai báo cả hai để
+    // Gson nhận được dù gọi từ đường nào.
+    @SerializedName(
+        value = ServiceDefinition.TIME_IN_24H_TEACHER,
+        alternate = [ServiceDefinition.TIME_24H_TEACHER]
+    )
     val time24hTeacher: Double? = null,
     val lastAuthenTime: Date? = null,
     // use for CER function

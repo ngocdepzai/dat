@@ -82,6 +82,7 @@ object ServiceDefinition {
     const val TOTAL_AUTOMATIC_TIME = "totalAutomaticTransmissionTime"
     const val TIME_IN_24H = "timeIn24H"
     const val TIME_24H_TEACHER = "time24hTeacher"
+    const val TIME_IN_24H_TEACHER = "timeIn24hTeacher"
     const val STUDENT_CODE = "studentCode"
     const val DATE_TIME_LOG = "dateTimeLog"
     const val OFFLINE_START_SESSION = "offlineStartSession"
