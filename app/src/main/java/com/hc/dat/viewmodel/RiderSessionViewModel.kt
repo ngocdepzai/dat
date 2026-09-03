@@ -1757,6 +1757,9 @@ data class RiderSessionViewModel @Inject constructor(
                         )
                     }
                 } else {
+                    // Server không trả về hai bộ đếm xác thực, nên phải đếm lại từ dữ liệu đã lưu
+                    // trong máy trước khi trả về, nếu không mỗi lần tắt/bật lại app bộ đếm sẽ về 0.
+                    resResult.data?.inProgressSession?.also { restoreVerifyCounterFromLocal(it) }
                     CoroutineScope(Dispatchers.Main).launch {
                         if (resResult.data?.inProgressSession != null) {
                             val serialInSession = resResult.data.inProgressSession.seri
@@ -1788,6 +1791,30 @@ data class RiderSessionViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Đếm lại số lần xác thực (tổng / thành công) của phiên đang chạy từ dữ liệu lưu trong máy và
+     * gắn bản ghi phiên local tương ứng vào [inProgressSession].
+     *
+     * Hai bộ đếm này chỉ tồn tại trong bộ nhớ và không nằm trong dữ liệu server trả về, nên nếu
+     * không khôi phục thì sau khi tắt/bật lại app màn hình phiên học sẽ hiển thị 0 lần xác thực.
+     * Không làm gì nếu chưa có bản ghi phiên trong máy.
+     *
+     * Truy vấn Room chạy đồng bộ nên hàm này chỉ được gọi ngoài main thread.
+     */
+    private fun restoreVerifyCounterFromLocal(inProgressSession: InProgressSession) {
+        val localSession = repository.getRiderSessionBySessionId(inProgressSession.id) ?: return
+        val listAuthen = repository.getListAuthenDataByLocalSessionId(localSession.id)
+        inProgressSession.totalVerifyCounter = listAuthen.size
+        inProgressSession.successVerifyCounter = listAuthen.count { studentAuth ->
+            studentAuth.recognitionResult == VerifyResult.VERIFY_SUCCESS.code
+        }
+        inProgressSession.localRiderSession = localSession
+        Logger.i(
+            "restoreVerifyCounterFromLocal totalVerifyCounter: ${inProgressSession.totalVerifyCounter}" +
+                " | successVerifyCounter: ${inProgressSession.successVerifyCounter}"
+        )
     }
 
     fun getInProgressSessionByTeacher(
