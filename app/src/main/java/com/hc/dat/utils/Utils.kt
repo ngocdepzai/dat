@@ -337,6 +337,14 @@ fun getDeviceInfo(context: Context): UploadDeviceInfoRequest {
      * trực tiếp, phải dựng khung của từng ngày rồi lấy phần giao. Quét từ ngày trước ngày
      * bắt đầu vì khung mở từ tối hôm trước có thể phủ sang sáng hôm sau.
      *
+     * Hai mốc truyền vào phải là **giờ thật** (getRealTimeStamp), không phải bản đã cộng
+     * 25200 để gửi server: cộng lệch thì thời lượng vẫn đúng nhưng vị trí trên trục ngày bị
+     * dịch 7 tiếng, phiên 19h sẽ bị coi là 2h sáng hôm sau.
+     *
+     * Khung giờ đêm được dựng theo múi giờ của máy. Điều này an toàn vì app từ chối chạy khi
+     * máy không ở GMT+7 hoặc đồng hồ lệch server quá 5 phút (xem checkDeviceDateTime trong
+     * ApplicationViewModel), nên khi hàm này chạy thì múi giờ máy chắc chắn là giờ Việt Nam.
+     *
      * @param startMillis mốc bắt đầu, epoch milli
      * @param endMillis mốc kết thúc, epoch milli; nhỏ hơn hoặc bằng startMillis thì trả 0
      * @param fromHour giờ bắt đầu khung đêm trong ngày, nhận cả giờ lẻ như 18.5 = 18h30

@@ -68,6 +68,26 @@ tay — số tính tay đã sai một lần khi tôi đếm nhầm số khung tr
 khung không vắt 1h–5h, hai ca khung giờ lẻ 18.5 và 5.5, treo 3 / 7 / 30 ngày, qua tháng, qua
 năm. Thêm 6 ca `isInNightWindow` gồm cả hai biên đầu và cuối khung, và ca `from == to`.
 
+## Múi giờ và mốc thời gian
+
+Có hai loại mốc thời gian trong app, dùng lẫn là sai 7 tiếng:
+
+- `Utils.getTimeStamp()` = giờ thật **+ 25200**. Đây là **quy ước gửi lên server**, không phải
+  bù múi giờ cho máy: server đọc mốc như UTC rồi hiển thị nguyên nên client cộng sẵn 7 tiếng.
+  Chỉ dùng ở chỗ gửi `loginTime` / `logoutTime` cho API.
+- `Utils.getRealTimeStamp()` = giờ thật. Dùng cho mọi phép tính trong máy, **bắt buộc** dùng
+  cho giờ đêm: nếu dùng bản cộng lệch thì thời lượng vẫn đúng nhưng vị trí trên trục ngày bị
+  dịch 7 tiếng, phiên 19h bị coi là 2h sáng hôm sau nên rơi sai phía trong khung đêm.
+
+Khung đêm dựng theo múi giờ máy. An toàn vì app **từ chối chạy** khi máy không ở GMT+7
+(`Asia/Ho_Chi_Minh` hoặc `Asia/Saigon`) hoặc đồng hồ lệch server quá 5 phút — xem phần kiểm
+tra giờ thiết bị trong `ApplicationViewModel`, sai thì báo `CHECK_DEVICE_DATE_TIME_FAIL` và
+không cho vào. Vì thế không hardcode GMT+7 trong hàm tính: làm vậy là nhân đôi chỗ quy định
+múi giờ, mà chính sách đó đã có chủ ở màn khởi động.
+
+Lưu ý ngược lại: trong máy, `logoutTime` của bảng phiên **có** lưu giá trị đã cộng lệch, để
+phần gửi lại dùng trực tiếp. Đừng đem trường đó đi tính toán cục bộ.
+
 ## Vì sao ngưỡng lưu shared-pref chứ không lưu Room
 
 Hai chỗ đều thiếu dữ liệu nếu chỉ dựa vào nguồn có sẵn:
