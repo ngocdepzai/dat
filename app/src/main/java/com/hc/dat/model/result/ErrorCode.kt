@@ -6,7 +6,6 @@ object ErrorCode {
      * Outside range used for other module
      */
     const val NO_ERROR = 0
-    const val SUCCESS_WITH_ERROR = 0
     const val UNKNOWN = 99
 
     const val REGISTER_FAILED = 1
@@ -19,4 +18,12 @@ object ErrorCode {
     const val DELIVERY_NOT_FOUND = 7
 
     const val PUSH_SESSION_TO_TC_FAIL = 101
+    const val FINISH_SESSION_FAIL = 102
+
+    /**
+     * Đã gửi request kết thúc phiên nhưng không đọc được kết quả (timeout, mất kết nối,
+     * response không đúng định dạng). Không thể biết server đã kết thúc phiên hay chưa
+     * nên bắt buộc phải lưu lại và gửi lại với coverReSend = true.
+     */
+    const val FINISH_SESSION_RESULT_UNKNOWN = 103
 }

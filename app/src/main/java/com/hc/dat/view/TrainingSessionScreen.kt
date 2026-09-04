@@ -2382,29 +2382,37 @@ class TrainingSessionScreen : DatBaseScreen() {
                     }
                 )
             }
-            RiderSessionAction.FINISH_RIDER_SESSION_FAIL_BY_LOCATION,
+            // Không có toạ độ kết thúc thì phiên chưa được lưu để gửi lại, phải giữ phiên
+            // đang chạy cho người dùng kết thúc lại khi GPS có tín hiệu.
+            RiderSessionAction.FINISH_RIDER_SESSION_FAIL_BY_LOCATION -> {
+                dismissProgress()
+                showDialog(
+                    title = getString(R.string.error_title_dialog),
+                    message = (data as? String).orEmpty(),
+                    cancelable = false,
+                    buttonList = listOf(getString(R.string.retry_button)),
+                    listener = object : DialogButtonClickListener {
+                        override fun onDialogButtonClick(position: Int) {
+                            dismissDialog()
+                            if (riderSessionViewModel.teacherAuthInfo != null &&
+                                studentAuthInfo != null &&
+                                riderSessionViewModel.getSessionInProgress() != null
+                            ) {
+                                openCamera()
+                            }
+                        }
+                    }
+                )
+            }
             RiderSessionAction.FINISH_RIDER_SESSION_FAIL -> {
                 dismissProgress()
-//                showDialog(
-//                    title = getString(R.string.error_title_dialog),
-//                    message = data as String,
-//                    cancelable = false,
-//                    buttonList = listOf(getString(R.string.retry_button)),
-//                    listener = object : DialogButtonClickListener {
-//                        override fun onDialogButtonClick(position: Int) {
-//                            dismissDialog()
-//                            if (riderSessionViewModel.teacherAuthInfo != null &&
-//                                studentAuthInfo != null &&
-//                                riderSessionViewModel.getSessionInProgress() != null
-//                            ) {
-//                                openCamera()
-//                            }
-//                        }
-//                    }
-//                )
+                // Giữ lại nguyên nhân cụ thể trong dialog để hỗ trợ đối soát tại hiện trường
+                val failReason = (data as? String).orEmpty()
                 showDialog(
-                    title = getString(R.string.title_notification),
-                    message = getString(R.string.finish_session_offline),
+                    title = getString(R.string.error_title_dialog),
+                    message = getString(R.string.finish_session_fail_will_re_send) +
+                        if (failReason.isEmpty()) ""
+                        else "\n" + getString(R.string.finish_session_fail_reason, failReason),
                     buttonList = listOf(getString(R.string.ok)),
                     cancelable = false,
                     listener = object : DialogButtonClickListener {
@@ -2412,7 +2420,28 @@ class TrainingSessionScreen : DatBaseScreen() {
                             dismissDialog()
                             // handle cancel all job running
                             clearSessionHandler()
-                            BaseNotification.showMessage(getString(R.string.finish_session_success))
+                            BaseNotification.showWarning(getString(R.string.finish_session_fail_toast))
+                            requireActivity().onBackPressed()
+                        }
+                    }
+                )
+            }
+            // Không biết phiên đã lưu để gửi lại hay đã kết thúc trên server, chỉ báo đúng
+            // mức chắc chắn và hướng người dùng đi đối soát.
+            RiderSessionAction.FINISH_RIDER_SESSION_FAIL_UNKNOWN -> {
+                dismissProgress()
+                val failReason = (data as? String).orEmpty()
+                showDialog(
+                    title = getString(R.string.error_title_dialog),
+                    message = getString(R.string.finish_session_fail_unknown) +
+                        if (failReason.isEmpty()) ""
+                        else "\n" + getString(R.string.finish_session_fail_reason, failReason),
+                    buttonList = listOf(getString(R.string.ok)),
+                    cancelable = false,
+                    listener = object : DialogButtonClickListener {
+                        override fun onDialogButtonClick(position: Int) {
+                            dismissDialog()
+                            clearSessionHandler()
                             requireActivity().onBackPressed()
                         }
                     }
@@ -2444,27 +2473,6 @@ class TrainingSessionScreen : DatBaseScreen() {
                 riderSessionViewModel.checkMissingDataSession1(
                     sessionId = sessionId
                 )
-            }
-            RiderSessionAction.FINISH_RIDER_SESSION_SUCCESS_WITH_ERROR -> {
-                val message: String  = data as String
-                if (message.isNotEmpty()) {
-                    showDialog(
-                        title = getString(R.string.title_notification),
-                        message = message,
-                        cancelable = false,
-                        buttonList = listOf(getString(R.string.ok)),
-                        listener = object : DialogButtonClickListener {
-                            override fun onDialogButtonClick(position: Int) {
-                                dismissDialog()
-                                if (position == 0) {
-                                    handleSessionCompletionEvent()
-                                }
-                            }
-                        }
-                    )
-                } else {
-                    handleSessionCompletionEvent()
-                }
             }
             RiderSessionAction.GET_SESSION_IN_PROGRESS_BY_STUDENT_SUCCESS -> {
                 val inProgressSession = data as InProgressSession?

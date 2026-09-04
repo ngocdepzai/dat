@@ -154,6 +154,10 @@
     <string name="upload_authen_image_fail">Lỗi tải ảnh xác thực trong phiên học!\nHãy thử lại.</string>
     <string name="upload_authen_image_fail_2">Lỗi tải ảnh xác thực. Vui lòng kiểm tra lại kết nối mạng</string>
     <string name="student_not_match_local_inprogress_session">Mã học viên khác với học viên đang có phiên học đang chạy trên thiết bị!\nKết nối lại internet để kiểm tra.</string>
+    <string name="finish_session_fail_will_re_send">Chưa truyền được dữ liệu kết thúc phiên lên server!\nPhiên học đã được lưu trên thiết bị và sẽ tự động gửi lại khi có kết nối. Vui lòng kiểm tra đối soát phiên.</string>
+    <string name="finish_session_fail_reason">Lý do: %1$s</string>
+    <string name="finish_session_fail_toast">Chưa truyền được phiên học lên server, sẽ tự động gửi lại.</string>
+    <string name="finish_session_fail_unknown">Lỗi xử lý khi kết thúc phiên học!\nKhông xác định được phiên đã kết thúc trên server hay chưa, vui lòng kiểm tra đối soát phiên.</string>
     <string name="finish_session_offline">Phiên học kết thúc ở chế độ ngoại tuyến!\nHãy kiểm tra lại kết nối internet để truyền lại phiên học.</string>
     <string name="missing_image_detected_message">Học viên không có dữ liệu ảnh xác thực quá %d phút.\nBạn có muốn kết thúc phiên học này không?</string>
     <string name="session_interrupted_long_time_message">Phiên học đã bị gián đoạn quá %d phút.\nBạn có muốn kết thúc phiên học này không?</string>

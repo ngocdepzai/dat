@@ -13,7 +13,6 @@ import com.hc.dat.model.*
 import com.hc.dat.model.database.entity.*
 import com.hc.dat.model.repository.Repository
 import com.hc.dat.model.result.ErrorCode
-import com.hc.dat.model.result.ErrorCode.SUCCESS_WITH_ERROR
 import com.hc.dat.model.result.ErrorCode.PUSH_SESSION_TO_TC_FAIL
 import com.hc.dat.model.result.ResponseResult
 import com.hc.dat.service.model.CheckMissingDataSessionResponse
@@ -83,10 +82,7 @@ data class RiderSessionViewModel @Inject constructor(
             ) {
                 // call recover
                 Logger.i("networkConnectionEvent recoverUploadInProgress: $recoverUploadInProgress")
-                if (!recoverUploadInProgress) {
-                    recoverUploadInProgress = true
-                    recoverSendOfflineData()
-                }
+                triggerRecoverSendOfflineData()
                 if(!recoverUploadLogFiles){
                     recoverUploadLogFiles = true
                     recoverSendLogFilesFail()
@@ -168,6 +164,14 @@ data class RiderSessionViewModel @Inject constructor(
                 }
                 // re-set flag in-progress
                 isReUploadDataInSession = false
+        }
+    }
+
+    @Synchronized
+    private fun triggerRecoverSendOfflineData() {
+        if (!recoverUploadInProgress) {
+            recoverUploadInProgress = true
+            recoverSendOfflineData()
         }
     }
 
@@ -1079,6 +1083,68 @@ data class RiderSessionViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Lưu thông tin kết thúc phiên vào máy và đóng phiên đang chạy khi chưa gửi được
+     * kết thúc lên server.
+     *
+     * State được đặt là [SessionState.START_FINISH_OFFLINE] nếu phiên cũng chưa được mở
+     * online, ngược lại là [SessionState.START_ONLINE_FINISH_OFFLINE] - đây là hai state duy
+     * nhất mà recoverSendOfflineData() dùng để gửi lại, nên bỏ bước này là mất phiên vĩnh viễn.
+     *
+     * @param logTitle tiêu đề ghi vào file log để phân biệt nguyên nhân phải gửi lại
+     */
+    private suspend fun saveFinishSessionForReSend(
+        studentLogoutImage: File,
+        notSendTC: Boolean,
+        logTitle: String
+    ) {
+        localRiderSession?.also {
+            val sessionState =
+                if (it.state == SessionState.START_OFFLINE.code) SessionState.START_FINISH_OFFLINE.code
+                else SessionState.START_ONLINE_FINISH_OFFLINE.code // else is case start online
+            Logger.i("saveFinishSessionForReSend it.state: ${it.state} | sessionState: $sessionState")
+            it.updateEndSessionInfo(
+                gpsLatEnd = sessionVerificationInfo.lat,
+                gpsLongEnd = sessionVerificationInfo.long,
+                logoutTime = Calendar.getInstance().timeInMillis.toDouble(), // don't use logoutTime for export file report
+                logoutImagePath = studentLogoutImage.path,
+                totalTime = inProgressSession!!.totalTime,
+                totalDistance = inProgressSession!!.totalDis,
+                isSendTC = !notSendTC,
+                state = sessionState
+            )
+            Logger.i("saveFinishSessionForReSend localRiderSession: $localRiderSession")
+            repository.updateEndSessionInfo(
+                id = it.id,
+                gpsLatEnd = it.gpsLatEnd!!,
+                gpsLongEnd = it.gpsLongEnd!!,
+                logoutTime = Utils.getTimeStamp().toDouble(),
+                logoutImagePath = studentLogoutImage.path,
+                totalTime = inProgressSession!!.totalTime,
+                totalDistance = inProgressSession!!.totalDis,
+                isSendTC = !notSendTC,
+                state = sessionState
+            )
+            try {
+                repository.exportSessionReport(it, null)
+                LogRecorder.i(logTitle, localRiderSession.toString())
+            } catch (e: Exception) {
+                LogRecorder.e("finish session error: ", e.message)
+            } finally {
+                try {
+                    LogRecorder.saveLog(false)
+                    pushLogFile()
+                } catch (e: Exception) {
+                    LogRecorder.e("push log file error: ", e.message)
+                }
+            }
+            resetDataSession()
+        } ?: LogRecorder.e(
+            "Kết thúc phiên không thành công",
+            "Không có phiên trong máy để lưu kết thúc, phiên có thể còn đang chạy trên server!"
+        )
+    }
+
     fun finishRiderSession(
         notSendTC: Boolean,
         studentLogoutImage: File,
@@ -1088,10 +1154,13 @@ data class RiderSessionViewModel @Inject constructor(
         CoroutineScope(Dispatchers.Default).launch(
             CoroutineExceptionHandler { _, ex ->
                 Logger.e("finishRiderSession: Found an exception exception: ${ex.message}")
+                LogRecorder.e("Kết thúc phiên không thành công", "Lỗi xử lý: ${ex.message}")
+                // Lỗi có thể xảy ra trước hoặc sau khi đã lưu/đã gửi kết thúc nên không biết
+                // phiên đang ở trạng thái nào, không được báo là đã lưu để gửi lại.
                 CoroutineScope(Dispatchers.Main).launch {
                     callback(
-                        RiderSessionAction.FINISH_RIDER_SESSION_FAIL,
-                        "Lỗi xử lý!!\n\nXin hãy thử lại"
+                        RiderSessionAction.FINISH_RIDER_SESSION_FAIL_UNKNOWN,
+                        ex.message
                     )
                 }
             }
@@ -1108,60 +1177,27 @@ data class RiderSessionViewModel @Inject constructor(
             } else {
                 // check internet available
                 if (device.getCurrentNetworkConnection()?.checkConnectionAvailable() == false) {
-                    // update finish session info
-                    localRiderSession?.also {
-                        val sessionState =
-                            if (it.state == SessionState.START_OFFLINE.code) SessionState.START_FINISH_OFFLINE.code
-                            else SessionState.START_ONLINE_FINISH_OFFLINE.code // else is case start online
-                        Logger.i("finishRiderSession it.state: ${it.state} | sessionState: $sessionState")
-                        it.updateEndSessionInfo(
-                            gpsLatEnd = sessionVerificationInfo.lat,
-                            gpsLongEnd = sessionVerificationInfo.long,
-                            logoutTime = Calendar.getInstance().timeInMillis.toDouble(), // don't use logoutTime for export file report
-                            logoutImagePath = studentLogoutImage.path,
-                            totalTime = inProgressSession!!.totalTime,
-                            totalDistance = inProgressSession!!.totalDis,
-                            isSendTC = !notSendTC,
-                            state = sessionState
-                        )
-                        Logger.i("finishRiderSession localRiderSession: $localRiderSession")
-                        val logoutTime = Utils.getTimeStamp().toDouble()
-                        repository.updateEndSessionInfo(
-                            id = it.id,
-                            gpsLatEnd = it.gpsLatEnd!!,
-                            gpsLongEnd = it.gpsLongEnd!!,
-                            logoutTime = logoutTime,
-                            logoutImagePath = studentLogoutImage.path,
-                            totalTime = inProgressSession!!.totalTime,
-                            totalDistance = inProgressSession!!.totalDis,
-                            isSendTC = !notSendTC,
-                            state = sessionState
-                        )
-                        try {
-                            repository.exportSessionReport(it,null)
-                            LogRecorder.i("Kết thúc phiên thành công - OFFLINE", localRiderSession.toString())
-                        } catch (e: Exception) {
-                            LogRecorder.e("finish session error: ", e.message)
-                        } finally {
-                            try {
-                                LogRecorder.saveLog(false)
-                                pushLogFile()
-                            } catch (e: Exception) {
-                                LogRecorder.e("push log file error: ", e.message)
-                            }
-                        }
-                        resetDataSession()
-                        CoroutineScope(Dispatchers.Main).launch {
-                            callback(RiderSessionAction.FINISH_RIDER_SESSION_SUCCESS_OFFLINE, null)
-                        }
+                    saveFinishSessionForReSend(
+                        studentLogoutImage = studentLogoutImage,
+                        notSendTC = notSendTC,
+                        logTitle = "Kết thúc phiên thành công - OFFLINE"
+                    )
+                    CoroutineScope(Dispatchers.Main).launch {
+                        callback(RiderSessionAction.FINISH_RIDER_SESSION_SUCCESS_OFFLINE, null)
                     }
                 }
                 else {
                     val imageUploadUrl: String? =
                         uploadImage(studentLogoutImage, studentAuthInfo!!.userCode)
                     if (imageUploadUrl == null) {
+                        LogRecorder.e("Kết thúc phiên không thành công", "Upload ảnh nhận diện lỗi")
+                        saveFinishSessionForReSend(
+                            studentLogoutImage = studentLogoutImage,
+                            notSendTC = notSendTC,
+                            logTitle = "Kết thúc phiên chờ gửi lại - UPLOAD ẢNH LỖI"
+                        )
+                        triggerRecoverSendOfflineData()
                         CoroutineScope(Dispatchers.Main).launch {
-                            LogRecorder.e("Kết thúc phiên không thành công", "Upload ảnh nhận diện lỗi")
                             callback(
                                 RiderSessionAction.FINISH_RIDER_SESSION_FAIL,
                                 "Upload ảnh nhận diện lỗi"
@@ -1184,13 +1220,28 @@ data class RiderSessionViewModel @Inject constructor(
                         if (resResult.isError) {
                             Logger.e("Response Error: ${resResult.errorMessage}")
                             LogRecorder.e("Kết thúc phiên không thành công", resResult.errorMessage)
-                            CoroutineScope(Dispatchers.Main).launch {
-                                if (resResult.errorCode == PUSH_SESSION_TO_TC_FAIL) {
+                            if (resResult.errorCode == PUSH_SESSION_TO_TC_FAIL) {
+                                // Giữ nguyên phiên để người dùng chọn kết thúc mà không đẩy Tổng Cục,
+                                // chưa được lưu kết thúc vào máy ở bước này.
+                                CoroutineScope(Dispatchers.Main).launch {
                                     callback(
                                         RiderSessionAction.PUSH_SESSION_TO_TC_FAIL,
                                         resResult.errorMessage
                                     )
-                                } else {
+                                }
+                            } else {
+                                // Server chưa kết thúc phiên (hoặc không rõ kết quả) nên phải lưu
+                                // thông tin kết thúc vào máy để recoverSendOfflineData() gửi lại,
+                                // nếu không phiên sẽ treo vĩnh viễn ở trạng thái đang học trên server.
+                                saveFinishSessionForReSend(
+                                    studentLogoutImage = studentLogoutImage,
+                                    notSendTC = notSendTC,
+                                    logTitle = "Kết thúc phiên chờ gửi lại - LỖI ONLINE"
+                                )
+                                // Mạng vẫn còn nên sẽ không có sự kiện NETWORK_AVAILABLE để
+                                // kích hoạt gửi lại, phải tự gọi ngay ở đây.
+                                triggerRecoverSendOfflineData()
+                                CoroutineScope(Dispatchers.Main).launch {
                                     callback(
                                         RiderSessionAction.FINISH_RIDER_SESSION_FAIL,
                                         resResult.errorMessage
@@ -1246,17 +1297,10 @@ data class RiderSessionViewModel @Inject constructor(
                                 }
                                 resetDataSession()
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    if (resResult.errorCode == SUCCESS_WITH_ERROR) {
-                                        callback(
-                                            RiderSessionAction.FINISH_RIDER_SESSION_SUCCESS_WITH_ERROR,
-                                            resResult.errorMessage
-                                        )
-                                    } else {
-                                        callback(
-                                            RiderSessionAction.FINISH_RIDER_SESSION_SUCCESS,
-                                            it.sessionId
-                                        )
-                                    }
+                                    callback(
+                                        RiderSessionAction.FINISH_RIDER_SESSION_SUCCESS,
+                                        it.sessionId
+                                    )
                                 }
                             }
                         }
@@ -2622,9 +2666,9 @@ enum class RiderSessionAction {
     START_RIDER_SESSION_FAIL,
     START_RIDER_SESSION_FAIL_BY_LOCATION,
     FINISH_RIDER_SESSION_SUCCESS,
-    FINISH_RIDER_SESSION_SUCCESS_WITH_ERROR,
     FINISH_RIDER_SESSION_SUCCESS_OFFLINE,
     FINISH_RIDER_SESSION_FAIL,
+    FINISH_RIDER_SESSION_FAIL_UNKNOWN,
     FINISH_RIDER_SESSION_FAIL_BY_LOCATION,
     PUSH_SESSION_TO_TC_FAIL,
     FETCH_CURRENT_SESSION_SUCCESS,

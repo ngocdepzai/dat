@@ -7,7 +7,8 @@ import com.hc.dat.model.UserInfo
 import com.hc.dat.model.database.AppDatabase
 import com.hc.dat.model.database.entity.*
 import com.hc.dat.model.result.ErrorCode.CAN_NOT_CONNECT_TO_SERVER
-import com.hc.dat.model.result.ErrorCode.SUCCESS_WITH_ERROR
+import com.hc.dat.model.result.ErrorCode.FINISH_SESSION_FAIL
+import com.hc.dat.model.result.ErrorCode.FINISH_SESSION_RESULT_UNKNOWN
 import com.hc.dat.model.result.ErrorCode.PUSH_SESSION_TO_TC_FAIL
 import com.hc.dat.model.result.ResponseResult
 import com.hc.dat.service.ServiceDefinition
@@ -25,7 +26,9 @@ import hc.manager.datapp.models.response.ResentSessionResponse
 import hc.manager.datapp.utils.UpdateUserType
 import kotlinx.coroutines.channels.Channel
 import okhttp3.MultipartBody
+import kotlinx.coroutines.CancellationException
 import java.io.File
+import java.io.IOException
 import java.net.UnknownHostException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -304,7 +307,8 @@ class RepositoryImpl @Inject constructor(
                                     )
                             )
                             ResponseResult(
-                                errorCode = SUCCESS_WITH_ERROR,
+                                isError = true,
+                                errorCode = FINISH_SESSION_FAIL,
                                 errorMessage =  responseData?.message ?: ""
                             )
                         }
@@ -379,18 +383,22 @@ class RepositoryImpl @Inject constructor(
                                             "httpCode" to response.code().toString()
                                     )
                             )
+                            // Không map errorCode = status vì status lạ có thể trùng mã lỗi nội bộ
                             ResponseResult(
                                 isError = true,
-                                errorCode = responseData?.status ?: -1,
+                                errorCode = FINISH_SESSION_FAIL,
                                 errorMessage = responseData?.message ?: ""
                             )
                         }
                     }
                 }
                 else -> {
+                    // HTTP lỗi thì body() luôn null, thông tin lỗi nằm ở errorBody()
+                    val errorBody = response.errorBody()?.string() ?: ""
+                    Logger.e("finishRiderSession HTTP_ERROR: ${response.code()} | errorBody: $errorBody")
                     SentryLogUploader.captureInfo(
                             tag = "SESSION_FINISH_FAIL",
-                            message = "Finish session failed: ${responseData?.message ?: "Unknown"}",
+                            message = "Finish session failed by HTTP ${response.code()}",
                             extras = mapOf(
                                     "imei" to imei,
                                     "studentCode" to studentCode,
@@ -403,18 +411,22 @@ class RepositoryImpl @Inject constructor(
                                     "coverReSend" to coverReSend.toString(),
                                     "responseStatus" to (responseData?.status ?: -1).toString(),
                                     "responseMessage" to (responseData?.message ?: ""),
+                                    "errorBody" to errorBody,
                                     "httpCode" to response.code().toString()
                             )
                     )
+                    // Server trả lỗi HTTP: không xác định được phiên đã kết thúc hay chưa
                     ResponseResult(
                         isError = true,
-                        errorCode = responseData?.status ?: -1,
-                        errorMessage = responseData?.message ?: ""
+                        errorCode = FINISH_SESSION_RESULT_UNKNOWN,
+                        errorMessage = "Server trả lỗi ${response.code()}"
                     )
                 }
             }
-        } catch (ex: UnknownHostException) {
-            Logger.i("Error ${ex.message}")
+        } catch (ex: CancellationException) {
+            throw ex
+        } catch (ex: Exception) {
+            Logger.e("finishRiderSession Error ${ex.javaClass.simpleName}: ${ex.message}")
             SentryLogUploader.captureException(
                     ex,
                     "SESSION_FINISH_EXCEPTION",
@@ -432,8 +444,15 @@ class RepositoryImpl @Inject constructor(
                             "exceptionType" to ex.javaClass.simpleName
                     )
             )
+            // UnknownHostException nghĩa là request chưa ra khỏi máy nên chắc chắn phiên
+            // chưa kết thúc, các lỗi còn lại (timeout, mất kết nối giữa luồng, parse lỗi)
+            // không biết server đã xử lý hay chưa.
             return ResponseResult(
-                isError = true
+                isError = true,
+                errorCode = if (ex is UnknownHostException) CAN_NOT_CONNECT_TO_SERVER
+                    else FINISH_SESSION_RESULT_UNKNOWN,
+                errorMessage = if (ex is IOException) "Mất kết nối tới server"
+                    else "Lỗi xử lý phản hồi từ server"
             )
         }
     }
