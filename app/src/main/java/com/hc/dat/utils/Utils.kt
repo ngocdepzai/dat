@@ -327,6 +327,49 @@ fun getDeviceInfo(context: Context): UploadDeviceInfoRequest {
 //    fun getTimeStamp(): Long =
 //        (Calendar.getInstance().timeInMillis / 1000L)
 
+    /**
+     * Số giây trong khoảng thời gian [startMillis, endMillis] nằm trong khung giờ đêm.
+     *
+     * Khung giờ đêm vắt qua nửa đêm (ví dụ 18h đến 5h sáng hôm sau) nên không thể trừ giờ
+     * trực tiếp, phải dựng khung của từng ngày rồi lấy phần giao. Quét từ ngày trước ngày
+     * bắt đầu vì khung mở từ tối hôm trước có thể phủ sang sáng hôm sau.
+     *
+     * @param startMillis mốc bắt đầu, epoch milli
+     * @param endMillis mốc kết thúc, epoch milli; nhỏ hơn hoặc bằng startMillis thì trả 0
+     * @param fromHour giờ bắt đầu khung đêm trong ngày, 0..23
+     * @param toHour giờ kết thúc khung đêm trong ngày, 0..23; bằng fromHour coi như khung rỗng
+     * @return số giây nằm trong khung đêm, luôn không âm
+     */
+    fun nightTimeSecondsBetween(
+        startMillis: Long,
+        endMillis: Long,
+        fromHour: Int,
+        toHour: Int
+    ): Double {
+        if (endMillis <= startMillis || fromHour == toHour) return 0.0
+        val day = Calendar.getInstance().apply {
+            timeInMillis = startMillis
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            add(Calendar.DAY_OF_YEAR, -1)
+        }
+        var nightMillis = 0L
+        // Ba ngày là đủ phủ mọi phiên: phiên dài nhất theo quy định chưa tới 4 giờ.
+        repeat(3) {
+            val windowStart = (day.clone() as Calendar)
+                .apply { add(Calendar.HOUR_OF_DAY, fromHour) }.timeInMillis
+            val windowEnd = (day.clone() as Calendar)
+                .apply { add(Calendar.HOUR_OF_DAY, if (fromHour > toHour) 24 + toHour else toHour) }
+                .timeInMillis
+            val overlap = minOf(endMillis, windowEnd) - maxOf(startMillis, windowStart)
+            if (overlap > 0) nightMillis += overlap
+            day.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        return nightMillis / 1000.0
+    }
+
     // Todo keep old logic + 25200
     fun getTimeStamp(): Long =
         (Calendar.getInstance().timeInMillis / 1000L) + 25200

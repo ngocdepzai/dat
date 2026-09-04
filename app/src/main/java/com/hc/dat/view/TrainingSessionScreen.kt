@@ -107,6 +107,8 @@ class TrainingSessionScreen : DatBaseScreen() {
     private var learningOverTimeDuration = 2L
     private var learningTimeOver10HoursDuration = 2L
     private var teacherTimeOver10HoursDuration = 2L
+    private var nightTimeOverDuration = 2L
+    private var autoTimeOverDuration = 2L
     private var autoLogoutDuration = 2L
     private var sendAuthenDataDuration = TIME_FREQUENCY_SENT_DATA
     private var recognizeFaceTimeDuration = TIME_FREQUENCY_FACE_RECOGNITION
@@ -156,6 +158,8 @@ class TrainingSessionScreen : DatBaseScreen() {
     var learningOverTimeSecondCounter = 0L
     var learningTimeOver10HoursCounter = 0L
     var teacherTimeOver10HoursCounter = 0L
+    var nightTimeOverCounter = 0L
+    var autoTimeOverCounter = 0L
     var autoLogoutCounter = 0L
     var collectFaceDetectedSecondCounter = 0L
     var recognizeUserFaceSecondCounter = 0L
@@ -212,6 +216,7 @@ class TrainingSessionScreen : DatBaseScreen() {
         const val BLINK_SESSION_CYCLE_SECONDS = 4
         const val WARNING_TIME_REMAINING_TO_30_MINUTES = 30 * 60
         const val WARNING_TIME_REMAINING_TO_10_MINUTES = 10 * 60
+        const val WARNING_TIME_REMAINING_TO_15_MINUTES = 15 * 60
         const val CONTINUE_SESSION_NOTIFY_MIN_INTERVAL = 60 * 1000L // mili giây
     }
 
@@ -374,6 +379,16 @@ class TrainingSessionScreen : DatBaseScreen() {
                             secondCounter = teacherTimeOver10HoursCounter,
                             secondDuration = teacherTimeOver10HoursDuration,
                         ) { checkTeacherOver10HoursBlock() }
+
+                        nightTimeOverCounter = logicBlockChecking(
+                            secondCounter = nightTimeOverCounter,
+                            secondDuration = nightTimeOverDuration,
+                        ) { checkNightTimeOverBlock() }
+
+                        autoTimeOverCounter = logicBlockChecking(
+                            secondCounter = autoTimeOverCounter,
+                            secondDuration = autoTimeOverDuration,
+                        ) { checkAutoTimeOverBlock() }
 
                         autoLogoutCounter = logicBlockChecking(
                             secondCounter = autoLogoutCounter,
@@ -961,6 +976,74 @@ class TrainingSessionScreen : DatBaseScreen() {
         }
     }
 
+    private fun checkNightTimeOverBlock() {
+        nightTimeOverDuration = FREQUENCY_CHECK_LEARNING_TIME
+        if (riderSessionViewModel.inProgressSession == null) return
+        val info = riderSessionViewModel.getSessionTimeLimitInfo()
+        // nightTimeMax = 0 nghĩa là server không giới hạn giờ đêm cho khoá này
+        val nightTimeMax = info.nightTimeMax
+        if (nightTimeMax <= 0) return
+        val nightTime = riderSessionViewModel.getSessionNightTime(info)
+        val remainingTime = nightTimeMax - nightTime
+        Logger.i("nightTime: ${DateUtil.ConvertHms(nightTime)} | max: ${DateUtil.ConvertHms(nightTimeMax)}")
+        CoroutineScope(Dispatchers.Main).launch {
+            if (!riderSessionViewModel.getNightTimeOverAlertEnabled()) return@launch
+            if (remainingTime <= 0) {
+                val message = getString(
+                    R.string.night_time_over_error,
+                    DateUtil.ConvertHms(nightTime),
+                    DateUtil.ConvertHms(nightTimeMax)
+                )
+                LogRecorder.e("Phiên học", message)
+                BaseNotification.showError(message)
+                nightTimeOverDuration = TIME_WARNING_OVER
+            } else if (remainingTime < WARNING_TIME_REMAINING_TO_15_MINUTES) {
+                val message = getString(
+                    R.string.night_time_over_warning,
+                    DateUtil.ConvertHms(nightTime),
+                    DateUtil.ConvertHms(nightTimeMax)
+                )
+                LogRecorder.w("Phiên học", message)
+                BaseNotification.showWarning(message)
+                nightTimeOverDuration = TIME_WARNING_OVER
+            }
+        }
+    }
+
+    private fun checkAutoTimeOverBlock() {
+        autoTimeOverDuration = FREQUENCY_CHECK_LEARNING_TIME
+        if (riderSessionViewModel.inProgressSession == null) return
+        val info = riderSessionViewModel.getSessionTimeLimitInfo()
+        // autoTimeMax = 0 nghĩa là server không giới hạn giờ xe số tự động cho khoá này
+        val autoTimeMax = info.autoTimeMax
+        if (autoTimeMax <= 0) return
+        val autoTime = riderSessionViewModel.getSessionAutoTime(info)
+        val remainingTime = autoTimeMax - autoTime
+        Logger.i("autoTime: ${DateUtil.ConvertHms(autoTime)} | max: ${DateUtil.ConvertHms(autoTimeMax)}")
+        CoroutineScope(Dispatchers.Main).launch {
+            if (!riderSessionViewModel.getAutoTimeOverAlertEnabled()) return@launch
+            if (remainingTime <= 0) {
+                val message = getString(
+                    R.string.auto_time_over_error,
+                    DateUtil.ConvertHms(autoTime),
+                    DateUtil.ConvertHms(autoTimeMax)
+                )
+                LogRecorder.e("Phiên học", message)
+                BaseNotification.showError(message)
+                autoTimeOverDuration = TIME_WARNING_OVER
+            } else if (remainingTime < WARNING_TIME_REMAINING_TO_15_MINUTES) {
+                val message = getString(
+                    R.string.auto_time_over_warning,
+                    DateUtil.ConvertHms(autoTime),
+                    DateUtil.ConvertHms(autoTimeMax)
+                )
+                LogRecorder.w("Phiên học", message)
+                BaseNotification.showWarning(message)
+                autoTimeOverDuration = TIME_WARNING_OVER
+            }
+        }
+    }
+
     private fun checkLearningOver4HoursBlock() {
         learningOverTimeDuration = FREQUENCY_CHECK_LEARNING_TIME
         val additionalTime = 15 * 60
@@ -1039,9 +1122,43 @@ class TrainingSessionScreen : DatBaseScreen() {
                 applyBlinkColor(
                     viewBinding.tvTotalTime, inProgressSession.totalTime, BLINK_WARNING_TIME_IN_SESSION, showRedSession
                 )
+
+                updateNightAndAutoTime(showRedIn24h)
             }
         }
     }
+
+    /**
+     * Cập nhật ô giờ đêm và giờ xe số tự động, nhấp nháy đỏ khi còn dưới 15 phút là quá
+     * ngưỡng cho phép.
+     *
+     * Chạy mỗi giây trong clockLogicBlock vì hai giá trị này cộng dồn theo phiên đang chạy,
+     * không phải chỉ lấy một lần lúc mở phiên.
+     */
+    private fun updateNightAndAutoTime(showRed: Boolean) {
+        val info = riderSessionViewModel.getSessionTimeLimitInfo()
+        val nightTime = riderSessionViewModel.getSessionNightTime(info)
+        val autoTime = riderSessionViewModel.getSessionAutoTime(info)
+        viewBinding.tvTotalNightTime.text = getString(R.string.hour_value, nightTime / 3600)
+        viewBinding.tvTotalAutoTime.text = getString(R.string.hour_value, autoTime / 3600)
+
+        applyBlinkColor(
+            viewBinding.tvTotalNightTime, nightTime, blinkThresholdOf(info.nightTimeMax), showRed
+        )
+        applyBlinkColor(
+            viewBinding.tvTotalAutoTime, autoTime, blinkThresholdOf(info.autoTimeMax), showRed
+        )
+    }
+
+    /**
+     * Mốc bắt đầu nhấp nháy đỏ: trước ngưỡng tối đa 15 phút.
+     *
+     * @param maxTime ngưỡng tối đa theo giây; 0 nghĩa là không giới hạn nên trả về
+     * [Int.MAX_VALUE] để không bao giờ nhấp nháy
+     */
+    private fun blinkThresholdOf(maxTime: Double): Int =
+        if (maxTime > 0) (maxTime - WARNING_TIME_REMAINING_TO_15_MINUTES).toInt()
+        else Int.MAX_VALUE
 
     private fun applyBlinkColor(
         textView: TextView,
@@ -1571,11 +1688,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         viewBinding.tvTotalDistanceComplete.text = getString(R.string.counter_distance_value, totalDistanceDoneValue.toString())
         viewBinding.tvTotalTimeRemaining.text = DateUtil.ConvertHms(totalTimeRemaining)
         viewBinding.tvTotalTimeComplete.text = DateUtil.ConvertHms(totalTimeDone)
-        riderSessionViewModel.inProgressSession?.also {
-            viewBinding.tvTotalAutoTime.text = String.format("%.2f GIỜ", (((it.automaticTransmissionTime ?: 0.0) / 3600 * 100).toInt() / 100.0))
-            viewBinding.tvTotalNightTime.text = String.format("%.2f GIỜ", (((it.nightTime ?: 0.0) / 3600 * 100).toInt() / 100.0))
-        }
-
         loadImageAvatar()
         openCamera()
         updateVerifyResultCounter()

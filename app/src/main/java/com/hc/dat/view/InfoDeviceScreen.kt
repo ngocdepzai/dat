@@ -59,6 +59,10 @@ class InfoDeviceScreen : DatBaseScreen() {
             viewBinding.tvAutoLogoutTime.text = "Thời gian tự động đăng xuất HV quá 10 giờ: 9h${viewBinding.skAutoLogoutTime.progress + 50}p"
             viewBinding.swtchAutoLogoutTeacher.isChecked =
                 riderSessionViewModel.getAutoLogoutTeacherOver10HoursEnabled()
+            viewBinding.swtchNightTimeOverAlert.isChecked =
+                riderSessionViewModel.getNightTimeOverAlertEnabled()
+            viewBinding.swtchAutoTimeOverAlert.isChecked =
+                riderSessionViewModel.getAutoTimeOverAlertEnabled()
             val autoLogoutTeacherMinute = riderSessionViewModel.getAutoLogoutTeacherMinute()
             viewBinding.skAutoLogoutTeacherTime.progress =
                 autoLogoutTeacherMinute - AUTO_LOGOUT_TEACHER_MINUTE_MIN
@@ -108,6 +112,16 @@ class InfoDeviceScreen : DatBaseScreen() {
         viewBinding.swtchAutoLogoutTeacher.setOnClickListener {
             riderSessionViewModel.saveAutoLogoutTeacherOver10HoursEnabled(
                 enabled = viewBinding.swtchAutoLogoutTeacher.isChecked
+            )
+        }
+        viewBinding.swtchNightTimeOverAlert.setOnClickListener {
+            riderSessionViewModel.saveNightTimeOverAlertEnabled(
+                enabled = viewBinding.swtchNightTimeOverAlert.isChecked
+            )
+        }
+        viewBinding.swtchAutoTimeOverAlert.setOnClickListener {
+            riderSessionViewModel.saveAutoTimeOverAlertEnabled(
+                enabled = viewBinding.swtchAutoTimeOverAlert.isChecked
             )
         }
         viewBinding.skAutoLogoutTeacherTime.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

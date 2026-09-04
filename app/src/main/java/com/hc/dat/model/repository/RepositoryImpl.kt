@@ -3,6 +3,7 @@ package com.hc.dat.model.repository
 import android.content.SharedPreferences
 import android.os.Build
 import com.hc.dat.model.CarInfo
+import com.hc.dat.model.SessionTimeLimitInfo
 import com.hc.dat.model.UserInfo
 import com.hc.dat.model.database.AppDatabase
 import com.hc.dat.model.database.entity.*
@@ -62,6 +63,15 @@ class RepositoryImpl @Inject constructor(
         const val AUTO_LOGOUT_TEACHER_OVER_10_HOURS = "AUTO_LOGOUT_TEACHER_OVER_10_HOURS"
         const val AUTO_LOGOUT_TEACHER_MINUTE = "AUTO_LOGOUT_TEACHER_MINUTE"
         const val AUTO_LOGOUT_TEACHER_MINUTE_DEFAULT = 50
+        const val NIGHT_TIME = "NIGHT_TIME"
+        const val NIGHT_FROM_HOUR = "NIGHT_FROM_HOUR"
+        const val NIGHT_TO_HOUR = "NIGHT_TO_HOUR"
+        const val NIGHT_TIME_MAX = "NIGHT_TIME_MAX"
+        const val AUTO_TIME = "AUTO_TIME"
+        const val AUTO_TIME_MAX = "AUTO_TIME_MAX"
+        const val IS_AUTOMATIC_TRANSMISSION = "IS_AUTOMATIC_TRANSMISSION"
+        const val NIGHT_TIME_OVER_ALERT = "NIGHT_TIME_OVER_ALERT"
+        const val AUTO_TIME_OVER_ALERT = "AUTO_TIME_OVER_ALERT"
     }
 
     // [DAT CER]: only use for get DAT certification
@@ -1389,6 +1399,46 @@ class RepositoryImpl @Inject constructor(
         }
 
     }
+    override fun saveSessionTimeLimitInfo(info: SessionTimeLimitInfo) {
+        sharedPreferences.edit()
+            .putFloat(NIGHT_TIME, info.nightTime.toFloat())
+            .putInt(NIGHT_FROM_HOUR, info.nightFromHour)
+            .putInt(NIGHT_TO_HOUR, info.nightToHour)
+            .putFloat(NIGHT_TIME_MAX, info.nightTimeMax.toFloat())
+            .putFloat(AUTO_TIME, info.automaticTransmissionTime.toFloat())
+            .putFloat(AUTO_TIME_MAX, info.autoTimeMax.toFloat())
+            .putBoolean(IS_AUTOMATIC_TRANSMISSION, info.isAutomaticTransmission)
+            .apply()
+    }
+
+    override fun getSessionTimeLimitInfo(): SessionTimeLimitInfo {
+        return SessionTimeLimitInfo(
+            nightTime = sharedPreferences.getFloat(NIGHT_TIME, 0f).toDouble(),
+            nightFromHour = sharedPreferences.getInt(NIGHT_FROM_HOUR, 0),
+            nightToHour = sharedPreferences.getInt(NIGHT_TO_HOUR, 0),
+            nightTimeMax = sharedPreferences.getFloat(NIGHT_TIME_MAX, 0f).toDouble(),
+            automaticTransmissionTime = sharedPreferences.getFloat(AUTO_TIME, 0f).toDouble(),
+            autoTimeMax = sharedPreferences.getFloat(AUTO_TIME_MAX, 0f).toDouble(),
+            isAutomaticTransmission = sharedPreferences.getBoolean(IS_AUTOMATIC_TRANSMISSION, false)
+        )
+    }
+
+    override fun saveNightTimeOverAlertEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(NIGHT_TIME_OVER_ALERT, enabled).apply()
+    }
+
+    override fun getNightTimeOverAlertEnabled(): Boolean {
+        return sharedPreferences.getBoolean(NIGHT_TIME_OVER_ALERT, true)
+    }
+
+    override fun saveAutoTimeOverAlertEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(AUTO_TIME_OVER_ALERT, enabled).apply()
+    }
+
+    override fun getAutoTimeOverAlertEnabled(): Boolean {
+        return sharedPreferences.getBoolean(AUTO_TIME_OVER_ALERT, true)
+    }
+
     override fun saveAutoLogoutTime(autoLogoutTime: Int) {
         sharedPreferences.edit().putInt(AUTO_LOGOUT_TIME, autoLogoutTime).apply()
     }
@@ -1494,7 +1544,18 @@ class RepositoryImpl @Inject constructor(
     }
 
     override fun removeSessionCode() {
-        sharedPreferences.edit().putString(SESSION_ID, null).apply()
+        // Ngưỡng đêm/số tự động thuộc về phiên vừa đóng, giữ lại thì phiên sau mở offline
+        // (chưa có phản hồi từ start-rider-session) sẽ cảnh báo theo ngưỡng của học viên khác.
+        sharedPreferences.edit()
+            .putString(SESSION_ID, null)
+            .remove(NIGHT_TIME)
+            .remove(NIGHT_FROM_HOUR)
+            .remove(NIGHT_TO_HOUR)
+            .remove(NIGHT_TIME_MAX)
+            .remove(AUTO_TIME)
+            .remove(AUTO_TIME_MAX)
+            .remove(IS_AUTOMATIC_TRANSMISSION)
+            .apply()
     }
 
     override fun getSessionCode(): String? {

@@ -54,6 +54,10 @@
     <string name="over_time_24h_error">Đã học %s. Phiên học vị phạm quy định không chạy quá 10 giờ trong 24 giờ!</string>
     <string name="teacher_over_time_24h_warning">Giảng viên chuẩn bị quá 10 tiếng trong ngày</string>
     <string name="teacher_over_time_24h_error">Giảng viên quá 10 tiếng trong 1 ngày</string>
+    <string name="night_time_over_warning">Đã học %1$s giờ đêm. Chuẩn bị quá giờ đêm cho phép (%2$s)!</string>
+    <string name="night_time_over_error">Đã học %1$s giờ đêm, vượt mức cho phép %2$s!</string>
+    <string name="auto_time_over_warning">Đã học %1$s xe số tự động. Chuẩn bị quá giờ cho phép (%2$s)!</string>
+    <string name="auto_time_over_error">Đã học %1$s xe số tự động, vượt mức cho phép %2$s!</string>
     <string name="connect_server_error">Kết nối máy chủ bị gián đoạn! Kiểm tra lại kết nối internet trên thiết bị.</string>
     <string name="connect_server_success">Kết nối lại máy chủ thành công.</string>
     <string name="finish_session_success">Phiên học đã kết thúc, vui lòng kiểm tra đối soát phiên. Xin cảm ơn!</string>
@@ -139,6 +143,7 @@
     <string name="verify_success_result">THÀNH CÔNG</string>
     <string name="verify_fail_result">THẤT BẠI</string>
     <string name="total_distance_value">%.2f KM</string>
+    <string name="hour_value">%.2f GIỜ</string>
     <string name="teacher_logout_bt">ĐĂNG XUẤT</string>
     <string name="teacher_can_not_logout">Đăng xuất học viên và phiên học trước khi giảng viên đăng xuất!</string>
     <string name="overtime_warning_message">- Thời gian học: %s -> tiệm cận mốc 4 giờ liên tiếp!</string>

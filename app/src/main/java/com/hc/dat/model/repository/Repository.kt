@@ -1,6 +1,7 @@
 package com.hc.dat.model.repository
 
 import com.hc.dat.model.CarInfo
+import com.hc.dat.model.SessionTimeLimitInfo
 import com.hc.dat.model.UserInfo
 import com.hc.dat.model.database.entity.*
 import com.hc.dat.model.result.ResponseResult
@@ -112,6 +113,38 @@ interface Repository {
     ):ResponseResult<UploadDeviceInfoResponse>
 
     // Local query data
+    /**
+     * Lưu mốc giờ đêm, giờ xe số tự động và ngưỡng tối đa của phiên vừa mở.
+     *
+     * Gọi ngay khi start-rider-session thành công. Không lưu thì app khởi động lại giữa
+     * phiên sẽ mất khung giờ đêm lẫn ngưỡng cảnh báo.
+     */
+    fun saveSessionTimeLimitInfo(info: SessionTimeLimitInfo)
+
+    /**
+     * @return thông tin đã lưu của phiên đang chạy, hoặc giá trị mặc định (mọi mốc bằng 0,
+     * tức không cảnh báo) nếu phiên mở offline hoặc chưa có phiên nào
+     */
+    fun getSessionTimeLimitInfo(): SessionTimeLimitInfo
+
+    fun saveNightTimeOverAlertEnabled(enabled: Boolean)
+
+    /**
+     * Cho biết có cảnh báo khi học quá giờ đêm cho phép hay không.
+     *
+     * @return trạng thái đã lưu, hoặc `true` nếu người dùng chưa từng đổi cài đặt này.
+     */
+    fun getNightTimeOverAlertEnabled(): Boolean
+
+    fun saveAutoTimeOverAlertEnabled(enabled: Boolean)
+
+    /**
+     * Cho biết có cảnh báo khi học quá giờ xe số tự động cho phép hay không.
+     *
+     * @return trạng thái đã lưu, hoặc `true` nếu người dùng chưa từng đổi cài đặt này.
+     */
+    fun getAutoTimeOverAlertEnabled(): Boolean
+
     fun saveAutoLogoutTime(autoLogoutTime : Int)
     fun getAutoLogoutTime(): Int
     fun saveAutoLogoutTeacherOver10HoursEnabled(enabled: Boolean)

@@ -22,6 +22,7 @@ import com.hc.dat.service.model.SessionHistoryRequest
 import com.hc.dat.service.model.SessionHistoryResponse
 import com.hc.dat.service.model.StartRiderSessionResponse
 import com.hc.dat.service.model.StudentSessionInProgressResponse
+import com.hc.dat.service.model.toSessionTimeLimitInfo
 import com.hc.dat.utils.Utils
 import com.lws.device.Device
 import com.lws.device.gps.GPSEvent
@@ -787,6 +788,13 @@ data class RiderSessionViewModel @Inject constructor(
                 Logger.i("handleRecoverUploadSession resResult: ${resResult.data}")
                 if (!resResult.isError) {
                     Logger.i("sessionId: ${resResult.data?.sessionId}")
+                    // Phiên mở offline chỉ có ngưỡng giờ đêm/số tự động khi được đẩy lên
+                    // server, và chỉ ghi cho phiên đang chạy để không lấy ngưỡng của phiên cũ.
+                    if (localRiderSession?.id == riderSessionEntity.id) {
+                        resResult.data?.also {
+                            repository.saveSessionTimeLimitInfo(it.toSessionTimeLimitInfo())
+                        }
+                    }
                     return resResult.data?.sessionId
                 }
             }
@@ -1495,6 +1503,9 @@ data class RiderSessionViewModel @Inject constructor(
                         Logger.i("startRiderSession: ${startRiderSession?.sessionId}")
                         if (startRiderSession != null) {
                             repository.saveSessionCode(startRiderSession.sessionId)
+                            repository.saveSessionTimeLimitInfo(
+                                startRiderSession.toSessionTimeLimitInfo()
+                            )
                             inProgressSession = InProgressSession(
                                 id = startRiderSession.sessionId,
                                 studentCode = studentAuthInfo!!.userCode,
@@ -2355,6 +2366,88 @@ data class RiderSessionViewModel @Inject constructor(
     fun saveAutoLogoutTime(autoLogoutTime: Int){
         CoroutineScope(Dispatchers.Default).launch {
             repository.saveAutoLogoutTime(autoLogoutTime = autoLogoutTime)
+        }
+    }
+
+    /**
+     * Mốc giờ đêm, giờ xe số tự động và ngưỡng tối đa của phiên đang chạy.
+     *
+     * @return thông tin đã lưu lúc mở phiên, mọi mốc bằng 0 nếu phiên mở offline
+     */
+    fun getSessionTimeLimitInfo(): SessionTimeLimitInfo = repository.getSessionTimeLimitInfo()
+
+    /**
+     * Tổng thời gian học trong khung giờ đêm, gồm mốc server trả về lúc mở phiên cộng phần
+     * phiên đang chạy nằm trong khung đêm.
+     *
+     * Phải tự cộng phần phiên đang chạy vì server chỉ dồn vào nightTime sau khi phiên kết
+     * thúc, giống cách timeIn24H hoạt động.
+     *
+     * @param info thông tin đã đọc sẵn, truyền vào để khối chạy mỗi giây không đọc lại
+     * @return số giây, 0 nếu không có phiên nào đang chạy
+     */
+    fun getSessionNightTime(
+        info: SessionTimeLimitInfo = repository.getSessionTimeLimitInfo()
+    ): Double {
+        if (inProgressSession == null) return 0.0
+        val startTime = getSessionStartTime() ?: return info.nightTime
+        return info.nightTime + Utils.nightTimeSecondsBetween(
+            startMillis = startTime,
+            endMillis = Utils.getRealTimeStamp(),
+            fromHour = info.nightFromHour,
+            toHour = info.nightToHour
+        )
+    }
+
+    /**
+     * Tổng thời gian học trên xe số tự động, gồm mốc server trả về lúc mở phiên cộng thời
+     * gian phiên đang chạy nếu xe của phiên là xe số tự động.
+     *
+     * @param info thông tin đã đọc sẵn, truyền vào để khối chạy mỗi giây không đọc lại
+     * @return số giây, 0 nếu không có phiên nào đang chạy
+     */
+    fun getSessionAutoTime(
+        info: SessionTimeLimitInfo = repository.getSessionTimeLimitInfo()
+    ): Double {
+        val session = inProgressSession ?: return 0.0
+        return if (info.isAutomaticTransmission) {
+            info.automaticTransmissionTime + session.totalTime
+        } else {
+            info.automaticTransmissionTime
+        }
+    }
+
+    /**
+     * Cho biết có cảnh báo khi học quá giờ đêm cho phép hay không.
+     *
+     * @return trạng thái đã lưu, hoặc `true` nếu người dùng chưa từng đổi cài đặt này.
+     */
+    suspend fun getNightTimeOverAlertEnabled(): Boolean {
+        return withContext(Dispatchers.Default) {
+            repository.getNightTimeOverAlertEnabled()
+        }
+    }
+
+    fun saveNightTimeOverAlertEnabled(enabled: Boolean) {
+        CoroutineScope(Dispatchers.Default).launch {
+            repository.saveNightTimeOverAlertEnabled(enabled = enabled)
+        }
+    }
+
+    /**
+     * Cho biết có cảnh báo khi học quá giờ xe số tự động cho phép hay không.
+     *
+     * @return trạng thái đã lưu, hoặc `true` nếu người dùng chưa từng đổi cài đặt này.
+     */
+    suspend fun getAutoTimeOverAlertEnabled(): Boolean {
+        return withContext(Dispatchers.Default) {
+            repository.getAutoTimeOverAlertEnabled()
+        }
+    }
+
+    fun saveAutoTimeOverAlertEnabled(enabled: Boolean) {
+        CoroutineScope(Dispatchers.Default).launch {
+            repository.saveAutoTimeOverAlertEnabled(enabled = enabled)
         }
     }
 
