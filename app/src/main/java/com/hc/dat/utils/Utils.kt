@@ -33,6 +33,8 @@ import java.util.*
 
 object Utils {
     private const val ONE_HOUR_IN_MILLIS = 60 * 60 * 1000
+    private const val ONE_DAY_IN_MILLIS = 24L * ONE_HOUR_IN_MILLIS
+    private const val MAX_NIGHT_WINDOW_DAYS = 366L
 
     const val JAPAN_TIME_VIEW_FORMAT = "HH:mm"
     const val RIDER_SESSION_DATE_FORMAT = "dd-MM-yyyy\nHH:mm:ss"
@@ -359,8 +361,14 @@ fun getDeviceInfo(context: Context): UploadDeviceInfoRequest {
         val fromMillis = (fromHour * ONE_HOUR_IN_MILLIS).toLong()
         val toMillis = ((if (fromHour > toHour) toHour + 24 else toHour) * ONE_HOUR_IN_MILLIS).toLong()
         var nightMillis = 0L
-        // Ba ngày là đủ phủ mọi phiên: phiên dài nhất theo quy định chưa tới 4 giờ.
-        repeat(3) {
+        // Quét đúng số ngày mà khoảng cần tính trải qua, cộng 2 cho ngày trước ngày bắt đầu
+        // và ngày cuối bị cắt dở. Không chốt cứng theo độ dài phiên tối đa vì không chỗ nào
+        // bảo đảm giả định đó, mà tính thiếu giờ đêm thì âm thầm không ai thấy.
+        // Chặn trên đề phòng mốc thời gian rác không làm vòng lặp chạy vô tận.
+        val dayCount = ((endMillis - day.timeInMillis) / ONE_DAY_IN_MILLIS + 2)
+            .coerceIn(1L, MAX_NIGHT_WINDOW_DAYS)
+            .toInt()
+        repeat(dayCount) {
             val dayStart = day.timeInMillis
             val overlap = minOf(endMillis, dayStart + toMillis) -
                 maxOf(startMillis, dayStart + fromMillis)

@@ -55,14 +55,18 @@ toàn trong khung đêm:
 
 Khung đêm vắt qua nửa đêm (18h → 5h) nên **không được trừ giờ trực tiếp**. Hàm nhận giờ
 thập phân nên khung lẻ kiểu 18.5 (18h30) cũng đúng.
-`Utils.nightTimeSecondsBetween()` dựng khung của 3 ngày liên tiếp (từ ngày trước ngày bắt
-đầu, vì khung mở từ tối hôm trước phủ sang sáng hôm sau) rồi lấy tổng phần giao. Ba ngày là
-đủ vì phiên dài nhất theo quy định chưa tới 4 giờ.
+`Utils.nightTimeSecondsBetween()` dựng khung của từng ngày rồi lấy tổng phần giao. Quét từ
+**ngày trước** ngày bắt đầu, vì khung mở từ tối hôm trước phủ sang sáng hôm sau. Số ngày quét
+tính từ chính độ dài khoảng cần tính, **không chốt cứng theo độ dài phiên tối đa** — chốt
+cứng thì phiên treo nhiều ngày sẽ bị tính thiếu giờ đêm mà không báo lỗi gì (ví dụ phiên treo
+30 ngày: chốt 3 ngày ra 27h, đúng phải 330h). Có chặn trên 366 ngày đề phòng mốc thời gian
+rác làm vòng lặp chạy vô tận.
 
-Đã kiểm chứng 16 ca: ca thực tế đo từ server (2514s), mở 17h giờ 19h (ra 1 tiếng), rạng
-sáng 3h–6h, ban ngày 6h–8h (ra 0), vắt nửa đêm 23h–1h, khung không vắt 1h–5h, phiên dài phủ
-2 đoạn, `from == to` (khung rỗng), hai ca khung giờ lẻ 18.5 và 5.5, cùng 6 ca
-`isInNightWindow` gồm cả hai biên đầu và cuối khung.
+Kiểm chứng bằng cách **đối chiếu với một bản đếm thô từng phút** chứ không so với số tính
+tay — số tính tay đã sai một lần khi tôi đếm nhầm số khung trong ca 7 ngày. 14 ca khớp tuyệt
+đối: ca thực tế đo từ server, mở 17h tới 19h, rạng sáng 3h–6h, ban ngày 6h–8h, vắt nửa đêm,
+khung không vắt 1h–5h, hai ca khung giờ lẻ 18.5 và 5.5, treo 3 / 7 / 30 ngày, qua tháng, qua
+năm. Thêm 6 ca `isInNightWindow` gồm cả hai biên đầu và cuối khung, và ca `from == to`.
 
 ## Vì sao ngưỡng lưu shared-pref chứ không lưu Room
 
