@@ -2436,11 +2436,7 @@ data class RiderSessionViewModel @Inject constructor(
      *
      * @return trạng thái đã lưu, hoặc `true` nếu người dùng chưa từng đổi cài đặt này.
      */
-    suspend fun getNightTimeOverAlertEnabled(): Boolean {
-        return withContext(Dispatchers.Default) {
-            repository.getNightTimeOverAlertEnabled()
-        }
-    }
+    fun isNightTimeOverAlertEnabled(): Boolean = repository.getNightTimeOverAlertEnabled()
 
     fun saveNightTimeOverAlertEnabled(enabled: Boolean) {
         CoroutineScope(Dispatchers.Default).launch {
@@ -2453,11 +2449,7 @@ data class RiderSessionViewModel @Inject constructor(
      *
      * @return trạng thái đã lưu, hoặc `true` nếu người dùng chưa từng đổi cài đặt này.
      */
-    suspend fun getAutoTimeOverAlertEnabled(): Boolean {
-        return withContext(Dispatchers.Default) {
-            repository.getAutoTimeOverAlertEnabled()
-        }
-    }
+    fun isAutoTimeOverAlertEnabled(): Boolean = repository.getAutoTimeOverAlertEnabled()
 
     fun saveAutoTimeOverAlertEnabled(enabled: Boolean) {
         CoroutineScope(Dispatchers.Default).launch {

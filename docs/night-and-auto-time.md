@@ -102,6 +102,9 @@ Theo chốt với người dùng: **Toast + TTS + nhấp nháy đỏ ô số**, 
   `isAutomaticTransmission = true`. Không có hai chốt này thì học viên đã vượt ngưỡng từ
   trước sẽ bị kêu 5 phút/lần suốt phiên ban ngày, hoặc bị kêu "quá giờ xe số tự động" trong
   khi đang lái xe số sàn — con số đứng im mà vẫn kêu.
+- **Nhấp nháy phải chịu đúng hai điều kiện trên và cả công tắc cài đặt.** Nhấp nháy là một
+  hình thức cảnh báo, không phải trang trí: nếu chỉ chặn phần toast/TTS mà để ô vẫn nháy đỏ
+  thì xe số sàn sẽ có ô "Giờ AT" nháy suốt phiên, và tắt công tắc rồi vẫn thấy ô nháy.
 - Mọi khối cảnh báo phải `if (!isAdded) return@launch` trước khi gọi `getString`: kết thúc
   phiên thì fragment bị detach ngay trong lúc một tick còn đang chờ trên Main, mà
   `clockLogicBlock` không có `CoroutineExceptionHandler` nên sẽ crash. Riêng khối hiển thị

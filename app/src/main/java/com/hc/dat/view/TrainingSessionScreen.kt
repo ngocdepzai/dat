@@ -983,6 +983,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private fun checkNightTimeOverBlock() {
         nightTimeOverDuration = FREQUENCY_CHECK_LEARNING_TIME
         if (riderSessionViewModel.inProgressSession == null) return
+        if (!riderSessionViewModel.isNightTimeOverAlertEnabled()) return
         val info = riderSessionViewModel.getSessionTimeLimitInfo()
         // nightTimeMax = 0 nghĩa là server không giới hạn giờ đêm cho khoá này
         val nightTimeMax = info.nightTimeMax
@@ -993,7 +994,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         val remainingTime = nightTimeMax - nightTime
         Logger.i("nightTime: ${DateUtil.ConvertHms(nightTime)} | max: ${DateUtil.ConvertHms(nightTimeMax)}")
         CoroutineScope(Dispatchers.Main).launch {
-            if (!riderSessionViewModel.getNightTimeOverAlertEnabled()) return@launch
             if (!isAdded) return@launch
             if (remainingTime <= 0) {
                 val message = getString(
@@ -1020,6 +1020,7 @@ class TrainingSessionScreen : DatBaseScreen() {
     private fun checkAutoTimeOverBlock() {
         autoTimeOverDuration = FREQUENCY_CHECK_LEARNING_TIME
         if (riderSessionViewModel.inProgressSession == null) return
+        if (!riderSessionViewModel.isAutoTimeOverAlertEnabled()) return
         val info = riderSessionViewModel.getSessionTimeLimitInfo()
         // autoTimeMax = 0 nghĩa là server không giới hạn giờ xe số tự động cho khoá này
         val autoTimeMax = info.autoTimeMax
@@ -1030,7 +1031,6 @@ class TrainingSessionScreen : DatBaseScreen() {
         val remainingTime = autoTimeMax - autoTime
         Logger.i("autoTime: ${DateUtil.ConvertHms(autoTime)} | max: ${DateUtil.ConvertHms(autoTimeMax)}")
         CoroutineScope(Dispatchers.Main).launch {
-            if (!riderSessionViewModel.getAutoTimeOverAlertEnabled()) return@launch
             if (!isAdded) return@launch
             if (remainingTime <= 0) {
                 val message = getString(
@@ -1156,11 +1156,23 @@ class TrainingSessionScreen : DatBaseScreen() {
         viewBinding.tvTotalNightTime.text = getString(R.string.hour_value, nightTime / 3600)
         viewBinding.tvTotalAutoTime.text = getString(R.string.hour_value, autoTime / 3600)
 
+        // Nhấp nháy theo đúng điều kiện của cảnh báo: tắt cài đặt hoặc con số không tăng
+        // được thì thôi, tránh ô đỏ nháy suốt phiên mà người dùng không làm gì được.
+        val blinkNight = riderSessionViewModel.isNightTimeOverAlertEnabled() &&
+            riderSessionViewModel.isNightTimeIncreasing(info)
+        val blinkAuto = riderSessionViewModel.isAutoTimeOverAlertEnabled() &&
+            info.isAutomaticTransmission
         applyBlinkColor(
-            viewBinding.tvTotalNightTime, nightTime, blinkThresholdOf(info.nightTimeMax), showRed
+            viewBinding.tvTotalNightTime,
+            nightTime,
+            if (blinkNight) blinkThresholdOf(info.nightTimeMax) else Int.MAX_VALUE,
+            showRed
         )
         applyBlinkColor(
-            viewBinding.tvTotalAutoTime, autoTime, blinkThresholdOf(info.autoTimeMax), showRed
+            viewBinding.tvTotalAutoTime,
+            autoTime,
+            if (blinkAuto) blinkThresholdOf(info.autoTimeMax) else Int.MAX_VALUE,
+            showRed
         )
     }
 

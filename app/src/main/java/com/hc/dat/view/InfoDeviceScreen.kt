@@ -60,9 +60,9 @@ class InfoDeviceScreen : DatBaseScreen() {
             viewBinding.swtchAutoLogoutTeacher.isChecked =
                 riderSessionViewModel.getAutoLogoutTeacherOver10HoursEnabled()
             viewBinding.swtchNightTimeOverAlert.isChecked =
-                riderSessionViewModel.getNightTimeOverAlertEnabled()
+                riderSessionViewModel.isNightTimeOverAlertEnabled()
             viewBinding.swtchAutoTimeOverAlert.isChecked =
-                riderSessionViewModel.getAutoTimeOverAlertEnabled()
+                riderSessionViewModel.isAutoTimeOverAlertEnabled()
             val autoLogoutTeacherMinute = riderSessionViewModel.getAutoLogoutTeacherMinute()
             viewBinding.skAutoLogoutTeacherTime.progress =
                 autoLogoutTeacherMinute - AUTO_LOGOUT_TEACHER_MINUTE_MIN
