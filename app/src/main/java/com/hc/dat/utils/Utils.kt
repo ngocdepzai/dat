@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 object Utils {
+    private const val ONE_HOUR_IN_MILLIS = 60 * 60 * 1000
 
     const val JAPAN_TIME_VIEW_FORMAT = "HH:mm"
     const val RIDER_SESSION_DATE_FORMAT = "dd-MM-yyyy\nHH:mm:ss"
@@ -336,15 +337,15 @@ fun getDeviceInfo(context: Context): UploadDeviceInfoRequest {
      *
      * @param startMillis mốc bắt đầu, epoch milli
      * @param endMillis mốc kết thúc, epoch milli; nhỏ hơn hoặc bằng startMillis thì trả 0
-     * @param fromHour giờ bắt đầu khung đêm trong ngày, 0..23
-     * @param toHour giờ kết thúc khung đêm trong ngày, 0..23; bằng fromHour coi như khung rỗng
+     * @param fromHour giờ bắt đầu khung đêm trong ngày, nhận cả giờ lẻ như 18.5 = 18h30
+     * @param toHour giờ kết thúc khung đêm trong ngày; bằng fromHour coi như khung rỗng
      * @return số giây nằm trong khung đêm, luôn không âm
      */
     fun nightTimeSecondsBetween(
         startMillis: Long,
         endMillis: Long,
-        fromHour: Int,
-        toHour: Int
+        fromHour: Double,
+        toHour: Double
     ): Double {
         if (endMillis <= startMillis || fromHour == toHour) return 0.0
         val day = Calendar.getInstance().apply {
@@ -355,20 +356,28 @@ fun getDeviceInfo(context: Context): UploadDeviceInfoRequest {
             set(Calendar.MILLISECOND, 0)
             add(Calendar.DAY_OF_YEAR, -1)
         }
+        val fromMillis = (fromHour * ONE_HOUR_IN_MILLIS).toLong()
+        val toMillis = ((if (fromHour > toHour) toHour + 24 else toHour) * ONE_HOUR_IN_MILLIS).toLong()
         var nightMillis = 0L
         // Ba ngày là đủ phủ mọi phiên: phiên dài nhất theo quy định chưa tới 4 giờ.
         repeat(3) {
-            val windowStart = (day.clone() as Calendar)
-                .apply { add(Calendar.HOUR_OF_DAY, fromHour) }.timeInMillis
-            val windowEnd = (day.clone() as Calendar)
-                .apply { add(Calendar.HOUR_OF_DAY, if (fromHour > toHour) 24 + toHour else toHour) }
-                .timeInMillis
-            val overlap = minOf(endMillis, windowEnd) - maxOf(startMillis, windowStart)
+            val dayStart = day.timeInMillis
+            val overlap = minOf(endMillis, dayStart + toMillis) -
+                maxOf(startMillis, dayStart + fromMillis)
             if (overlap > 0) nightMillis += overlap
             day.add(Calendar.DAY_OF_YEAR, 1)
         }
         return nightMillis / 1000.0
     }
+
+    /**
+     * Thời điểm [timeMillis] có nằm trong khung giờ đêm hay không.
+     *
+     * Dùng lại [nightTimeSecondsBetween] với khoảng một giây để hai hàm không thể lệch nhau
+     * về định nghĩa khung đêm.
+     */
+    fun isInNightWindow(timeMillis: Long, fromHour: Double, toHour: Double): Boolean =
+        nightTimeSecondsBetween(timeMillis, timeMillis + 1000L, fromHour, toHour) > 0
 
     // Todo keep old logic + 25200
     fun getTimeStamp(): Long =

@@ -1402,8 +1402,8 @@ class RepositoryImpl @Inject constructor(
     override fun saveSessionTimeLimitInfo(info: SessionTimeLimitInfo) {
         sharedPreferences.edit()
             .putFloat(NIGHT_TIME, info.nightTime.toFloat())
-            .putInt(NIGHT_FROM_HOUR, info.nightFromHour)
-            .putInt(NIGHT_TO_HOUR, info.nightToHour)
+            .putFloat(NIGHT_FROM_HOUR, info.nightFromHour.toFloat())
+            .putFloat(NIGHT_TO_HOUR, info.nightToHour.toFloat())
             .putFloat(NIGHT_TIME_MAX, info.nightTimeMax.toFloat())
             .putFloat(AUTO_TIME, info.automaticTransmissionTime.toFloat())
             .putFloat(AUTO_TIME_MAX, info.autoTimeMax.toFloat())
@@ -1414,13 +1414,27 @@ class RepositoryImpl @Inject constructor(
     override fun getSessionTimeLimitInfo(): SessionTimeLimitInfo {
         return SessionTimeLimitInfo(
             nightTime = sharedPreferences.getFloat(NIGHT_TIME, 0f).toDouble(),
-            nightFromHour = sharedPreferences.getInt(NIGHT_FROM_HOUR, 0),
-            nightToHour = sharedPreferences.getInt(NIGHT_TO_HOUR, 0),
+            nightFromHour = readHourPreference(NIGHT_FROM_HOUR),
+            nightToHour = readHourPreference(NIGHT_TO_HOUR),
             nightTimeMax = sharedPreferences.getFloat(NIGHT_TIME_MAX, 0f).toDouble(),
             automaticTransmissionTime = sharedPreferences.getFloat(AUTO_TIME, 0f).toDouble(),
             autoTimeMax = sharedPreferences.getFloat(AUTO_TIME_MAX, 0f).toDouble(),
             isAutomaticTransmission = sharedPreferences.getBoolean(IS_AUTOMATIC_TRANSMISSION, false)
         )
+    }
+
+    /**
+     * Đọc giờ khung đêm, chịu được cả giá trị do bản cũ ghi bằng putInt.
+     *
+     * Khung đêm từng được lưu là Int trước khi hỗ trợ giờ lẻ; getFloat trên khoá kiểu Int sẽ
+     * ném ClassCastException ngay trong khối chạy mỗi giây của màn phiên học.
+     */
+    private fun readHourPreference(key: String): Double {
+        return try {
+            sharedPreferences.getFloat(key, 0f).toDouble()
+        } catch (ex: ClassCastException) {
+            sharedPreferences.getInt(key, 0).toDouble()
+        }
     }
 
     override fun saveNightTimeOverAlertEnabled(enabled: Boolean) {

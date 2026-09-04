@@ -2400,6 +2400,20 @@ data class RiderSessionViewModel @Inject constructor(
     }
 
     /**
+     * Giờ đêm có đang tăng ở thời điểm này hay không, tức hiện tại có nằm trong khung giờ đêm.
+     *
+     * Dùng để không cảnh báo quá giờ đêm vào ban ngày: khi đó con số đứng im nên cảnh báo
+     * chỉ gây ồn mà người dùng không làm được gì.
+     */
+    fun isNightTimeIncreasing(
+        info: SessionTimeLimitInfo = repository.getSessionTimeLimitInfo()
+    ): Boolean = Utils.isInNightWindow(
+        timeMillis = Utils.getRealTimeStamp(),
+        fromHour = info.nightFromHour,
+        toHour = info.nightToHour
+    )
+
+    /**
      * Tổng thời gian học trên xe số tự động, gồm mốc server trả về lúc mở phiên cộng thời
      * gian phiên đang chạy nếu xe của phiên là xe số tự động.
      *

@@ -923,6 +923,9 @@ class TrainingSessionScreen : DatBaseScreen() {
             val remainingTimeIn24H = LEARNING_TIME_OVER_IN_24H - totalTimeIn24h
             Logger.i("totalTimeIn24h: ${DateUtil.ConvertHms(totalTimeIn24h)}")
             Logger.i("remainingTime: ${DateUtil.ConvertHms(remainingTimeIn24H)}")
+            // getString cần context, mà phiên kết thúc thì fragment detach ngay trong lúc
+            // tick còn đang chờ trên Main
+            if (!isAdded) return@launch
             if (remainingTimeIn24H <= 0) {
                 LogRecorder.e("Phiên học", getString(
                     R.string.over_time_24h_error, DateUtil.ConvertHms(totalTimeIn24h)
@@ -964,6 +967,7 @@ class TrainingSessionScreen : DatBaseScreen() {
             inProgressSession.totalTime + (inProgressSession.time24hTeacher ?: 0.0)
         Logger.i("teacherTimeIn24h: ${DateUtil.ConvertHms(teacherTimeIn24h)}")
         CoroutineScope(Dispatchers.Main).launch {
+            if (!isAdded) return@launch
             if (teacherTimeIn24h > LEARNING_TIME_OVER_IN_24H) {
                 LogRecorder.e("Phiên học", getString(R.string.teacher_over_time_24h_error))
                 BaseNotification.showError(getString(R.string.teacher_over_time_24h_error))
@@ -983,11 +987,14 @@ class TrainingSessionScreen : DatBaseScreen() {
         // nightTimeMax = 0 nghĩa là server không giới hạn giờ đêm cho khoá này
         val nightTimeMax = info.nightTimeMax
         if (nightTimeMax <= 0) return
+        // Ngoài khung giờ đêm thì giờ đêm đứng im, cảnh báo lúc đó chỉ gây ồn vô ích
+        if (!riderSessionViewModel.isNightTimeIncreasing(info)) return
         val nightTime = riderSessionViewModel.getSessionNightTime(info)
         val remainingTime = nightTimeMax - nightTime
         Logger.i("nightTime: ${DateUtil.ConvertHms(nightTime)} | max: ${DateUtil.ConvertHms(nightTimeMax)}")
         CoroutineScope(Dispatchers.Main).launch {
             if (!riderSessionViewModel.getNightTimeOverAlertEnabled()) return@launch
+            if (!isAdded) return@launch
             if (remainingTime <= 0) {
                 val message = getString(
                     R.string.night_time_over_error,
@@ -1017,11 +1024,14 @@ class TrainingSessionScreen : DatBaseScreen() {
         // autoTimeMax = 0 nghĩa là server không giới hạn giờ xe số tự động cho khoá này
         val autoTimeMax = info.autoTimeMax
         if (autoTimeMax <= 0) return
+        // Xe số sàn thì giờ xe số tự động đứng im, không cảnh báo về con số không nhích được
+        if (!info.isAutomaticTransmission) return
         val autoTime = riderSessionViewModel.getSessionAutoTime(info)
         val remainingTime = autoTimeMax - autoTime
         Logger.i("autoTime: ${DateUtil.ConvertHms(autoTime)} | max: ${DateUtil.ConvertHms(autoTimeMax)}")
         CoroutineScope(Dispatchers.Main).launch {
             if (!riderSessionViewModel.getAutoTimeOverAlertEnabled()) return@launch
+            if (!isAdded) return@launch
             if (remainingTime <= 0) {
                 val message = getString(
                     R.string.auto_time_over_error,
@@ -1057,6 +1067,7 @@ class TrainingSessionScreen : DatBaseScreen() {
             }
         }
         CoroutineScope(Dispatchers.Main).launch {
+            if (!isAdded) return@launch
             if (remainingTime <= 0) {
                 LogRecorder.e("Phiên học", getString(
                     R.string.over_time_error,
@@ -1136,6 +1147,9 @@ class TrainingSessionScreen : DatBaseScreen() {
      * không phải chỉ lấy một lần lúc mở phiên.
      */
     private fun updateNightAndAutoTime(showRed: Boolean) {
+        // Khối này chạy mỗi giây và cần context để getString, mà phiên kết thúc thì fragment
+        // bị detach ngay trong lúc một tick còn đang chờ trên Main.
+        if (!isAdded) return
         val info = riderSessionViewModel.getSessionTimeLimitInfo()
         val nightTime = riderSessionViewModel.getSessionNightTime(info)
         val autoTime = riderSessionViewModel.getSessionAutoTime(info)
@@ -1157,7 +1171,7 @@ class TrainingSessionScreen : DatBaseScreen() {
      * [Int.MAX_VALUE] để không bao giờ nhấp nháy
      */
     private fun blinkThresholdOf(maxTime: Double): Int =
-        if (maxTime > 0) (maxTime - WARNING_TIME_REMAINING_TO_15_MINUTES).toInt()
+        if (maxTime > 0) maxOf(0.0, maxTime - WARNING_TIME_REMAINING_TO_15_MINUTES).toInt()
         else Int.MAX_VALUE
 
     private fun applyBlinkColor(

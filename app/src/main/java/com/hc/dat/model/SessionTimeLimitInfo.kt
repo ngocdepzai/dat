@@ -10,10 +10,10 @@ package com.hc.dat.model
 data class SessionTimeLimitInfo(
     /** Số giây đã học trong khung đêm trước phiên hiện tại, do server tổng hợp. */
     val nightTime: Double = 0.0,
-    /** Giờ bắt đầu khung đêm trong ngày, 0..23. */
-    val nightFromHour: Int = 0,
-    /** Giờ kết thúc khung đêm trong ngày, 0..23; bằng nightFromHour là khung rỗng. */
-    val nightToHour: Int = 0,
+    /** Giờ bắt đầu khung đêm trong ngày, nhận cả giờ lẻ như 18.5 = 18h30. */
+    val nightFromHour: Double = 0.0,
+    /** Giờ kết thúc khung đêm trong ngày; bằng nightFromHour là khung rỗng. */
+    val nightToHour: Double = 0.0,
     /** Ngưỡng giờ đêm tối đa theo giây, 0 nghĩa là server không giới hạn. */
     val nightTimeMax: Double = 0.0,
     /** Số giây đã học trên xe số tự động trước phiên hiện tại. */

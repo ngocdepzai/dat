@@ -53,14 +53,16 @@ toàn trong khung đêm:
 - **Giờ tự động** = `automaticTransmissionTime` + `totalTime` của phiên, chỉ khi
   `isAutomaticTransmission = true`.
 
-Khung đêm vắt qua nửa đêm (18h → 5h) nên **không được trừ giờ trực tiếp**.
+Khung đêm vắt qua nửa đêm (18h → 5h) nên **không được trừ giờ trực tiếp**. Hàm nhận giờ
+thập phân nên khung lẻ kiểu 18.5 (18h30) cũng đúng.
 `Utils.nightTimeSecondsBetween()` dựng khung của 3 ngày liên tiếp (từ ngày trước ngày bắt
 đầu, vì khung mở từ tối hôm trước phủ sang sáng hôm sau) rồi lấy tổng phần giao. Ba ngày là
 đủ vì phiên dài nhất theo quy định chưa tới 4 giờ.
 
-Đã kiểm chứng 8 ca: ca thực tế đo từ server (2514s), mở 17h giờ 19h (ra 1 tiếng), rạng sáng
-3h–6h, ban ngày 6h–8h (ra 0), vắt nửa đêm 23h–1h, khung không vắt 1h–5h, phiên dài phủ 2
-đoạn, và `from == to` (khung rỗng).
+Đã kiểm chứng 16 ca: ca thực tế đo từ server (2514s), mở 17h giờ 19h (ra 1 tiếng), rạng
+sáng 3h–6h, ban ngày 6h–8h (ra 0), vắt nửa đêm 23h–1h, khung không vắt 1h–5h, phiên dài phủ
+2 đoạn, `from == to` (khung rỗng), hai ca khung giờ lẻ 18.5 và 5.5, cùng 6 ca
+`isInNightWindow` gồm cả hai biên đầu và cuối khung.
 
 ## Vì sao ngưỡng lưu shared-pref chứ không lưu Room
 
@@ -95,6 +97,15 @@ Theo chốt với người dùng: **Toast + TTS + nhấp nháy đỏ ô số**, 
 - Phải kiểm tra `<= 0` **trước** `< 15 phút`, vì `<= 0` cũng thoả `< 15 phút`.
 - `Max = 0` nghĩa là server không giới hạn → thoát sớm, không cảnh báo, không nhấp nháy
   (`blinkThresholdOf` trả `Int.MAX_VALUE`).
+- **Chỉ cảnh báo khi con số đang tăng được**: giờ đêm chỉ cảnh báo khi hiện tại nằm trong
+  khung đêm (`Utils.isInNightWindow`), giờ xe số tự động chỉ cảnh báo khi
+  `isAutomaticTransmission = true`. Không có hai chốt này thì học viên đã vượt ngưỡng từ
+  trước sẽ bị kêu 5 phút/lần suốt phiên ban ngày, hoặc bị kêu "quá giờ xe số tự động" trong
+  khi đang lái xe số sàn — con số đứng im mà vẫn kêu.
+- Mọi khối cảnh báo phải `if (!isAdded) return@launch` trước khi gọi `getString`: kết thúc
+  phiên thì fragment bị detach ngay trong lúc một tick còn đang chờ trên Main, mà
+  `clockLogicBlock` không có `CoroutineExceptionHandler` nên sẽ crash. Riêng khối hiển thị
+  chạy mỗi giây nên khả năng gặp rất cao.
 - Hai ô "Giờ đêm" / "Giờ AT" cập nhật **mỗi giây** trong `clockLogicBlock`, không còn gán
   một lần lúc mở phiên như trước.
 
@@ -103,15 +114,18 @@ Hai switch bật/tắt cảnh báo nằm trong màn Cài đặt thiết bị, **
 
 ## Tồn đọng
 
-1. **Phiên mở offline không có ngưỡng và không biết xe số tự động** (`Max = 0`,
+1. **Ngưỡng là của cả khoá học, không reset theo ngày.** Học viên đã vượt thì mọi phiên về
+   sau đều cảnh báo. Nếu quy định thật là theo ngày hoặc theo tuần thì công thức phải đổi —
+   cần chốt lại với nghiệp vụ.
+2. **Phiên mở offline không có ngưỡng và không biết xe số tự động** (`Max = 0`,
    `isAutomaticTransmission = false`) cho tới khi có mạng và `recoverSendOfflineData` đẩy
    phiên lên server thành công — lúc đó `handleRecoverUploadSession` mới lưu được ngưỡng, và
    chỉ lưu nếu đúng phiên đang chạy để không lấy ngưỡng của phiên cũ. Muốn chạy được cả khi
    offline thì phải lấy `isAutomaticTransmission` từ node `vehicle` của `get_by_seri_v3`
    (`VehicleInfo` hiện chưa parse field này) và ngưỡng thì không có nguồn nào khác.
-2. **`nightTimeMin` / `autoTimeMin` chưa dùng.** Đã khai báo trong
+3. **`nightTimeMin` / `autoTimeMin` chưa dùng.** Đã khai báo trong
    `StartRiderSessionResponse` để giữ đủ contract. Nghi là mức tối thiểu bắt buộc của khoá
    học (giờ đêm/giờ số tự động phải học đủ) — cần xác nhận với backend trước khi làm gì với
    chúng.
-3. Mốc server chỉ được làm mới lúc mở phiên. Trong phiên app tự cộng dồn nên không lệch,
+4. Mốc server chỉ được làm mới lúc mở phiên. Trong phiên app tự cộng dồn nên không lệch,
    nhưng nếu backend sửa `nightTime` giữa phiên thì app không thấy.

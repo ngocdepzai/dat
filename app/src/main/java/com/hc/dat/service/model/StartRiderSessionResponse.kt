@@ -35,8 +35,8 @@ data class StartRiderSessionResponse(
 fun StartRiderSessionResponse.toSessionTimeLimitInfo(): SessionTimeLimitInfo =
     SessionTimeLimitInfo(
         nightTime = nightTime,
-        nightFromHour = fromNightTime.toInt(),
-        nightToHour = toNightTime.toInt(),
+        nightFromHour = fromNightTime,
+        nightToHour = toNightTime,
         nightTimeMax = nightTimeMax ?: 0.0,
         automaticTransmissionTime = automaticTransmissionTime,
         autoTimeMax = autoTimeMax ?: 0.0,
